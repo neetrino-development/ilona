@@ -4,9 +4,9 @@ import { cn } from '@/shared/lib/utils';
 
 interface Column<T> {
   key: string;
-  header: string;
+  header: React.ReactNode;
   sortable?: boolean;
-  render?: (item: T) => React.ReactNode;
+  render?: (item: T, index?: number) => React.ReactNode;
   className?: string;
 }
 
@@ -70,7 +70,7 @@ export function DataTable<T>({
               </td>
             </tr>
           ) : (
-            data.map((item) => (
+            data.map((item, index) => (
               <tr
                 key={keyExtractor(item)}
                 onClick={() => onRowClick?.(item)}
@@ -82,7 +82,7 @@ export function DataTable<T>({
                 {columns.map((column) => (
                   <td key={column.key} className={cn('px-6 py-4', column.className)}>
                     {column.render
-                      ? column.render(item)
+                      ? column.render(item, index)
                       : (item as Record<string, unknown>)[column.key] as React.ReactNode}
                   </td>
                 ))}
