@@ -10,6 +10,7 @@ interface AuthState {
   tokens: AuthTokens | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  isHydrated: boolean; // Track if store is hydrated from localStorage
   error: string | null;
 }
 
@@ -19,6 +20,7 @@ interface AuthActions {
   refreshToken: () => Promise<void>;
   clearError: () => void;
   setUser: (user: User) => void;
+  setHydrated: () => void;
 }
 
 type AuthStore = AuthState & AuthActions;
@@ -28,6 +30,7 @@ const initialState: AuthState = {
   tokens: null,
   isLoading: false,
   isAuthenticated: false,
+  isHydrated: false,
   error: null,
 };
 
@@ -62,13 +65,13 @@ export const useAuthStore = create<AuthStore>()(
       },
 
       logout: () => {
-        set(initialState);
+        set({ ...initialState, isHydrated: true });
       },
 
       refreshToken: async () => {
         const { tokens } = get();
         if (!tokens?.refreshToken) {
-          set(initialState);
+          set({ ...initialState, isHydrated: true });
           return;
         }
 
@@ -79,7 +82,7 @@ export const useAuthStore = create<AuthStore>()(
 
           set({ tokens: newTokens });
         } catch {
-          set(initialState);
+          set({ ...initialState, isHydrated: true });
         }
       },
 
@@ -90,6 +93,10 @@ export const useAuthStore = create<AuthStore>()(
       setUser: (user: User) => {
         set({ user });
       },
+
+      setHydrated: () => {
+        set({ isHydrated: true });
+      },
     }),
     {
       name: 'ilona-auth',
@@ -99,6 +106,12 @@ export const useAuthStore = create<AuthStore>()(
         tokens: state.tokens,
         isAuthenticated: state.isAuthenticated,
       }),
+      onRehydrateStorage: () => (state) => {
+        // Called when hydration is complete
+        if (state) {
+          state.setHydrated();
+        }
+      },
     }
   )
 );
@@ -116,4 +129,3 @@ export function getDashboardPath(role: UserRole): string {
       return '/';
   }
 }
-

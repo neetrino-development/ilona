@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuthStore, getDashboardPath } from '../store/auth.store';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
@@ -8,6 +9,7 @@ import { Label } from '@/shared/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
 
 export function LoginForm() {
+  const router = useRouter();
   const { login, isLoading, error, clearError } = useAuthStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -20,7 +22,7 @@ export function LoginForm() {
       await login(email, password);
       const user = useAuthStore.getState().user;
       if (user) {
-        window.location.href = getDashboardPath(user.role);
+        router.push(getDashboardPath(user.role));
       }
     } catch {
       // Error is handled in store
@@ -28,12 +30,12 @@ export function LoginForm() {
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto shadow-2xl border-0 bg-white/95 backdrop-blur">
+    <Card className="w-full max-w-md mx-auto shadow-xl border border-slate-200 bg-white">
       <CardHeader className="space-y-1 text-center pb-2">
-        <div className="mx-auto w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
-          <span className="text-3xl">🎓</span>
+        <div className="mx-auto w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
+          <span className="text-3xl text-white font-bold">I</span>
         </div>
-        <CardTitle className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+        <CardTitle className="text-2xl font-bold text-slate-800">
           Ilona English Center
         </CardTitle>
         <CardDescription className="text-slate-500">
@@ -51,7 +53,7 @@ export function LoginForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="h-11 border-slate-200 focus:border-indigo-500 focus:ring-indigo-500"
+              className="h-11 border-slate-200 focus:border-blue-500 focus:ring-blue-500"
             />
           </div>
           <div className="space-y-2">
@@ -63,7 +65,7 @@ export function LoginForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="h-11 border-slate-200 focus:border-indigo-500 focus:ring-indigo-500"
+              className="h-11 border-slate-200 focus:border-blue-500 focus:ring-blue-500"
             />
           </div>
 
@@ -75,7 +77,7 @@ export function LoginForm() {
 
           <Button
             type="submit"
-            className="w-full h-11 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold shadow-lg shadow-indigo-500/30 transition-all duration-200"
+            className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md transition-all duration-200"
             disabled={isLoading}
           >
             {isLoading ? (
