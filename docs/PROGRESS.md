@@ -1,7 +1,7 @@
 # Прогресс: Ilona English Center
 
 **Текущий этап:** Этап 6 — Frontend Integration 🚧
-**Общий прогресс:** 75%
+**Общий прогресс:** 85%
 **Последнее обновление:** 2026-02-02
 
 ---
@@ -65,13 +65,21 @@
 - [x] Sidebar navigation
 - [x] DashboardLayout component
 - [x] UI components (Button, Input, Card, Badge, DataTable, StatCard)
+- [x] **React Query** — QueryProvider, devtools
+- [x] **Teachers feature** — API hooks (useTeachers, useCreateTeacher, useDeleteTeacher)
+- [x] **Dashboard feature** — API hooks (useAdminDashboardStats, useFinanceDashboard)
+- [x] **Admin Dashboard** — подключён к реальному API
+- [x] **Admin Teachers** — подключён к реальному API с пагинацией и поиском
+- [x] **Students feature** — API hooks (useStudents, useCreateStudent, useDeleteStudent)
+- [x] **Admin Students** — подключён к реальному API с пагинацией и поиском
+- [x] **Finance feature** — API hooks (usePayments, useSalaries, useFinanceDashboard и др.)
+- [x] **Admin Finance** — подключён к реальному API (payments, salaries, dashboard stats)
 
 ---
 
 ## 🚧 Осталось сделать
 
 ### Этап 6: Frontend (продолжение)
-- [ ] **Подключить API к страницам** — сейчас mock data
 - [ ] **Calendar page** — расписание уроков
 - [ ] **Attendance page** — отметка посещаемости
 - [ ] **Settings page** — настройки профиля

@@ -1,89 +1,112 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { DashboardLayout } from '@/shared/components/layout/DashboardLayout';
 import { StatCard, DataTable, Badge, Button } from '@/shared/components/ui';
-
-interface Payment {
-  id: string;
-  student: {
-    firstName: string;
-    lastName: string;
-    email: string;
-  };
-  amount: number;
-  month: string;
-  status: 'paid' | 'pending' | 'overdue';
-  paidAt?: string;
-  dueDate: string;
-}
-
-interface SalaryRecord {
-  id: string;
-  teacher: {
-    firstName: string;
-    lastName: string;
-  };
-  lessonsCount: number;
-  grossAmount: number;
-  deductions: number;
-  netAmount: number;
-  status: 'pending' | 'paid';
-}
+import {
+  useFinanceDashboard,
+  usePayments,
+  useSalaries,
+  useProcessPayment,
+  useProcessSalary,
+  type Payment,
+  type SalaryRecord,
+} from '@/features/finance';
 
 export default function FinancePage() {
-  const [payments, setPayments] = useState<Payment[]>([]);
-  const [salaries, setSalaries] = useState<SalaryRecord[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'payments' | 'salaries'>('payments');
+  const [paymentsPage, setPaymentsPage] = useState(0);
+  const [salariesPage, setSalariesPage] = useState(0);
+  const pageSize = 10;
 
-  useEffect(() => {
-    // Mock data
-    setPayments([
-      { id: '1', student: { firstName: 'Anna', lastName: 'Kowalski', email: 'anna.k@student.edu' }, amount: 150, month: 'January 2026', status: 'paid', paidAt: '2026-01-15', dueDate: '2026-01-10' },
-      { id: '2', student: { firstName: 'Michael', lastName: 'Brown', email: 'm.brown@student.edu' }, amount: 150, month: 'January 2026', status: 'pending', dueDate: '2026-01-10' },
-      { id: '3', student: { firstName: 'Sofia', lastName: 'Garcia', email: 'sofia.g@student.edu' }, amount: 200, month: 'January 2026', status: 'paid', paidAt: '2026-01-08', dueDate: '2026-01-10' },
-      { id: '4', student: { firstName: 'James', lastName: 'Wilson', email: 'j.wilson@student.edu' }, amount: 175, month: 'January 2026', status: 'overdue', dueDate: '2026-01-10' },
-    ]);
+  // Fetch dashboard stats
+  const { data: dashboard, isLoading: isLoadingDashboard } = useFinanceDashboard();
 
-    setSalaries([
-      { id: '1', teacher: { firstName: 'Sarah', lastName: 'Jenkins' }, lessonsCount: 48, grossAmount: 1200, deductions: 30, netAmount: 1170, status: 'pending' },
-      { id: '2', teacher: { firstName: 'Marcus', lastName: 'Thorne' }, lessonsCount: 36, grossAmount: 1080, deductions: 0, netAmount: 1080, status: 'paid' },
-      { id: '3', teacher: { firstName: 'Elena', lastName: 'Rodriguez' }, lessonsCount: 24, grossAmount: 528, deductions: 15, netAmount: 513, status: 'pending' },
-    ]);
+  // Fetch payments
+  const { 
+    data: paymentsData, 
+    isLoading: isLoadingPayments 
+  } = usePayments({
+    skip: paymentsPage * pageSize,
+    take: pageSize,
+  });
 
-    setIsLoading(false);
-  }, []);
+  // Fetch salaries
+  const {
+    data: salariesData,
+    isLoading: isLoadingSalaries,
+  } = useSalaries({
+    skip: salariesPage * pageSize,
+    take: pageSize,
+  });
 
-  const stats = {
-    totalRevenue: 156750,
-    pendingPayments: 23400,
-    totalSalaries: 12500,
-    netProfit: 120850,
+  // Mutations
+  const processPayment = useProcessPayment();
+  const processSalary = useProcessSalary();
+
+  const payments = paymentsData?.items || [];
+  const totalPayments = paymentsData?.total || 0;
+  const paymentsTotalPages = paymentsData?.totalPages || 1;
+
+  const salaries = salariesData?.items || [];
+  const totalSalaries = salariesData?.total || 0;
+  const salariesTotalPages = salariesData?.totalPages || 1;
+
+  const isLoading = activeTab === 'payments' ? isLoadingPayments : isLoadingSalaries;
+
+  // Handle process payment
+  const handleProcessPayment = async (id: string) => {
+    try {
+      await processPayment.mutateAsync({ id });
+    } catch (err) {
+      console.error('Failed to process payment:', err);
+    }
+  };
+
+  // Handle process salary
+  const handleProcessSalary = async (id: string) => {
+    try {
+      await processSalary.mutateAsync(id);
+    } catch (err) {
+      console.error('Failed to process salary:', err);
+    }
+  };
+
+  // Format month/year
+  const formatMonth = (month: number, year: number) => {
+    const date = new Date(year, month - 1);
+    return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   };
 
   const paymentColumns = [
     {
       key: 'student',
       header: 'Student',
-      render: (payment: Payment) => (
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-semibold">
-            {payment.student.firstName[0]}{payment.student.lastName[0]}
+      render: (payment: Payment) => {
+        const firstName = payment.student?.user?.firstName || '';
+        const lastName = payment.student?.user?.lastName || '';
+        const initials = `${firstName[0] || ''}${lastName[0] || ''}` || '?';
+        return (
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-semibold">
+              {initials}
+            </div>
+            <div>
+              <p className="font-semibold text-slate-800">
+                {firstName} {lastName}
+              </p>
+              <p className="text-sm text-slate-500">{payment.student?.user?.email || ''}</p>
+            </div>
           </div>
-          <div>
-            <p className="font-semibold text-slate-800">
-              {payment.student.firstName} {payment.student.lastName}
-            </p>
-            <p className="text-sm text-slate-500">{payment.student.email}</p>
-          </div>
-        </div>
-      ),
+        );
+      },
     },
     {
       key: 'month',
       header: 'Month',
-      render: (payment: Payment) => <span className="text-slate-700">{payment.month}</span>,
+      render: (payment: Payment) => (
+        <span className="text-slate-700">{formatMonth(payment.month, payment.year)}</span>
+      ),
     },
     {
       key: 'amount',
@@ -97,7 +120,9 @@ export default function FinancePage() {
       key: 'dueDate',
       header: 'Due Date',
       render: (payment: Payment) => (
-        <span className="text-slate-500">{new Date(payment.dueDate).toLocaleDateString()}</span>
+        <span className="text-slate-500">
+          {new Date(payment.dueDate).toLocaleDateString()}
+        </span>
       ),
     },
     {
@@ -105,17 +130,23 @@ export default function FinancePage() {
       header: 'Status',
       render: (payment: Payment) => {
         switch (payment.status) {
-          case 'paid':
+          case 'PAID':
             return <Badge variant="success">Paid</Badge>;
-          case 'pending':
+          case 'PENDING':
             return <Badge variant="warning">Pending</Badge>;
-          case 'overdue':
+          case 'OVERDUE':
             return (
               <div className="flex items-center gap-2">
                 <span className="text-red-500">!</span>
                 <Badge variant="error">Overdue</Badge>
               </div>
             );
+          case 'CANCELLED':
+            return <Badge variant="default">Cancelled</Badge>;
+          case 'REFUNDED':
+            return <Badge variant="info">Refunded</Badge>;
+          default:
+            return <Badge variant="default">{payment.status}</Badge>;
         }
       },
     },
@@ -123,13 +154,18 @@ export default function FinancePage() {
       key: 'actions',
       header: 'Actions',
       render: (payment: Payment) => (
-        payment.status !== 'paid' ? (
-          <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white text-sm">
+        payment.status !== 'PAID' && payment.status !== 'CANCELLED' ? (
+          <Button 
+            size="sm" 
+            className="bg-blue-600 hover:bg-blue-700 text-white text-sm"
+            onClick={() => handleProcessPayment(payment.id)}
+            disabled={processPayment.isPending}
+          >
             Mark Paid
           </Button>
         ) : (
           <Button variant="ghost" size="sm" className="text-blue-600 text-sm">
-            View Receipt
+            View
           </Button>
         )
       ),
@@ -140,15 +176,27 @@ export default function FinancePage() {
     {
       key: 'teacher',
       header: 'Teacher',
-      render: (salary: SalaryRecord) => (
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-semibold">
-            {salary.teacher.firstName[0]}{salary.teacher.lastName[0]}
+      render: (salary: SalaryRecord) => {
+        const firstName = salary.teacher?.user?.firstName || '';
+        const lastName = salary.teacher?.user?.lastName || '';
+        const initials = `${firstName[0] || ''}${lastName[0] || ''}` || '?';
+        return (
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-semibold">
+              {initials}
+            </div>
+            <span className="font-semibold text-slate-800">
+              {firstName} {lastName}
+            </span>
           </div>
-          <span className="font-semibold text-slate-800">
-            {salary.teacher.firstName} {salary.teacher.lastName}
-          </span>
-        </div>
+        );
+      },
+    },
+    {
+      key: 'period',
+      header: 'Period',
+      render: (salary: SalaryRecord) => (
+        <span className="text-slate-700">{formatMonth(salary.month, salary.year)}</span>
       ),
     },
     {
@@ -164,7 +212,7 @@ export default function FinancePage() {
       header: 'Gross',
       className: 'text-right',
       render: (salary: SalaryRecord) => (
-        <span className="text-slate-700">${salary.grossAmount}</span>
+        <span className="text-slate-700">${salary.baseSalary}</span>
       ),
     },
     {
@@ -172,8 +220,8 @@ export default function FinancePage() {
       header: 'Deductions',
       className: 'text-right',
       render: (salary: SalaryRecord) => (
-        salary.deductions > 0 ? (
-          <span className="text-red-500">-${salary.deductions}</span>
+        salary.totalDeductions > 0 ? (
+          <span className="text-red-500">-${salary.totalDeductions}</span>
         ) : (
           <span className="text-slate-400">$0</span>
         )
@@ -191,7 +239,7 @@ export default function FinancePage() {
       key: 'status',
       header: 'Status',
       render: (salary: SalaryRecord) => (
-        salary.status === 'paid' ? (
+        salary.status === 'PAID' ? (
           <Badge variant="success">Paid</Badge>
         ) : (
           <Badge variant="warning">Pending</Badge>
@@ -202,8 +250,13 @@ export default function FinancePage() {
       key: 'actions',
       header: 'Actions',
       render: (salary: SalaryRecord) => (
-        salary.status === 'pending' ? (
-          <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white text-sm">
+        salary.status === 'PENDING' ? (
+          <Button 
+            size="sm" 
+            className="bg-blue-600 hover:bg-blue-700 text-white text-sm"
+            onClick={() => handleProcessSalary(salary.id)}
+            disabled={processSalary.isPending}
+          >
             Process
           </Button>
         ) : (
@@ -225,22 +278,26 @@ export default function FinancePage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <StatCard
             title="Total Revenue"
-            value={`$${stats.totalRevenue.toLocaleString()}`}
+            value={`$${(dashboard?.revenue?.totalRevenue || 0).toLocaleString()}`}
             change={{ value: '+8.2%', type: 'positive' }}
           />
           <StatCard
             title="Pending Payments"
-            value={`$${stats.pendingPayments.toLocaleString()}`}
-            change={{ value: '156 students', type: 'warning' }}
+            value={`$${(dashboard?.pendingPayments?.totalPending || 0).toLocaleString()}`}
+            change={{ 
+              value: `${dashboard?.pendingPayments?.count || 0} pending`, 
+              type: (dashboard?.pendingPayments?.overdueCount || 0) > 0 ? 'warning' : 'neutral' 
+            }}
           />
           <StatCard
-            title="Salaries (This Month)"
-            value={`$${stats.totalSalaries.toLocaleString()}`}
+            title="Total Expenses"
+            value={`$${(dashboard?.expenses?.totalExpenses || 0).toLocaleString()}`}
+            change={{ value: `${dashboard?.expenses?.salariesPaid || 0} salaries paid`, type: 'neutral' }}
           />
           <StatCard
             title="Net Profit"
-            value={`$${stats.netProfit.toLocaleString()}`}
-            change={{ value: '+12.5%', type: 'positive' }}
+            value={`$${(dashboard?.profit || 0).toLocaleString()}`}
+            change={{ value: dashboard?.profit && dashboard.profit > 0 ? 'Positive' : 'Review needed', type: dashboard?.profit && dashboard.profit > 0 ? 'positive' : 'warning' }}
           />
         </div>
 
@@ -254,7 +311,7 @@ export default function FinancePage() {
                 : 'border-transparent text-slate-500 hover:text-slate-700'
             }`}
           >
-            Student Payments
+            Student Payments ({totalPayments})
           </button>
           <button
             onClick={() => setActiveTab('salaries')}
@@ -264,11 +321,11 @@ export default function FinancePage() {
                 : 'border-transparent text-slate-500 hover:text-slate-700'
             }`}
           >
-            Teacher Salaries
+            Teacher Salaries ({totalSalaries})
           </button>
         </div>
 
-        {/* Search & Actions */}
+        {/* Actions */}
         <div className="flex items-center gap-4">
           <div className="flex-1 relative">
             <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -298,21 +355,79 @@ export default function FinancePage() {
 
         {/* Table */}
         {activeTab === 'payments' ? (
-          <DataTable
-            columns={paymentColumns}
-            data={payments}
-            keyExtractor={(payment) => payment.id}
-            isLoading={isLoading}
-            emptyMessage="No payments found"
-          />
+          <>
+            <DataTable
+              columns={paymentColumns}
+              data={payments}
+              keyExtractor={(payment) => payment.id}
+              isLoading={isLoading || isLoadingDashboard}
+              emptyMessage="No payments found"
+            />
+            {/* Pagination */}
+            <div className="flex items-center justify-between text-sm text-slate-500">
+              <span>
+                Showing {Math.min(paymentsPage * pageSize + 1, totalPayments)}-{Math.min((paymentsPage + 1) * pageSize, totalPayments)} of {totalPayments}
+              </span>
+              <div className="flex items-center gap-2">
+                <button 
+                  className="p-2 rounded-lg hover:bg-slate-100 disabled:opacity-50" 
+                  disabled={paymentsPage === 0}
+                  onClick={() => setPaymentsPage(p => Math.max(0, p - 1))}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <span>Page {paymentsPage + 1} of {paymentsTotalPages || 1}</span>
+                <button 
+                  className="p-2 rounded-lg hover:bg-slate-100 disabled:opacity-50"
+                  disabled={paymentsPage >= paymentsTotalPages - 1}
+                  onClick={() => setPaymentsPage(p => p + 1)}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </>
         ) : (
-          <DataTable
-            columns={salaryColumns}
-            data={salaries}
-            keyExtractor={(salary) => salary.id}
-            isLoading={isLoading}
-            emptyMessage="No salary records found"
-          />
+          <>
+            <DataTable
+              columns={salaryColumns}
+              data={salaries}
+              keyExtractor={(salary) => salary.id}
+              isLoading={isLoading || isLoadingDashboard}
+              emptyMessage="No salary records found"
+            />
+            {/* Pagination */}
+            <div className="flex items-center justify-between text-sm text-slate-500">
+              <span>
+                Showing {Math.min(salariesPage * pageSize + 1, totalSalaries)}-{Math.min((salariesPage + 1) * pageSize, totalSalaries)} of {totalSalaries}
+              </span>
+              <div className="flex items-center gap-2">
+                <button 
+                  className="p-2 rounded-lg hover:bg-slate-100 disabled:opacity-50" 
+                  disabled={salariesPage === 0}
+                  onClick={() => setSalariesPage(p => Math.max(0, p - 1))}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <span>Page {salariesPage + 1} of {salariesTotalPages || 1}</span>
+                <button 
+                  className="p-2 rounded-lg hover:bg-slate-100 disabled:opacity-50"
+                  disabled={salariesPage >= salariesTotalPages - 1}
+                  onClick={() => setSalariesPage(p => p + 1)}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </>
         )}
 
         {/* Info Cards */}
@@ -327,7 +442,8 @@ export default function FinancePage() {
               <div className="flex-1">
                 <h3 className="font-semibold text-slate-800 mb-2">Overdue Payments</h3>
                 <p className="text-sm text-slate-500 leading-relaxed">
-                  12 payments are overdue totaling $1,800. Send automated reminders to improve collection rates.
+                  {dashboard?.pendingPayments?.overdueCount || 0} payments are overdue. 
+                  Send automated reminders to improve collection rates.
                 </p>
                 <button className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700">
                   Send Reminders
@@ -365,5 +481,3 @@ export default function FinancePage() {
     </DashboardLayout>
   );
 }
-
-

@@ -1,112 +1,83 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { DashboardLayout } from '@/shared/components/layout/DashboardLayout';
 import { StatCard, DataTable, Badge, Button } from '@/shared/components/ui';
-import { api, ApiError } from '@/shared/lib/api';
-
-interface DashboardStats {
-  totalTeachers: number;
-  activeTeachers: number;
-  totalStudents: number;
-  activeStudents: number;
-  totalGroups: number;
-  totalCenters: number;
-  missedFeedbacks: number;
-  pendingPayments: number;
-}
-
-interface Teacher {
-  id: string;
-  user: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-    avatarUrl?: string;
-  };
-  groups: Array<{ id: string; name: string; level?: string }>;
-  _count: {
-    lessons: number;
-  };
-}
+import { useTeachers, type Teacher } from '@/features/teachers';
+import { useAdminDashboardStats } from '@/features/dashboard';
 
 export default function AdminDashboardPage() {
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [teachers, setTeachers] = useState<Teacher[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  // Fetch teachers list (top 5 for dashboard)
+  const { 
+    data: teachersData, 
+    isLoading: isLoadingTeachers,
+    error: teachersError 
+  } = useTeachers({ take: 5 });
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Fetch teachers list
-        const teachersData = await api.get<{ items: Teacher[] }>('/teachers?take=5');
-        setTeachers(teachersData.items || []);
+  // Fetch dashboard stats
+  const { 
+    data: stats, 
+    isLoading: isLoadingStats,
+    error: statsError 
+  } = useAdminDashboardStats();
 
-        // For now, mock stats (can be replaced with real API call)
-        setStats({
-          totalTeachers: 124,
-          activeTeachers: 118,
-          totalStudents: 2450,
-          activeStudents: 2280,
-          totalGroups: 85,
-          totalCenters: 3,
-          missedFeedbacks: 12,
-          pendingPayments: 45,
-        });
-      } catch (error) {
-        if (error instanceof ApiError) {
-          console.error('API Error:', error.message);
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const teachers = teachersData?.items || [];
+  const totalTeachers = teachersData?.total || 0;
+  const isLoading = isLoadingTeachers || isLoadingStats;
 
-    fetchData();
-  }, []);
+  // Show error state
+  if (teachersError || statsError) {
+    console.error('Dashboard error:', teachersError || statsError);
+  }
 
   const teacherColumns = [
     {
       key: 'teacher',
       header: 'Teacher',
       sortable: true,
-      render: (teacher: Teacher) => (
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center text-slate-600 font-semibold">
-            {teacher.user.firstName[0]}{teacher.user.lastName[0]}
+      render: (teacher: Teacher) => {
+        const firstName = teacher.user?.firstName || '';
+        const lastName = teacher.user?.lastName || '';
+        const initials = `${firstName[0] || ''}${lastName[0] || ''}` || '?';
+        return (
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center text-slate-600 font-semibold">
+              {initials}
+            </div>
+            <div>
+              <p className="font-semibold text-slate-800">
+                {firstName} {lastName}
+              </p>
+              <p className="text-sm text-slate-500">{teacher.user?.email || ''}</p>
+            </div>
           </div>
-          <div>
-            <p className="font-semibold text-slate-800">
-              {teacher.user.firstName} {teacher.user.lastName}
-            </p>
-            <p className="text-sm text-slate-500">{teacher.user.email}</p>
-          </div>
-        </div>
-      ),
+        );
+      },
     },
     {
       key: 'groups',
       header: 'Assigned Groups',
-      render: (teacher: Teacher) => (
-        <div className="flex flex-wrap gap-1.5">
-          {teacher.groups.slice(0, 2).map((group) => (
-            <Badge key={group.id} variant="info">
-              {group.name}
-            </Badge>
-          ))}
-          {teacher.groups.length > 2 && (
-            <Badge variant="default">+{teacher.groups.length - 2}</Badge>
-          )}
-          {teacher.groups.length === 0 && (
-            <span className="text-slate-400 text-sm">No groups</span>
-          )}
-        </div>
-      ),
+      render: (teacher: Teacher) => {
+        const groups = teacher.groups || [];
+        return (
+          <div className="flex flex-wrap gap-1.5">
+            {groups.slice(0, 2).map((group) => (
+              <Badge key={group.id} variant="info">
+                {group.name}
+              </Badge>
+            ))}
+            {groups.length > 2 && (
+              <Badge variant="default">+{groups.length - 2}</Badge>
+            )}
+            {groups.length === 0 && (
+              <span className="text-slate-400 text-sm">No groups</span>
+            )}
+          </div>
+        );
+      },
     },
     {
-      key: 'students',
-      header: 'Students',
+      key: 'lessons',
+      header: 'Lessons',
       sortable: true,
       className: 'text-center',
       render: (teacher: Teacher) => (
@@ -114,10 +85,12 @@ export default function AdminDashboardPage() {
       ),
     },
     {
-      key: 'obligations',
-      header: 'Missed Obligations',
-      render: () => (
-        <span className="text-slate-400">— None</span>
+      key: 'groups_count',
+      header: 'Groups',
+      sortable: true,
+      className: 'text-center',
+      render: (teacher: Teacher) => (
+        <span className="text-slate-700 font-medium">{teacher._count?.groups || 0}</span>
       ),
     },
     {
@@ -141,18 +114,23 @@ export default function AdminDashboardPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <StatCard
             title="Total Teachers"
-            value={stats?.totalTeachers || 0}
+            value={stats?.teachers.total || totalTeachers}
             change={{ value: '+4.5%', type: 'positive' }}
           />
           <StatCard
             title="Active Teachers"
-            value={stats?.activeTeachers || 0}
+            value={stats?.teachers.active || totalTeachers}
             change={{ value: '+2.1%', type: 'positive' }}
           />
           <StatCard
-            title="Missed Feedbacks"
-            value={stats?.missedFeedbacks || 0}
-            change={{ value: '-12%', type: 'negative' }}
+            title="Pending Payments"
+            value={stats?.finance.pendingPayments || 0}
+            change={{ 
+              value: stats?.finance.overduePayments 
+                ? `${stats.finance.overduePayments} overdue` 
+                : 'All on time', 
+              type: stats?.finance.overduePayments ? 'negative' : 'positive' 
+            }}
           />
         </div>
 
@@ -204,7 +182,7 @@ export default function AdminDashboardPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          <span>1-4 of 124</span>
+          <span>1-{Math.min(5, teachers.length)} of {totalTeachers}</span>
           <button className="p-2 rounded-lg hover:bg-slate-100">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -222,12 +200,13 @@ export default function AdminDashboardPage() {
                 </svg>
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-slate-800 mb-2">Salary calculation</h3>
+                <h3 className="font-semibold text-slate-800 mb-2">Finance Overview</h3>
                 <p className="text-sm text-slate-500 leading-relaxed">
-                  There are currently 12 missed student feedback deadlines. Systematic delays in feedback negatively impact student retention rates.
+                  {stats?.finance.pendingPayments || 0} pending payments worth tracking. 
+                  {stats?.finance.overduePayments ? ` ${stats.finance.overduePayments} are overdue and need attention.` : ' All payments are on track.'}
                 </p>
                 <button className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700">
-                  Review Policy
+                  View Finance
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                   </svg>
@@ -244,12 +223,13 @@ export default function AdminDashboardPage() {
                 </svg>
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-slate-800 mb-2">Staff Workload</h3>
+                <h3 className="font-semibold text-slate-800 mb-2">Staff Overview</h3>
                 <p className="text-sm text-slate-500 leading-relaxed">
-                  Average student count per teacher is 14.2. Department of English is nearing capacity. Consider onboarding 2 more English teachers.
+                  {totalTeachers} teachers registered in the system.
+                  {teachers.length > 0 && ` Average lessons per teacher: ${Math.round(teachers.reduce((sum, t) => sum + (t._count?.lessons || 0), 0) / teachers.length)}.`}
                 </p>
                 <button className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700">
-                  View Capacity
+                  Manage Teachers
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                   </svg>

@@ -102,14 +102,19 @@ export default function StudentDashboardPage() {
     {
       key: 'teacher',
       header: 'Teacher',
-      render: (lesson: UpcomingLesson) => (
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 text-sm font-medium">
-            {lesson.teacher.firstName[0]}{lesson.teacher.lastName[0]}
+      render: (lesson: UpcomingLesson) => {
+        const firstName = lesson.teacher?.firstName || '';
+        const lastName = lesson.teacher?.lastName || '';
+        const initials = `${firstName[0] || ''}${lastName[0] || ''}` || '?';
+        return (
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 text-sm font-medium">
+              {initials}
+            </div>
+            <span className="text-slate-700">{firstName} {lastName}</span>
           </div>
-          <span className="text-slate-700">{lesson.teacher.firstName} {lesson.teacher.lastName}</span>
-        </div>
-      ),
+        );
+      },
     },
     {
       key: 'status',

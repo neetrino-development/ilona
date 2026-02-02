@@ -1,0 +1,86 @@
+import type { User, UserStatus } from '@/types';
+
+export interface Student {
+  id: string;
+  userId: string;
+  groupId?: string | null;
+  parentName?: string;
+  parentPhone?: string;
+  parentEmail?: string;
+  monthlyFee: number;
+  notes?: string;
+  receiveReports: boolean;
+  user: Pick<User, 'id' | 'email' | 'firstName' | 'lastName' | 'phone' | 'avatarUrl' | 'status' | 'lastLoginAt' | 'createdAt'>;
+  group?: StudentGroup | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface StudentGroup {
+  id: string;
+  name: string;
+  level?: string;
+  center?: {
+    id: string;
+    name: string;
+  };
+}
+
+export interface StudentsResponse {
+  items: Student[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+export interface StudentFilters {
+  skip?: number;
+  take?: number;
+  search?: string;
+  groupId?: string;
+  status?: UserStatus;
+}
+
+export interface CreateStudentDto {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  groupId?: string;
+  parentName?: string;
+  parentPhone?: string;
+  parentEmail?: string;
+  monthlyFee: number;
+  notes?: string;
+  receiveReports?: boolean;
+}
+
+export interface UpdateStudentDto {
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  status?: UserStatus;
+  parentName?: string;
+  parentPhone?: string;
+  parentEmail?: string;
+  monthlyFee?: number;
+  notes?: string;
+  receiveReports?: boolean;
+}
+
+export interface StudentStatistics {
+  attendance: {
+    total: number;
+    present: number;
+    absent: number;
+    unjustifiedAbsences: number;
+    rate: number;
+  };
+  payments: {
+    pending: number;
+    overdue: number;
+  };
+  feedbacks: number;
+}

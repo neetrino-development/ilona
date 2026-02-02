@@ -82,7 +82,7 @@ export default function TeacherDashboardPage() {
       render: (lesson: TodayLesson) => (
         <div>
           <p className="font-semibold text-slate-800">{lesson.topic || 'Untitled'}</p>
-          <p className="text-sm text-slate-500">Level: {lesson.group.level}</p>
+          <p className="text-sm text-slate-500">Level: {lesson.group?.level || 'N/A'}</p>
         </div>
       ),
     },
@@ -90,7 +90,7 @@ export default function TeacherDashboardPage() {
       key: 'group',
       header: 'Group',
       render: (lesson: TodayLesson) => (
-        <Badge variant="info">{lesson.group.name}</Badge>
+        <Badge variant="info">{lesson.group?.name || 'No group'}</Badge>
       ),
     },
     {

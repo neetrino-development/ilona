@@ -59,6 +59,14 @@ export class TeachersService {
               createdAt: true,
             },
           },
+          groups: {
+            take: 3,
+            select: {
+              id: true,
+              name: true,
+              level: true,
+            },
+          },
           _count: {
             select: { groups: true, lessons: true },
           },

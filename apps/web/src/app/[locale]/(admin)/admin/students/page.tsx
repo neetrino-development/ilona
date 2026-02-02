@@ -1,92 +1,59 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { DashboardLayout } from '@/shared/components/layout/DashboardLayout';
 import { StatCard, DataTable, Badge, Button } from '@/shared/components/ui';
-
-interface Student {
-  id: string;
-  user: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-  };
-  group?: {
-    id: string;
-    name: string;
-    level?: string;
-  };
-  monthlyFee: number;
-  attendanceRate: number;
-  paymentStatus: 'paid' | 'pending' | 'overdue';
-}
+import { useStudents, useDeleteStudent, type Student } from '@/features/students';
 
 export default function StudentsPage() {
-  const [students, setStudents] = useState<Student[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [page, setPage] = useState(0);
+  const pageSize = 10;
 
-  useEffect(() => {
-    // Mock data
-    setStudents([
-      {
-        id: '1',
-        user: { id: 'u1', firstName: 'Anna', lastName: 'Kowalski', email: 'anna.k@student.edu' },
-        group: { id: 'g1', name: 'ENGLISH B2', level: 'B2' },
-        monthlyFee: 150,
-        attendanceRate: 95,
-        paymentStatus: 'paid',
-      },
-      {
-        id: '2',
-        user: { id: 'u2', firstName: 'Michael', lastName: 'Brown', email: 'm.brown@student.edu' },
-        group: { id: 'g1', name: 'ENGLISH B2', level: 'B2' },
-        monthlyFee: 150,
-        attendanceRate: 88,
-        paymentStatus: 'pending',
-      },
-      {
-        id: '3',
-        user: { id: 'u3', firstName: 'Sofia', lastName: 'Garcia', email: 'sofia.g@student.edu' },
-        group: { id: 'g2', name: 'IELTS ADV', level: 'C1' },
-        monthlyFee: 200,
-        attendanceRate: 100,
-        paymentStatus: 'paid',
-      },
-      {
-        id: '4',
-        user: { id: 'u4', firstName: 'James', lastName: 'Wilson', email: 'j.wilson@student.edu' },
-        group: { id: 'g3', name: 'BUSINESS FR', level: 'B1' },
-        monthlyFee: 175,
-        attendanceRate: 72,
-        paymentStatus: 'overdue',
-      },
-      {
-        id: '5',
-        user: { id: 'u5', firstName: 'Emma', lastName: 'Davis', email: 'emma.d@student.edu' },
-        group: { id: 'g1', name: 'ENGLISH B2', level: 'B2' },
-        monthlyFee: 150,
-        attendanceRate: 91,
-        paymentStatus: 'paid',
-      },
-    ]);
-    setIsLoading(false);
-  }, []);
+  // Fetch students with search and pagination
+  const { 
+    data: studentsData, 
+    isLoading,
+    error 
+  } = useStudents({ 
+    skip: page * pageSize,
+    take: pageSize,
+    search: searchQuery || undefined 
+  });
 
-  const stats = {
-    totalStudents: 2450,
-    activeStudents: 2280,
-    atRisk: 45,
-    pendingPayments: 156,
+  // Delete mutation
+  const deleteStudent = useDeleteStudent();
+
+  const students = studentsData?.items || [];
+  const totalStudents = studentsData?.total || 0;
+  const totalPages = studentsData?.totalPages || 1;
+
+  // Handle search
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+    setPage(0);
   };
 
-  const filteredStudents = students.filter((student) => {
-    const fullName = `${student.user.firstName} ${student.user.lastName}`.toLowerCase();
-    const email = student.user.email.toLowerCase();
-    const query = searchQuery.toLowerCase();
-    return fullName.includes(query) || email.includes(query);
-  });
+  // Handle delete
+  const handleDelete = async (id: string) => {
+    if (confirm('Are you sure you want to delete this student?')) {
+      try {
+        await deleteStudent.mutateAsync(id);
+      } catch (err) {
+        console.error('Failed to delete student:', err);
+      }
+    }
+  };
+
+  // Stats calculation
+  const activeStudents = students.filter(s => s.user?.status === 'ACTIVE').length;
+  const studentsWithGroup = students.filter(s => s.group).length;
+  const totalFees = students.reduce((sum, s) => sum + (s.monthlyFee || 0), 0);
+
+  // Error state
+  if (error) {
+    console.error('Students fetch error:', error);
+  }
 
   const studentColumns = [
     {
@@ -96,72 +63,93 @@ export default function StudentsPage() {
     },
     {
       key: 'student',
-      header: 'Student ↕',
-      render: (student: Student) => (
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-semibold">
-            {student.user.firstName[0]}{student.user.lastName[0]}
+      header: 'Student',
+      sortable: true,
+      render: (student: Student) => {
+        const firstName = student.user?.firstName || '';
+        const lastName = student.user?.lastName || '';
+        const initials = `${firstName[0] || ''}${lastName[0] || ''}` || '?';
+        return (
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-semibold">
+              {initials}
+            </div>
+            <div>
+              <p className="font-semibold text-slate-800">
+                {firstName} {lastName}
+              </p>
+              <p className="text-sm text-slate-500">{student.user?.email || ''}</p>
+            </div>
           </div>
-          <div>
-            <p className="font-semibold text-slate-800">
-              {student.user.firstName} {student.user.lastName}
-            </p>
-            <p className="text-sm text-slate-500">{student.user.email}</p>
-          </div>
-        </div>
-      ),
+        );
+      },
     },
     {
       key: 'group',
       header: 'Group',
       render: (student: Student) => (
         student.group ? (
-          <Badge variant="info">{student.group.name}</Badge>
+          <div>
+            <Badge variant="info">{student.group.name}</Badge>
+            {student.group.level && (
+              <span className="ml-2 text-xs text-slate-500">{student.group.level}</span>
+            )}
+          </div>
         ) : (
           <span className="text-slate-400">Not assigned</span>
         )
       ),
     },
     {
-      key: 'attendance',
-      header: 'Attendance',
-      className: 'text-center',
-      render: (student: Student) => {
-        const rate = student.attendanceRate;
-        let color = 'text-emerald-600';
-        if (rate < 80) color = 'text-red-500';
-        else if (rate < 90) color = 'text-amber-500';
-        return <span className={`font-semibold ${color}`}>{rate}%</span>;
-      },
+      key: 'center',
+      header: 'Center',
+      render: (student: Student) => (
+        student.group?.center ? (
+          <span className="text-slate-700">{student.group.center.name}</span>
+        ) : (
+          <span className="text-slate-400">—</span>
+        )
+      ),
     },
     {
-      key: 'payment',
-      header: 'Payment Status',
+      key: 'monthlyFee',
+      header: 'Monthly Fee',
+      className: 'text-right',
+      render: (student: Student) => (
+        <span className="text-slate-700 font-medium">
+          ${student.monthlyFee || 0}
+        </span>
+      ),
+    },
+    {
+      key: 'status',
+      header: 'Status',
       render: (student: Student) => {
-        switch (student.paymentStatus) {
-          case 'paid':
-            return <Badge variant="success">Paid</Badge>;
-          case 'pending':
-            return <Badge variant="warning">Pending</Badge>;
-          case 'overdue':
-            return (
-              <div className="flex items-center gap-2">
-                <span className="text-red-500">!</span>
-                <Badge variant="error">Overdue</Badge>
-              </div>
-            );
-          default:
-            return null;
-        }
+        const status = student.user?.status || 'ACTIVE';
+        return (
+          <Badge variant={status === 'ACTIVE' ? 'success' : 'warning'}>
+            {status}
+          </Badge>
+        );
       },
     },
     {
       key: 'actions',
       header: 'Actions',
-      render: () => (
-        <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 font-medium">
-          View Profile
-        </Button>
+      render: (student: Student) => (
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 font-medium">
+            View
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="text-red-600 hover:text-red-700 font-medium"
+            onClick={() => handleDelete(student.id)}
+          >
+            Delete
+          </Button>
+        </div>
       ),
     },
   ];
@@ -176,23 +164,22 @@ export default function StudentsPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <StatCard
             title="Total Students"
-            value={stats.totalStudents.toLocaleString()}
+            value={totalStudents}
             change={{ value: '+5.2%', type: 'positive' }}
           />
           <StatCard
             title="Active Students"
-            value={stats.activeStudents.toLocaleString()}
+            value={activeStudents || totalStudents}
             change={{ value: '+3.1%', type: 'positive' }}
           />
           <StatCard
-            title="At Risk"
-            value={stats.atRisk}
-            change={{ value: 'Low attendance', type: 'warning' }}
+            title="In Groups"
+            value={studentsWithGroup}
+            change={{ value: `${totalStudents - studentsWithGroup} unassigned`, type: totalStudents - studentsWithGroup > 0 ? 'warning' : 'positive' }}
           />
           <StatCard
-            title="Pending Payments"
-            value={stats.pendingPayments}
-            change={{ value: '$23,400', type: 'neutral' }}
+            title="Total Monthly Fees"
+            value={`$${totalFees.toLocaleString()}`}
           />
         </div>
 
@@ -206,7 +193,7 @@ export default function StudentsPage() {
               type="search"
               placeholder="Search students by name, email or group..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={handleSearchChange}
               className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
             />
           </div>
@@ -223,25 +210,38 @@ export default function StudentsPage() {
         {/* Students Table */}
         <DataTable
           columns={studentColumns}
-          data={filteredStudents}
+          data={students}
           keyExtractor={(student) => student.id}
           isLoading={isLoading}
-          emptyMessage="No students found"
+          emptyMessage={searchQuery ? "No students match your search" : "No students found"}
         />
 
         {/* Pagination */}
-        <div className="flex items-center justify-end gap-2 text-sm text-slate-500">
-          <button className="p-2 rounded-lg hover:bg-slate-100 disabled:opacity-50" disabled>
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <span>1-{filteredStudents.length} of {stats.totalStudents}</span>
-          <button className="p-2 rounded-lg hover:bg-slate-100">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
+        <div className="flex items-center justify-between text-sm text-slate-500">
+          <span>
+            Showing {Math.min(page * pageSize + 1, totalStudents)}-{Math.min((page + 1) * pageSize, totalStudents)} of {totalStudents} students
+          </span>
+          <div className="flex items-center gap-2">
+            <button 
+              className="p-2 rounded-lg hover:bg-slate-100 disabled:opacity-50" 
+              disabled={page === 0}
+              onClick={() => setPage(p => Math.max(0, p - 1))}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <span>Page {page + 1} of {totalPages || 1}</span>
+            <button 
+              className="p-2 rounded-lg hover:bg-slate-100 disabled:opacity-50"
+              disabled={page >= totalPages - 1}
+              onClick={() => setPage(p => p + 1)}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         {/* Info Cards */}
@@ -254,12 +254,14 @@ export default function StudentsPage() {
                 </svg>
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-slate-800 mb-2">At-Risk Students</h3>
+                <h3 className="font-semibold text-slate-800 mb-2">Unassigned Students</h3>
                 <p className="text-sm text-slate-500 leading-relaxed">
-                  45 students have attendance below 80%. Early intervention can help prevent dropouts and improve retention.
+                  {totalStudents - studentsWithGroup > 0 
+                    ? `${totalStudents - studentsWithGroup} students are not assigned to any group. Assign them to start their learning journey.`
+                    : 'All students are assigned to groups. Great work!'}
                 </p>
                 <button className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700">
-                  View At-Risk List
+                  Manage Groups
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                   </svg>
@@ -278,10 +280,11 @@ export default function StudentsPage() {
               <div className="flex-1">
                 <h3 className="font-semibold text-slate-800 mb-2">Payment Collection</h3>
                 <p className="text-sm text-slate-500 leading-relaxed">
-                  156 students have pending or overdue payments totaling $23,400. Send automated reminders to improve collection.
+                  Total monthly fees: ${totalFees.toLocaleString()}. 
+                  Monitor payment status in the Finance section.
                 </p>
                 <button className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700">
-                  Send Reminders
+                  View Finance
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                   </svg>
@@ -294,4 +297,3 @@ export default function StudentsPage() {
     </DashboardLayout>
   );
 }
-
