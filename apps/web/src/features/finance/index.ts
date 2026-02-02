@@ -19,6 +19,21 @@ export {
   financeKeys,
 } from './hooks';
 
+// Teacher Finance Hooks
+export {
+  useMySalaries,
+  useMySalarySummary,
+  useMyDeductions,
+  teacherFinanceKeys,
+} from './hooks/useTeacherFinance';
+
+// Student Finance Hooks
+export {
+  useMyPayments,
+  useMyPaymentsSummary,
+  studentFinanceKeys,
+} from './hooks/useStudentFinance';
+
 // Types
 export type {
   PaymentStatus,
