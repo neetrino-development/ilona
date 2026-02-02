@@ -1,0 +1,203 @@
+{
+  "common": {
+    "save": "Պdelays",
+    "cancel": "Չdelays",
+    "delete": "Ջdelay",
+    "edit": "Խdelay",
+    "add": "Աdelays",
+    "search": "Որdelays",
+    "filter": "Զdelay",
+    "loading": "Բdelay...",
+    "noData": "Տdelays delays",
+    "confirm": "Հdelays",
+    "back": "Հdelays",
+    "next": "Հdelay",
+    "submit": " Delays",
+    "close": "Փdelays",
+    "yes": "Այdelays",
+    "no": "Ոdelays",
+    "all": "Բdelays",
+    "actions": "Գdelay",
+    "status": "Կdelay",
+    "date": " Delays",
+    "time": "Ժdelays",
+    "name": "Աdelay",
+    "email": "Էdelays",
+    "phone": "Հdelays",
+    "description": "Նdelays",
+    "notes": "Նdelays"
+  },
+  "home": {
+    "title": "Ilona English Center",
+    "subtitle": "Անdelays delays delays delays",
+    "login": "Մdelay"
+  },
+  "auth": {
+    "login": "Մdelay",
+    "logout": " Delays",
+    "forgotPassword": "Մdelays delays?",
+    "resetPassword": "Վdelays delays",
+    "email": "Էdelays",
+    "password": "Գdelays",
+    "rememberMe": "Հdelays delays",
+    "loginButton": "Մdelay",
+    "invalidCredentials": "Սdelays delays delays",
+    "welcomeBack": "Բdelays delays!",
+    "enterCredentials": "Մdelays delays delays"
+  },
+  "nav": {
+    "dashboard": "Վdelays",
+    "teachers": "Ուdelays",
+    "students": " Delays",
+    "groups": "Խdelays",
+    "centers": "Կdelays",
+    "lessons": "Դdelays",
+    "calendar": "Օdelays",
+    "attendance": "Հdelays",
+    "finance": "Ֆdelays",
+    "analytics": "Վdelays",
+    "chat": "Զdelays",
+    "settings": "Կdelays",
+    "profile": "Պdelays",
+    "dailyPlan": "Օdelays delays",
+    "salary": "Ադelays",
+    "payments": "Վdelays",
+    "recordings": " Delays",
+    "absence": "Բdelays"
+  },
+  "dashboard": {
+    "title": "Վdelays",
+    "welcome": "Բdelays, {name}!",
+    "totalStudents": " Delays delays",
+    "totalTeachers": " Delays delays",
+    "activeGroups": " Delays delays",
+    "todayLessons": " Delays delays",
+    "totalIncome": " Delays delays",
+    "pendingPayments": " Delays delays",
+    "alerts": "Delays",
+    "recentActivity": "Delays delays"
+  },
+  "teachers": {
+    "title": "Ուdelays",
+    "addTeacher": " Delays delays",
+    "teacherProfile": "Delays delays",
+    "groups": "Delays",
+    "salary": "Delays",
+    "lessonsCompleted": "Delays delays",
+    "feedbackCompletion": "Delays delays",
+    "vocabularyCompletion": "Delays delays"
+  },
+  "students": {
+    "title": "Ուdelays",
+    "addStudent": "Ավdelays delays",
+    "studentProfile": " Delays delays",
+    "group": "Delays",
+    "attendance": "Delays",
+    "payments": "Delays",
+    "performance": "Delays",
+    "parentContact": "Delays delays"
+  },
+  "groups": {
+    "title": "Խdelays",
+    "addGroup": " Delays delays",
+    "groupDetails": "Delays delays",
+    "level": "Delays",
+    "teacher": "Delays",
+    "studentsCount": "Delays",
+    "center": "Delays",
+    "schedule": "Delays"
+  },
+  "lessons": {
+    "title": "Դdelays",
+    "addLesson": " Delays delays",
+    "lessonDetails": "Delays delays",
+    "scheduled": "Delays",
+    "inProgress": "Delays",
+    "completed": "Delays",
+    "cancelled": "Delays",
+    "missed": "Delays",
+    "topic": "Delays",
+    "duration": "Delays",
+    "markAttendance": "Delays delays",
+    "submitFeedback": "Delays delays",
+    "sendVocabulary": "Delays delays",
+    "completeLesson": "Delays delays"
+  },
+  "attendance": {
+    "title": "Հdelays",
+    "present": "Delays",
+    "absent": "Delays",
+    "justified": "Delays",
+    "unjustified": "Delays",
+    "markAttendance": "Delays delays",
+    "attendanceRate": "Delays delays",
+    "absenceHistory": "Delays delays"
+  },
+  "chat": {
+    "title": "Զdelays",
+    "sendMessage": "Delays delays",
+    "typeMessage": "Delays delays...",
+    "voiceMessage": "Delays delays",
+    "vocabulary": "Delays",
+    "groupChat": "Delays delays",
+    "directChat": "Delays delays",
+    "systemMessage": "Delays delays",
+    "online": "Delays",
+    "offline": "Delays"
+  },
+  "finance": {
+    "title": " Delays",
+    "payments": "Delays",
+    "salary": "Delays",
+    "income": "Delays",
+    "expenses": "Delays",
+    "pending": "Delays",
+    "paid": "Delays",
+    "overdue": "Delays",
+    "amount": "Delays",
+    "dueDate": "Delays",
+    "paymentHistory": "Delays delays",
+    "deductions": "Delays"
+  },
+  "analytics": {
+    "title": "Delays",
+    "overview": "Delays",
+    "teacherPerformance": "Delays delays",
+    "studentProgress": "Delays delays",
+    "attendanceStats": "Delays delays",
+    "revenueAnalytics": "Delays delays",
+    "riskIndicators": "Delays delays"
+  },
+  "settings": {
+    "title": "Delays",
+    "profile": "Delays",
+    "security": "Delays",
+    "notifications": "Delays",
+    "language": "Delays",
+    "changePassword": "Delays delays",
+    "systemSettings": "Delays delays"
+  },
+  "roles": {
+    "admin": "Delays",
+    "teacher": "Delays",
+    "student": "Delays"
+  },
+  "status": {
+    "active": "Delays",
+    "inactive": "Delays",
+    "suspended": "Delays"
+  },
+  "validation": {
+    "required": "Delays delays",
+    "invalidEmail": "Delays delays",
+    "minLength": "Delays delays {min}",
+    "maxLength": "Delays delays {max}"
+  },
+  "errors": {
+    "somethingWentWrong": "Delays delays",
+    "notFound": "Delays delays",
+    "unauthorized": "Delays delays",
+    "forbidden": "Delays delays"
+  }
+}
+

@@ -1,0 +1,203 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "search": "Search",
+    "filter": "Filter",
+    "loading": "Loading...",
+    "noData": "No data available",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "submit": "Submit",
+    "close": "Close",
+    "yes": "Yes",
+    "no": "No",
+    "all": "All",
+    "actions": "Actions",
+    "status": "Status",
+    "date": "Date",
+    "time": "Time",
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "description": "Description",
+    "notes": "Notes"
+  },
+  "home": {
+    "title": "Ilona English Center",
+    "subtitle": "English Learning Center Management Platform",
+    "login": "Log In"
+  },
+  "auth": {
+    "login": "Log In",
+    "logout": "Log Out",
+    "forgotPassword": "Forgot Password?",
+    "resetPassword": "Reset Password",
+    "email": "Email",
+    "password": "Password",
+    "rememberMe": "Remember me",
+    "loginButton": "Sign In",
+    "invalidCredentials": "Invalid email or password",
+    "welcomeBack": "Welcome back!",
+    "enterCredentials": "Enter your credentials to continue"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "teachers": "Teachers",
+    "students": "Students",
+    "groups": "Groups",
+    "centers": "Centers",
+    "lessons": "Lessons",
+    "calendar": "Calendar",
+    "attendance": "Attendance",
+    "finance": "Finance",
+    "analytics": "Analytics",
+    "chat": "Chat",
+    "settings": "Settings",
+    "profile": "Profile",
+    "dailyPlan": "Daily Plan",
+    "salary": "Salary",
+    "payments": "Payments",
+    "recordings": "Recordings",
+    "absence": "Absence"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome, {name}!",
+    "totalStudents": "Total Students",
+    "totalTeachers": "Total Teachers",
+    "activeGroups": "Active Groups",
+    "todayLessons": "Today's Lessons",
+    "totalIncome": "Total Income",
+    "pendingPayments": "Pending Payments",
+    "alerts": "Alerts",
+    "recentActivity": "Recent Activity"
+  },
+  "teachers": {
+    "title": "Teachers",
+    "addTeacher": "Add Teacher",
+    "teacherProfile": "Teacher Profile",
+    "groups": "Groups",
+    "salary": "Salary",
+    "lessonsCompleted": "Lessons Completed",
+    "feedbackCompletion": "Feedback Completion",
+    "vocabularyCompletion": "Vocabulary Completion"
+  },
+  "students": {
+    "title": "Students",
+    "addStudent": "Add Student",
+    "studentProfile": "Student Profile",
+    "group": "Group",
+    "attendance": "Attendance",
+    "payments": "Payments",
+    "performance": "Performance",
+    "parentContact": "Parent Contact"
+  },
+  "groups": {
+    "title": "Groups",
+    "addGroup": "Add Group",
+    "groupDetails": "Group Details",
+    "level": "Level",
+    "teacher": "Teacher",
+    "studentsCount": "Students",
+    "center": "Center",
+    "schedule": "Schedule"
+  },
+  "lessons": {
+    "title": "Lessons",
+    "addLesson": "Add Lesson",
+    "lessonDetails": "Lesson Details",
+    "scheduled": "Scheduled",
+    "inProgress": "In Progress",
+    "completed": "Completed",
+    "cancelled": "Cancelled",
+    "missed": "Missed",
+    "topic": "Topic",
+    "duration": "Duration",
+    "markAttendance": "Mark Attendance",
+    "submitFeedback": "Submit Feedback",
+    "sendVocabulary": "Send Vocabulary",
+    "completeLesson": "Complete Lesson"
+  },
+  "attendance": {
+    "title": "Attendance",
+    "present": "Present",
+    "absent": "Absent",
+    "justified": "Justified",
+    "unjustified": "Unjustified",
+    "markAttendance": "Mark Attendance",
+    "attendanceRate": "Attendance Rate",
+    "absenceHistory": "Absence History"
+  },
+  "chat": {
+    "title": "Chat",
+    "sendMessage": "Send message",
+    "typeMessage": "Type a message...",
+    "voiceMessage": "Voice message",
+    "vocabulary": "Vocabulary",
+    "groupChat": "Group Chat",
+    "directChat": "Direct Chat",
+    "systemMessage": "System Message",
+    "online": "Online",
+    "offline": "Offline"
+  },
+  "finance": {
+    "title": "Finance",
+    "payments": "Payments",
+    "salary": "Salary",
+    "income": "Income",
+    "expenses": "Expenses",
+    "pending": "Pending",
+    "paid": "Paid",
+    "overdue": "Overdue",
+    "amount": "Amount",
+    "dueDate": "Due Date",
+    "paymentHistory": "Payment History",
+    "deductions": "Deductions"
+  },
+  "analytics": {
+    "title": "Analytics",
+    "overview": "Overview",
+    "teacherPerformance": "Teacher Performance",
+    "studentProgress": "Student Progress",
+    "attendanceStats": "Attendance Statistics",
+    "revenueAnalytics": "Revenue Analytics",
+    "riskIndicators": "Risk Indicators"
+  },
+  "settings": {
+    "title": "Settings",
+    "profile": "Profile",
+    "security": "Security",
+    "notifications": "Notifications",
+    "language": "Language",
+    "changePassword": "Change Password",
+    "systemSettings": "System Settings"
+  },
+  "roles": {
+    "admin": "Admin",
+    "teacher": "Teacher",
+    "student": "Student"
+  },
+  "status": {
+    "active": "Active",
+    "inactive": "Inactive",
+    "suspended": "Suspended"
+  },
+  "validation": {
+    "required": "This field is required",
+    "invalidEmail": "Invalid email address",
+    "minLength": "Must be at least {min} characters",
+    "maxLength": "Must be at most {max} characters"
+  },
+  "errors": {
+    "somethingWentWrong": "Something went wrong",
+    "notFound": "Not found",
+    "unauthorized": "Unauthorized",
+    "forbidden": "Access denied"
+  }
+}
+
