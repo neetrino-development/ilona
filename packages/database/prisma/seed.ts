@@ -235,6 +235,30 @@ async function main() {
     },
   });
 
+  // Add admin to chat (so admin can see all chats)
+  await prisma.chatParticipant.upsert({
+    where: { chatId_userId: { chatId: chat.id, userId: admin.id } },
+    update: {},
+    create: {
+      chatId: chat.id,
+      userId: admin.id,
+      isAdmin: true,
+    },
+  });
+
+  // Add a welcome message
+  await prisma.message.upsert({
+    where: { id: 'welcome-message' },
+    update: {},
+    create: {
+      id: 'welcome-message',
+      chatId: chat.id,
+      senderId: teacherUser.id,
+      type: 'TEXT',
+      content: 'Welcome to the Advanced English group chat! Feel free to ask questions and practice your English here.',
+    },
+  });
+
   console.log(`  ✅ Group chat created with participants`);
 
   // ============================================

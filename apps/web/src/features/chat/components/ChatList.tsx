@@ -100,20 +100,23 @@ export function ChatList({ onSelectChat }: ChatListProps) {
       <div className="p-4 border-b border-slate-200">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-slate-800">Messages</h2>
-          <div className="flex items-center gap-2">
-            {/* Connection status */}
+          {/* Connection status */}
+          <div
+            className={cn(
+              'flex items-center gap-1.5 px-2 py-1 rounded-full text-xs',
+              isConnected 
+                ? 'bg-green-100 text-green-700' 
+                : 'bg-red-100 text-red-700'
+            )}
+            title={isConnected ? 'Connected' : 'Disconnected'}
+          >
             <div
               className={cn(
                 'w-2 h-2 rounded-full',
                 isConnected ? 'bg-green-500' : 'bg-red-500'
               )}
-              title={isConnected ? 'Connected' : 'Disconnected'}
             />
-            <button className="p-2 hover:bg-slate-100 rounded-lg">
-              <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-            </button>
+            {isConnected ? 'Online' : 'Offline'}
           </div>
         </div>
 
@@ -148,8 +151,18 @@ export function ChatList({ onSelectChat }: ChatListProps) {
           </div>
         ) : filteredChats.length === 0 ? (
           <div className="p-8 text-center">
-            <p className="text-sm text-slate-500">
+            <div className="w-12 h-12 mx-auto mb-3 bg-slate-100 rounded-full flex items-center justify-center">
+              <svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+            </div>
+            <p className="text-sm font-medium text-slate-700 mb-1">
               {searchQuery ? 'No chats found' : 'No conversations yet'}
+            </p>
+            <p className="text-xs text-slate-500">
+              {searchQuery 
+                ? 'Try a different search term' 
+                : 'Group chats will appear here when you join a group'}
             </p>
           </div>
         ) : (

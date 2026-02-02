@@ -1,5 +1,5 @@
 // Components
-export { ChatList, ChatWindow } from './components';
+export { ChatList, ChatWindow, ChatContainer } from './components';
 
 // Hooks
 export {
