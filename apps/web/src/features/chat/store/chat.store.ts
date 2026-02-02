@@ -1,127 +1,132 @@
 import { create } from 'zustand';
+import type { Chat, Message } from '../types';
 
-export interface ChatUser {
-  id: string;
-  firstName: string;
-  lastName: string;
-  avatarUrl?: string;
-  role: string;
-}
-
-export interface Message {
-  id: string;
+interface TypingUser {
   chatId: string;
-  senderId: string;
-  sender?: ChatUser;
-  type: 'TEXT' | 'IMAGE' | 'FILE' | 'VOICE' | 'VIDEO' | 'VOCABULARY';
-  content?: string;
-  fileUrl?: string;
-  fileName?: string;
-  isEdited: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface Chat {
-  id: string;
-  type: 'DIRECT' | 'GROUP';
-  name?: string;
-  groupId?: string;
-  participants: Array<{
-    userId: string;
-    user: ChatUser;
-    unreadCount: number;
-  }>;
-  lastMessage?: Message;
-  createdAt: string;
-  updatedAt: string;
+  userId: string;
+  timestamp: number;
 }
 
 interface ChatState {
-  chats: Chat[];
+  // Active chat
   activeChat: Chat | null;
-  messages: Message[];
-  isLoading: boolean;
-  isConnected: boolean;
-  onlineUsers: string[];
-  typingUsers: Record<string, string[]>; // chatId -> userIds
-
-  setChats: (chats: Chat[]) => void;
   setActiveChat: (chat: Chat | null) => void;
-  setMessages: (messages: Message[]) => void;
-  addMessage: (message: Message) => void;
-  updateMessage: (messageId: string, updates: Partial<Message>) => void;
-  deleteMessage: (messageId: string) => void;
-  setLoading: (loading: boolean) => void;
-  setConnected: (connected: boolean) => void;
-  setOnlineUsers: (users: string[]) => void;
+
+  // Typing indicators
+  typingUsers: TypingUser[];
   addTypingUser: (chatId: string, userId: string) => void;
   removeTypingUser: (chatId: string, userId: string) => void;
-  updateLastMessage: (chatId: string, message: Message) => void;
+  getTypingUsers: (chatId: string) => string[];
+
+  // UI state
+  isMobileListVisible: boolean;
+  setMobileListVisible: (visible: boolean) => void;
+
+  // Message input drafts
+  drafts: Map<string, string>;
+  setDraft: (chatId: string, content: string) => void;
+  getDraft: (chatId: string) => string;
+  clearDraft: (chatId: string) => void;
+
+  // Reply to message
+  replyTo: Message | null;
+  setReplyTo: (message: Message | null) => void;
+
+  // Edit message
+  editingMessage: Message | null;
+  setEditingMessage: (message: Message | null) => void;
+
+  // Clear all state
+  reset: () => void;
 }
 
-export const useChatStore = create<ChatState>((set) => ({
-  chats: [],
+// Auto-remove typing indicator after 3 seconds
+const TYPING_TIMEOUT = 3000;
+
+export const useChatStore = create<ChatState>((set, get) => ({
+  // Active chat
   activeChat: null,
-  messages: [],
-  isLoading: false,
-  isConnected: false,
-  onlineUsers: [],
-  typingUsers: {},
+  setActiveChat: (chat) => set({ activeChat: chat, replyTo: null, editingMessage: null }),
 
-  setChats: (chats) => set({ chats }),
-  
-  setActiveChat: (chat) => set({ activeChat: chat, messages: [] }),
-  
-  setMessages: (messages) => set({ messages }),
-  
-  addMessage: (message) =>
-    set((state) => ({
-      messages: [...state.messages, message],
-    })),
+  // Typing indicators
+  typingUsers: [],
+  addTypingUser: (chatId, userId) => {
+    set((state) => {
+      // Remove existing entry for this user in this chat
+      const filtered = state.typingUsers.filter(
+        (t) => !(t.chatId === chatId && t.userId === userId)
+      );
+      return {
+        typingUsers: [...filtered, { chatId, userId, timestamp: Date.now() }],
+      };
+    });
 
-  updateMessage: (messageId, updates) =>
+    // Auto-remove after timeout
+    setTimeout(() => {
+      get().removeTypingUser(chatId, userId);
+    }, TYPING_TIMEOUT);
+  },
+  removeTypingUser: (chatId, userId) => {
     set((state) => ({
-      messages: state.messages.map((m) =>
-        m.id === messageId ? { ...m, ...updates } : m
+      typingUsers: state.typingUsers.filter(
+        (t) => !(t.chatId === chatId && t.userId === userId)
       ),
-    })),
+    }));
+  },
+  getTypingUsers: (chatId) => {
+    const now = Date.now();
+    return get()
+      .typingUsers.filter((t) => t.chatId === chatId && now - t.timestamp < TYPING_TIMEOUT)
+      .map((t) => t.userId);
+  },
 
-  deleteMessage: (messageId) =>
-    set((state) => ({
-      messages: state.messages.filter((m) => m.id !== messageId),
-    })),
+  // UI state
+  isMobileListVisible: true,
+  setMobileListVisible: (visible) => set({ isMobileListVisible: visible }),
 
-  setLoading: (isLoading) => set({ isLoading }),
-  
-  setConnected: (isConnected) => set({ isConnected }),
-  
-  setOnlineUsers: (onlineUsers) => set({ onlineUsers }),
+  // Message drafts
+  drafts: new Map(),
+  setDraft: (chatId, content) => {
+    set((state) => {
+      const newDrafts = new Map(state.drafts);
+      if (content) {
+        newDrafts.set(chatId, content);
+      } else {
+        newDrafts.delete(chatId);
+      }
+      return { drafts: newDrafts };
+    });
+  },
+  getDraft: (chatId) => get().drafts.get(chatId) || '',
+  clearDraft: (chatId) => {
+    set((state) => {
+      const newDrafts = new Map(state.drafts);
+      newDrafts.delete(chatId);
+      return { drafts: newDrafts };
+    });
+  },
 
-  addTypingUser: (chatId, userId) =>
-    set((state) => ({
-      typingUsers: {
-        ...state.typingUsers,
-        [chatId]: [...(state.typingUsers[chatId] || []), userId].filter(
-          (id, i, arr) => arr.indexOf(id) === i
-        ),
-      },
-    })),
+  // Reply
+  replyTo: null,
+  setReplyTo: (message) => set({ replyTo: message, editingMessage: null }),
 
-  removeTypingUser: (chatId, userId) =>
-    set((state) => ({
-      typingUsers: {
-        ...state.typingUsers,
-        [chatId]: (state.typingUsers[chatId] || []).filter((id) => id !== userId),
-      },
-    })),
+  // Edit
+  editingMessage: null,
+  setEditingMessage: (message) => set({ editingMessage: message, replyTo: null }),
 
-  updateLastMessage: (chatId, message) =>
-    set((state) => ({
-      chats: state.chats.map((chat) =>
-        chat.id === chatId ? { ...chat, lastMessage: message } : chat
-      ),
-    })),
+  // Reset
+  reset: () =>
+    set({
+      activeChat: null,
+      typingUsers: [],
+      isMobileListVisible: true,
+      drafts: new Map(),
+      replyTo: null,
+      editingMessage: null,
+    }),
 }));
 
-
+// Selectors
+export const selectActiveChat = (state: ChatState) => state.activeChat;
+export const selectTypingUsers = (chatId: string) => (state: ChatState) =>
+  state.getTypingUsers(chatId);

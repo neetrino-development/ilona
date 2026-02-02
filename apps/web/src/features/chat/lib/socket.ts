@@ -1,0 +1,230 @@
+'use client';
+
+import { io, Socket } from 'socket.io-client';
+import type { SocketEvents } from '../types';
+
+// Socket instance
+let socket: Socket | null = null;
+
+// API URL for WebSocket
+const WS_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:4000';
+
+export interface SocketOptions {
+  token: string;
+  onConnect?: () => void;
+  onDisconnect?: () => void;
+  onError?: (error: Error) => void;
+}
+
+/**
+ * Initialize and get socket connection
+ */
+export function initSocket(options: SocketOptions): Socket {
+  if (socket?.connected) {
+    return socket;
+  }
+
+  // Disconnect existing socket if any
+  if (socket) {
+    socket.disconnect();
+  }
+
+  // Create new socket connection
+  socket = io(`${WS_URL}/chat`, {
+    auth: { token: options.token },
+    transports: ['websocket', 'polling'],
+    reconnection: true,
+    reconnectionAttempts: 5,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000,
+    timeout: 10000,
+  });
+
+  // Connection events
+  socket.on('connect', () => {
+    console.log('[Socket] Connected');
+    options.onConnect?.();
+  });
+
+  socket.on('disconnect', (reason) => {
+    console.log('[Socket] Disconnected:', reason);
+    options.onDisconnect?.();
+  });
+
+  socket.on('connect_error', (error) => {
+    console.error('[Socket] Connection error:', error.message);
+    options.onError?.(error);
+  });
+
+  return socket;
+}
+
+/**
+ * Get current socket instance
+ */
+export function getSocket(): Socket | null {
+  return socket;
+}
+
+/**
+ * Disconnect socket
+ */
+export function disconnectSocket(): void {
+  if (socket) {
+    socket.disconnect();
+    socket = null;
+  }
+}
+
+/**
+ * Check if socket is connected
+ */
+export function isSocketConnected(): boolean {
+  return socket?.connected ?? false;
+}
+
+// ============ EMIT HELPERS ============
+
+/**
+ * Send a message
+ */
+export function emitSendMessage(
+  chatId: string,
+  content: string,
+  type: string = 'TEXT',
+  metadata?: Record<string, unknown>
+): Promise<{ success: boolean; message?: unknown; error?: string }> {
+  return new Promise((resolve) => {
+    if (!socket?.connected) {
+      resolve({ success: false, error: 'Not connected' });
+      return;
+    }
+
+    socket.emit('message:send', { chatId, content, type, metadata }, (response: { success: boolean; message?: unknown; error?: string }) => {
+      resolve(response);
+    });
+  });
+}
+
+/**
+ * Edit a message
+ */
+export function emitEditMessage(
+  messageId: string,
+  content: string
+): Promise<{ success: boolean; message?: unknown; error?: string }> {
+  return new Promise((resolve) => {
+    if (!socket?.connected) {
+      resolve({ success: false, error: 'Not connected' });
+      return;
+    }
+
+    socket.emit('message:edit', { messageId, content }, (response: { success: boolean; message?: unknown; error?: string }) => {
+      resolve(response);
+    });
+  });
+}
+
+/**
+ * Delete a message
+ */
+export function emitDeleteMessage(
+  messageId: string
+): Promise<{ success: boolean; error?: string }> {
+  return new Promise((resolve) => {
+    if (!socket?.connected) {
+      resolve({ success: false, error: 'Not connected' });
+      return;
+    }
+
+    socket.emit('message:delete', { messageId }, (response: { success: boolean; error?: string }) => {
+      resolve(response);
+    });
+  });
+}
+
+/**
+ * Start typing indicator
+ */
+export function emitTypingStart(chatId: string): void {
+  socket?.emit('typing:start', { chatId });
+}
+
+/**
+ * Stop typing indicator
+ */
+export function emitTypingStop(chatId: string): void {
+  socket?.emit('typing:stop', { chatId });
+}
+
+/**
+ * Mark chat as read
+ */
+export function emitMarkAsRead(chatId: string): Promise<{ success: boolean }> {
+  return new Promise((resolve) => {
+    if (!socket?.connected) {
+      resolve({ success: false });
+      return;
+    }
+
+    socket.emit('chat:read', { chatId }, (response: { success: boolean }) => {
+      resolve(response);
+    });
+  });
+}
+
+/**
+ * Join a chat room
+ */
+export function emitJoinChat(chatId: string): Promise<{ success: boolean; onlineUsers?: string[] }> {
+  return new Promise((resolve) => {
+    if (!socket?.connected) {
+      resolve({ success: false });
+      return;
+    }
+
+    socket.emit('chat:join', { chatId }, (response: { success: boolean; onlineUsers?: string[] }) => {
+      resolve(response);
+    });
+  });
+}
+
+/**
+ * Send vocabulary (teacher feature)
+ */
+export function emitSendVocabulary(
+  chatId: string,
+  words: string[]
+): Promise<{ success: boolean; message?: unknown; error?: string }> {
+  return new Promise((resolve) => {
+    if (!socket?.connected) {
+      resolve({ success: false, error: 'Not connected' });
+      return;
+    }
+
+    socket.emit('vocabulary:send', { chatId, words }, (response: { success: boolean; message?: unknown; error?: string }) => {
+      resolve(response);
+    });
+  });
+}
+
+// ============ SUBSCRIBE HELPERS ============
+
+type EventHandler<T> = (data: T) => void;
+
+/**
+ * Subscribe to socket events
+ */
+export function onSocketEvent<K extends keyof SocketEvents>(
+  event: K,
+  handler: EventHandler<SocketEvents[K]>
+): () => void {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  socket?.on(event, handler as any);
+  
+  // Return unsubscribe function
+  return () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    socket?.off(event, handler as any);
+  };
+}
