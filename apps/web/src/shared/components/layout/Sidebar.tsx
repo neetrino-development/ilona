@@ -129,6 +129,19 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
     }
   };
 
+  const getChatHref = () => {
+    switch (userRole) {
+      case 'ADMIN':
+        return '/chat';
+      case 'TEACHER':
+        return '/chat';
+      case 'STUDENT':
+        return '/chat';
+      default:
+        return '/chat';
+    }
+  };
+
   const isActive = (href: string) => {
     if (href === '/dashboard') {
       return pathname.includes('/dashboard');
@@ -169,7 +182,9 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {filteredItems.map((item) => {
-          const href = item.href === '/dashboard' ? getDashboardHref() : item.href;
+          let href = item.href;
+          if (item.href === '/dashboard') href = getDashboardHref();
+          if (item.href === '/chat') href = getChatHref();
           const active = isActive(item.href);
 
           return (
