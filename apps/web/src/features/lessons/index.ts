@@ -4,6 +4,7 @@ export {
   useLesson,
   useTodayLessons,
   useUpcomingLessons,
+  useMyLessons,
   useLessonStatistics,
   useCreateLesson,
   useCreateRecurringLessons,

@@ -40,17 +40,31 @@ export async function fetchLesson(id: string): Promise<Lesson> {
 }
 
 /**
- * Fetch today's lessons for a teacher
+ * Fetch today's lessons for current teacher
  */
-export async function fetchTodayLessons(teacherId: string): Promise<Lesson[]> {
-  return api.get<Lesson[]>(`${LESSONS_ENDPOINT}/teacher/${teacherId}/today`);
+export async function fetchTodayLessons(): Promise<Lesson[]> {
+  return api.get<Lesson[]>(`${LESSONS_ENDPOINT}/today`);
 }
 
 /**
- * Fetch upcoming lessons for a teacher
+ * Fetch upcoming lessons for current teacher
  */
-export async function fetchUpcomingLessons(teacherId: string, limit = 10): Promise<Lesson[]> {
-  return api.get<Lesson[]>(`${LESSONS_ENDPOINT}/teacher/${teacherId}/upcoming?limit=${limit}`);
+export async function fetchUpcomingLessons(limit = 10): Promise<Lesson[]> {
+  return api.get<Lesson[]>(`${LESSONS_ENDPOINT}/upcoming?limit=${limit}`);
+}
+
+/**
+ * Fetch teacher's lessons with date filter
+ */
+export async function fetchMyLessons(dateFrom?: string, dateTo?: string): Promise<LessonsResponse> {
+  const params = new URLSearchParams();
+  if (dateFrom) params.append('dateFrom', dateFrom);
+  if (dateTo) params.append('dateTo', dateTo);
+  
+  const query = params.toString();
+  const url = query ? `${LESSONS_ENDPOINT}/my-lessons?${query}` : `${LESSONS_ENDPOINT}/my-lessons`;
+  
+  return api.get<LessonsResponse>(url);
 }
 
 /**

@@ -6,6 +6,7 @@ import {
   fetchLesson,
   fetchTodayLessons,
   fetchUpcomingLessons,
+  fetchMyLessons,
   fetchLessonStatistics,
   createLesson,
   createRecurringLessons,
@@ -32,8 +33,9 @@ export const lessonKeys = {
   list: (filters?: LessonFilters) => [...lessonKeys.lists(), filters] as const,
   details: () => [...lessonKeys.all, 'detail'] as const,
   detail: (id: string) => [...lessonKeys.details(), id] as const,
-  today: (teacherId: string) => [...lessonKeys.all, 'today', teacherId] as const,
-  upcoming: (teacherId: string, limit?: number) => [...lessonKeys.all, 'upcoming', teacherId, limit] as const,
+  today: () => [...lessonKeys.all, 'today'] as const,
+  upcoming: (limit?: number) => [...lessonKeys.all, 'upcoming', limit] as const,
+  myLessons: (dateFrom?: string, dateTo?: string) => [...lessonKeys.all, 'my-lessons', { dateFrom, dateTo }] as const,
   statistics: (teacherId?: string, dateFrom?: string, dateTo?: string) =>
     [...lessonKeys.all, 'statistics', { teacherId, dateFrom, dateTo }] as const,
 };
@@ -60,24 +62,35 @@ export function useLesson(id: string, enabled = true) {
 }
 
 /**
- * Hook to fetch today's lessons for a teacher
+ * Hook to fetch today's lessons for current teacher
  */
-export function useTodayLessons(teacherId: string, enabled = true) {
+export function useTodayLessons(enabled = true) {
   return useQuery({
-    queryKey: lessonKeys.today(teacherId),
-    queryFn: () => fetchTodayLessons(teacherId),
-    enabled: enabled && !!teacherId,
+    queryKey: lessonKeys.today(),
+    queryFn: () => fetchTodayLessons(),
+    enabled,
   });
 }
 
 /**
- * Hook to fetch upcoming lessons for a teacher
+ * Hook to fetch upcoming lessons for current teacher
  */
-export function useUpcomingLessons(teacherId: string, limit = 10, enabled = true) {
+export function useUpcomingLessons(limit = 10, enabled = true) {
   return useQuery({
-    queryKey: lessonKeys.upcoming(teacherId, limit),
-    queryFn: () => fetchUpcomingLessons(teacherId, limit),
-    enabled: enabled && !!teacherId,
+    queryKey: lessonKeys.upcoming(limit),
+    queryFn: () => fetchUpcomingLessons(limit),
+    enabled,
+  });
+}
+
+/**
+ * Hook to fetch teacher's lessons with date filter
+ */
+export function useMyLessons(dateFrom?: string, dateTo?: string, enabled = true) {
+  return useQuery({
+    queryKey: lessonKeys.myLessons(dateFrom, dateTo),
+    queryFn: () => fetchMyLessons(dateFrom, dateTo),
+    enabled,
   });
 }
 
