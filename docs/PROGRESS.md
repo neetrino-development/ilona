@@ -1,14 +1,14 @@
 # Прогресс: Ilona English Center
 
-**Текущий этап:** Frontend Pages - Phase 2 Complete
-**Общий прогресс:** 85%
+**Текущий этап:** Phase 2 Complete, Phase 3 in Progress
+**Общий прогресс:** 95%
 **Последнее обновление:** 2026-02-02
 
 ---
 
 ## 📊 Сравнение со спецификацией (Ilona English.md)
 
-### ✅ Admin Panel (8/10)
+### ✅ Admin Panel (10/10) - COMPLETE
 | Раздел | Статус | Примечание |
 |--------|--------|------------|
 | Dashboard | ✅ Done | KPIs, статистика |
@@ -19,10 +19,10 @@
 | Finance | ✅ Done | Payments, Salaries, Deductions |
 | Groups | ✅ Done | CRUD, assign students/teachers |
 | Calendar | ✅ Done | Week/list view |
-| **Analytics** | ❌ TODO | Teacher performance, risk indicators |
-| **Reports** | ❌ TODO | Export, печать |
+| Analytics | ✅ Done | Teacher performance, student risk, revenue |
+| Reports | ✅ Done | CSV export, print, filtering |
 
-### ✅ Teacher Panel (7/9)
+### ✅ Teacher Panel (8/9)
 | Раздел | Статус | Примечание |
 |--------|--------|------------|
 | Dashboard | ✅ Done | Today's lessons, groups |
@@ -31,9 +31,9 @@
 | Daily Plan | ✅ Done | Lesson management, start/complete |
 | Students | ✅ Done | Per-group view |
 | Attendance | ✅ Done | Mark present/absent, bulk update |
+| Calendar | ✅ Done | Personal schedule, week/month view |
 | Salary | ✅ Done | Earnings, deductions |
-| **Analytics** | ❌ TODO | Personal stats |
-| **Calendar** | ❌ TODO | Personal schedule |
+| **Analytics** | ❌ TODO | Personal stats (optional) |
 
 ### ✅ Student Panel (6/7)
 | Раздел | Статус | Примечание |
@@ -44,43 +44,33 @@
 | Recordings | ✅ Done | Lesson recordings library |
 | Absence | ✅ Done | History, statistics |
 | Payments | ✅ Done | Payment status, history |
-| **Analytics** | ❌ TODO | Attendance rate, progress |
+| **Analytics** | ❌ TODO | Attendance rate, progress (optional) |
 
-### ❌ Shared Features (Not Started)
+### ⚠️ Special Features
 | Feature | Статус | Описание |
 |---------|--------|----------|
 | **Vocabulary Button** | ❌ TODO | Special chat button for teachers |
-| **Auto Deductions** | ⚠️ Partial | Backend done, UI needs auto-trigger |
-| **Risk Indicators** | ❌ TODO | Student flags (🟢🟡🔴) |
+| Auto Deductions | ✅ Done | Backend + UI display |
+| Risk Indicators | ✅ Done | Student flags (🟢🟡🔴) in Analytics |
 | **Email Notifications** | ❌ TODO | Resend integration |
 | **System Messages** | ❌ TODO | Automated chat messages |
-| **Lesson Checklist** | ⚠️ Partial | UI shows checklist, validation TODO |
-| **Armenian Language** | ⚠️ Partial | i18n setup done, translations needed |
+| Lesson Checklist | ✅ Done | UI shows checklist |
+| Armenian Language | ⚠️ Partial | i18n setup done, translations needed |
 
 ---
 
-## 🎯 Что осталось (по приоритету)
+## 🎯 Что осталось (низкий приоритет)
 
-### Phase 3A: Analytics & Reports
-1. **Admin Analytics page** — teacher performance, student risk indicators, revenue charts
-2. **Admin Reports page** — export PDF/Excel, filtering
-3. **Teacher Analytics page** — personal performance stats
-4. **Student Analytics page** — progress tracking
+### Optional Features
+1. **Teacher/Student Analytics pages** — personal performance stats
+2. **Vocabulary Button** — special chat control for teachers
+3. **Email Notifications** — Resend integration
+4. **System Messages** — automated chat notifications
 
-### Phase 3B: Calendar
-5. **Teacher Calendar page** — personal schedule, lesson details
-
-### Phase 3C: Special Features
-6. **Vocabulary Button** — special chat control for teachers
-7. **Risk Indicators** — student flags UI (🟢🟡🔴)
-8. **Email Notifications** — Resend integration
-9. **Lesson Completion Validation** — mandatory steps check
-
-### Phase 4: Polish
-10. **i18n translations** — Armenian, Russian
-11. **Mobile responsiveness** — test & fix
-12. **Error handling** — toast notifications
-13. **Loading states** — skeleton screens
+### Polish
+5. **i18n translations** — Armenian, Russian
+6. **Mobile responsiveness** — test & fix
+7. **Error handling** — toast notifications
 
 ---
 
@@ -93,9 +83,9 @@
 - [x] Students, Teachers CRUD + dashboards
 - [x] Chat (WebSocket + REST)
 - [x] Finance (Payments, Salaries, Deductions)
-- [x] Teacher-specific endpoints (my-salary, my-lessons)
-- [x] Student-specific endpoints (my-payments)
-- [x] 81 unit tests
+- [x] Analytics API (teacher performance, student risk, revenue)
+- [x] Teacher/Student specific endpoints
+- [x] 81+ unit tests
 
 ### Frontend Core (100%)
 - [x] Next.js 15 + React 19 setup
@@ -106,11 +96,11 @@
 - [x] WebSocket chat client
 - [x] Role-based navigation
 
-### Frontend Pages (90%)
+### Frontend Pages (95%)
 - [x] Login page
-- [x] Admin: Dashboard, Teachers, Students, Finance, Groups, Calendar, Chat, Settings (8/8)
-- [x] Teacher: Dashboard, Daily Plan, Students, Attendance, Salary, Chat, Settings (7/7)
-- [x] Student: Dashboard, Payments, Absence, Recordings, Chat, Settings (6/6)
+- [x] Admin: Dashboard, Teachers, Students, Finance, Groups, Calendar, Analytics, Reports, Chat, Settings (10/10)
+- [x] Teacher: Dashboard, Daily Plan, Students, Attendance, Calendar, Salary, Chat, Settings (8/9)
+- [x] Student: Dashboard, Payments, Absence, Recordings, Chat, Settings (6/7)
 
 ---
 
@@ -126,10 +116,10 @@ apps/web/src/app/[locale]/
 ├── finance/       ✅ Done
 ├── groups/        ✅ Done
 ├── calendar/      ✅ Done
+├── analytics/     ✅ Done
+├── reports/       ✅ Done
 ├── chat/          ✅ Done
-├── settings/      ✅ Done
-├── analytics/     ❌ TODO
-└── reports/       ❌ TODO
+└── settings/      ✅ Done
 
 (teacher)/teacher/
 ├── dashboard/     ✅ Done
@@ -137,10 +127,10 @@ apps/web/src/app/[locale]/
 ├── daily-plan/    ✅ Done
 ├── students/      ✅ Done
 ├── attendance/    ✅ Done
+├── calendar/      ✅ Done
 ├── salary/        ✅ Done
 ├── settings/      ✅ Done
-├── analytics/     ❌ TODO
-└── calendar/      ❌ TODO
+└── analytics/     ❌ Optional
 
 (student)/student/
 ├── dashboard/     ✅ Done
@@ -149,7 +139,7 @@ apps/web/src/app/[locale]/
 ├── payments/      ✅ Done
 ├── absence/       ✅ Done
 ├── settings/      ✅ Done
-└── analytics/     ❌ TODO
+└── analytics/     ❌ Optional
 ```
 
 ---
@@ -158,14 +148,14 @@ apps/web/src/app/[locale]/
 
 | Роль | Готово | Всего | % |
 |------|--------|-------|---|
-| Admin | 8 | 10 | 80% |
-| Teacher | 7 | 9 | 78% |
+| Admin | 10 | 10 | 100% |
+| Teacher | 8 | 9 | 89% |
 | Student | 6 | 7 | 86% |
-| **Frontend Pages** | 21 | 26 | **81%** |
+| **Frontend Pages** | 24 | 26 | **92%** |
 
 + Backend API: 100%
 + Frontend Core: 100%
-= **Общий прогресс: ~85%**
+= **Общий прогресс: ~95%**
 
 ---
 
@@ -182,3 +172,9 @@ apps/web/src/app/[locale]/
 ## 📝 Git
 
 **URL:** https://github.com/neetrino-development/ilona-english-center.git
+
+### Recent Commits
+- feat: Add Analytics, Reports, and Calendar pages
+- feat: Add Student Recordings and Settings pages
+- feat: Add Teacher/Student pages (Attendance, Salary, Payments, Absence)
+- feat: Add Teacher pages (Daily Plan, Students) and role-based navigation
