@@ -1,220 +1,184 @@
 # Прогресс: Ilona English Center
 
-**Текущий этап:** Завершён ✅
-**Общий прогресс:** 100%
+**Текущий этап:** Frontend Pages - Phase 2
+**Общий прогресс:** 65%
 **Последнее обновление:** 2026-02-02
 
 ---
 
-## 📊 Общая информация
+## 📊 Сравнение со спецификацией (Ilona English.md)
 
-| Параметр | Значение |
-|----------|----------|
-| **Размер проекта** | B+ (средний с элементами крупного) |
-| **Структура** | Monorepo (Turborepo + pnpm) |
-| **Frontend** | Next.js 15.1 + React 19 + TypeScript 5.9 + Tailwind 3.4 |
-| **Backend** | NestJS 10.4 + TypeScript 5.9 + Vitest 2.1 |
-| **Database** | PostgreSQL (Neon) + Prisma 5.22 |
-| **i18n** | English (primary) + Armenian |
-| **Auth** | JWT + Zustand persist |
+### ✅ Admin Panel (7/10)
+| Раздел | Статус | Примечание |
+|--------|--------|------------|
+| Dashboard | ✅ Done | KPIs, статистика |
+| Chat | ✅ Done | WebSocket, real-time |
+| Settings/Profile | ✅ Done | Профиль, пароль |
+| Teachers | ✅ Done | CRUD, API |
+| Students | ✅ Done | CRUD, API |
+| Finance | ✅ Done | Payments, Salaries |
+| **Analytics** | ❌ TODO | Teacher performance, risk indicators |
+| **Reports** | ❌ TODO | Export, печать |
+| Calendar | ✅ Done | Week/list view |
+| **Attendance Registry** | ❌ TODO | Общий реестр посещаемости |
+
+### ⚠️ Teacher Panel (3/9)
+| Раздел | Статус | Примечание |
+|--------|--------|------------|
+| Dashboard | ✅ Done | Today's lessons, groups |
+| Chat | ✅ Done | WebSocket |
+| Settings/Profile | ⚠️ Partial | Нужно добавить bio, availability |
+| **Daily Plan** | ❌ TODO | Lesson management, feedback |
+| **Students** | ❌ TODO | Per-group view, feedback submit |
+| **Analytics** | ❌ TODO | Personal stats |
+| **Attendance** | ❌ TODO | Mark attendance, absence |
+| **Salary** | ❌ TODO | Earnings, deductions |
+| **Calendar** | ❌ TODO | Personal schedule |
+
+### ⚠️ Student Panel (2/7)
+| Раздел | Статус | Примечание |
+|--------|--------|------------|
+| Dashboard | ✅ Done | Upcoming lessons |
+| Chat | ✅ Done | WebSocket |
+| Settings/Profile | ⚠️ Partial | Нужно parent contact, notification prefs |
+| **Recordings** | ❌ TODO | Vocabulary voice messages library |
+| **Absence** | ❌ TODO | History, remaining absences |
+| **Payments** | ❌ TODO | Pay now, history, status |
+| **Analytics** | ❌ TODO | Attendance rate, progress |
+
+### ❌ Shared Features (Not Started)
+| Feature | Статус | Описание |
+|---------|--------|----------|
+| **Vocabulary Button** | ❌ TODO | Special chat button for teachers |
+| **Auto Deductions** | ❌ TODO | UI for viewing deduction reasons |
+| **Risk Indicators** | ❌ TODO | Student flags (🟢🟡🔴) |
+| **Email Notifications** | ❌ TODO | Resend integration |
+| **System Messages** | ❌ TODO | Automated chat messages |
+| **Lesson Checklist** | ❌ TODO | Mandatory steps before completion |
+| **Armenian Language** | ⚠️ Partial | i18n setup done, translations needed |
+
+---
+
+## 🎯 Следующие шаги (по приоритету)
+
+### Phase 2A: Teacher Pages (высокий приоритет)
+1. **Teacher Daily Plan page** — lesson list, feedback form, complete lesson
+2. **Teacher Students page** — per-group students, attendance marking
+3. **Teacher Attendance page** — mark present/absent, justified/unjustified
+4. **Teacher Salary page** — earnings breakdown, deductions
+5. **Teacher Calendar page** — personal schedule
+
+### Phase 2B: Student Pages
+6. **Student Payments page** — payment status, pay button, history
+7. **Student Absence page** — absence history, remaining count
+8. **Student Recordings page** — vocabulary voice messages library
+
+### Phase 2C: Admin Advanced
+9. **Admin Analytics page** — teacher performance, student risk, revenue
+10. **Admin Attendance Registry** — global attendance view
+11. **Admin Reports page** — export, filtering
+
+### Phase 3: Special Features
+12. **Vocabulary Button** — special chat control for teachers
+13. **Lesson Completion Checklist** — mandatory steps validation
+14. **Risk Indicators** — student flags in UI
+15. **Email Notifications** — Resend integration
 
 ---
 
 ## ✅ Выполнено
 
-### Этап 0-1: Инфраструктура ✅
-- [x] Monorepo (Turborepo, pnpm)
-- [x] TypeScript strict mode
-- [x] ESLint + Prettier
-- [x] Husky + Commitlint
+### Backend API (100%)
+- [x] Auth (JWT + RBAC)
+- [x] Users, Centers, Groups, Lessons CRUD
+- [x] Attendance marking + reports
+- [x] Students, Teachers CRUD + dashboards
+- [x] Chat (WebSocket + REST)
+- [x] Finance (Payments, Salaries, Deductions)
+- [x] 81 unit tests
 
-### Этап 2: База данных ✅
-- [x] Prisma: 18 моделей
-- [x] Neon PostgreSQL подключен
-- [x] Seed data (demo accounts)
-
-### Этап 3: Backend API ✅
-- [x] NestJS Auth (JWT + RBAC)
-- [x] Users, Centers, Groups CRUD
-- [x] Lessons, Attendance CRUD
-- [x] Students, Teachers CRUD
-
-### Этап 4: Chat System ✅
-- [x] ChatService (чаты, сообщения, vocabulary)
-- [x] ChatGateway (WebSocket, real-time)
-- [x] Typing indicators, online/offline
-
-### Этап 5: Finance Module ✅
-- [x] PaymentsService (CRUD, process, stats)
-- [x] SalariesService (generate, process)
-- [x] DeductionsService (auto-deductions)
-- [x] Finance dashboard & reports
-
-### Этап 6: Frontend (частично) 🚧
-- [x] Next.js 15 + React 19 обновление
-- [x] Auth store (Zustand + persist + hydration)
+### Frontend Core (100%)
+- [x] Next.js 15 + React 19 setup
+- [x] Auth store (Zustand + persist)
+- [x] React Query integration
 - [x] Protected layouts (Admin, Teacher, Student)
-- [x] Login page + form
-- [x] Admin Dashboard page
-- [x] Admin Teachers page
-- [x] Admin Students page
-- [x] Admin Finance page
-- [x] Teacher Dashboard page
-- [x] Student Dashboard page
-- [x] Chat pages (Admin, Teacher, Student)
-- [x] Sidebar navigation
-- [x] DashboardLayout component
-- [x] UI components (Button, Input, Card, Badge, DataTable, StatCard)
-- [x] **React Query** — QueryProvider, devtools
-- [x] **Teachers feature** — API hooks (useTeachers, useCreateTeacher, useDeleteTeacher)
-- [x] **Dashboard feature** — API hooks (useAdminDashboardStats, useFinanceDashboard)
-- [x] **Admin Dashboard** — подключён к реальному API
-- [x] **Admin Teachers** — подключён к реальному API с пагинацией и поиском
-- [x] **Students feature** — API hooks (useStudents, useCreateStudent, useDeleteStudent)
-- [x] **Admin Students** — подключён к реальному API с пагинацией и поиском
-- [x] **Finance feature** — API hooks (usePayments, useSalaries, useFinanceDashboard и др.)
-- [x] **Admin Finance** — подключён к реальному API (payments, salaries, dashboard stats)
-- [x] **Groups feature** — API hooks (useGroups, useCreateGroup, useDeleteGroup и др.)
-- [x] **Admin Groups** — подключён к API с пагинацией, поиском, toggle active
-- [x] **Lessons feature** — API hooks (useLessons, useStartLesson, useCompleteLesson и др.)
-- [x] **Admin Calendar** — расписание уроков (week/list view), статистика
-- [x] **Teacher Dashboard** — подключён к реальному API (today's lessons, groups, actions)
-- [x] **Student Dashboard** — подключён к API (upcoming lessons, payments, statistics)
-- [x] **Attendance feature** — API hooks (useLessonAttendance, useMarkAttendance, useAtRiskStudents и др.)
-- [x] **Settings feature** — API hooks (useProfile, useUpdateProfile, useChangePassword)
-- [x] **Admin Settings page** — профиль, безопасность, уведомления, система
+- [x] UI components library
+- [x] WebSocket chat client
+
+### Frontend Pages (65%)
+- [x] Login page
+- [x] Admin: Dashboard, Teachers, Students, Finance, Groups, Calendar, Chat, Settings
+- [x] Teacher: Dashboard, Chat
+- [x] Student: Dashboard, Chat
 
 ---
 
-## ✅ Завершено
-
-### Этап 7: WebSocket Chat
-- [x] **Socket.IO клиент** — подключение с JWT авторизацией
-- [x] **useSocket hook** — управление подключением и событиями
-- [x] **Chat API** — HTTP для загрузки истории
-- [x] **Chat Store** — Zustand для UI состояния
-- [x] **ChatList** — список чатов с онлайн статусами
-- [x] **ChatWindow** — сообщения, typing indicators, real-time
-
----
-
-## 🎉 Проект завершён!
-- [ ] **Attendance page** — отметка посещаемости
-- [ ] **Settings page** — настройки профиля
-- [ ] **Groups page** — управление группами
-- [ ] **WebSocket на фронте** — real-time чат
-
-### Этап 7: Analytics Module
-- [ ] Teacher performance dashboard
-- [ ] Student risk indicators
-- [ ] Revenue analytics
-- [ ] Attendance reports
-
-### Этап 8: Notifications
-- [ ] Email notifications (Resend)
-- [ ] In-app notifications
-- [ ] Auto-call integration (TBD)
-
-### Этап 9: Polish & Deploy
-- [ ] Error boundaries
-- [ ] Loading states
-- [ ] Mobile responsive
-- [ ] Production deployment
-- [ ] Documentation
-
----
-
-## 📁 Структура проекта
+## 📁 Структура страниц
 
 ```
-ilona-english-center/
-├── apps/
-│   ├── api/                 # NestJS Backend
-│   │   └── src/modules/
-│   │       ├── auth/        ✅ JWT + RBAC
-│   │       ├── users/       ✅ CRUD
-│   │       ├── centers/     ✅ CRUD
-│   │       ├── groups/      ✅ CRUD
-│   │       ├── lessons/     ✅ CRUD
-│   │       ├── attendance/  ✅ Mark + reports
-│   │       ├── students/    ✅ CRUD + dashboard
-│   │       ├── teachers/    ✅ CRUD + daily plan
-│   │       ├── chat/        ✅ WebSocket + REST
-│   │       ├── finance/     ✅ Payments + Salaries
-│   │       ├── analytics/   📋 Planned
-│   │       └── notifications/ 📋 Planned
-│   │
-│   └── web/                 # Next.js Frontend
-│       └── src/app/[locale]/
-│           ├── (admin)/admin/
-│           │   ├── dashboard/   ✅
-│           │   ├── teachers/    ✅
-│           │   ├── students/    ✅
-│           │   ├── finance/     ✅
-│           │   └── chat/        ✅
-│           ├── (teacher)/teacher/
-│           │   ├── dashboard/   ✅
-│           │   └── chat/        ✅
-│           ├── (student)/student/
-│           │   ├── dashboard/   ✅
-│           │   └── chat/        ✅
-│           └── (auth)/login/    ✅
-│
-└── packages/
-    ├── database/            ✅ Prisma schema
-    ├── types/               ✅ Shared types
-    └── utils/               ✅ Shared utilities
+apps/web/src/app/[locale]/
+
+(admin)/admin/
+├── dashboard/     ✅ Done
+├── teachers/      ✅ Done
+├── students/      ✅ Done
+├── finance/       ✅ Done
+├── groups/        ✅ Done
+├── calendar/      ✅ Done
+├── chat/          ✅ Done
+├── settings/      ✅ Done
+├── analytics/     ❌ TODO
+├── attendance/    ❌ TODO
+└── reports/       ❌ TODO
+
+(teacher)/teacher/
+├── dashboard/     ✅ Done
+├── chat/          ✅ Done
+├── daily-plan/    ❌ TODO
+├── students/      ❌ TODO
+├── attendance/    ❌ TODO
+├── salary/        ❌ TODO
+├── analytics/     ❌ TODO
+├── calendar/      ❌ TODO
+└── settings/      ❌ TODO (needs update)
+
+(student)/student/
+├── dashboard/     ✅ Done
+├── chat/          ✅ Done
+├── recordings/    ❌ TODO
+├── payments/      ❌ TODO
+├── absence/       ❌ TODO
+├── analytics/     ❌ TODO
+└── settings/      ❌ TODO (needs update)
 ```
 
 ---
 
-## 🧪 Тестирование
+## 📊 Прогресс по ролям
 
-| Модуль | Unit Tests | Status |
-|--------|-----------|--------|
-| AuthService | 7 | ✅ |
-| CentersService | 11 | ✅ |
-| LessonsService | 13 | ✅ |
-| PaymentsService | 14 | ✅ |
-| DeductionsService | 13 | ✅ |
-| ChatService | 23 | ✅ |
-| **Total** | **81** | ✅ |
+| Роль | Готово | Всего | % |
+|------|--------|-------|---|
+| Admin | 8 | 11 | 73% |
+| Teacher | 2 | 9 | 22% |
+| Student | 2 | 7 | 29% |
+| **Общий** | 12 | 27 | **44%** |
+
++ Backend API: 100%
++ Frontend Core: 100%
+= **Общий прогресс: ~65%**
 
 ---
 
 ## 🔐 Демо аккаунты
 
-| Роль | Email | Password | Dashboard |
-|------|-------|----------|-----------|
-| Admin | admin@ilona.edu | admin123 | /en/admin/dashboard |
-| Teacher | teacher@ilona.edu | teacher123 | /en/teacher/dashboard |
-| Student | student@ilona.edu | student123 | /en/student/dashboard |
-
----
-
-## 📦 Версии пакетов
-
-| Пакет | Версия |
-|-------|--------|
-| Next.js | 15.1.0 |
-| React | 19.x |
-| NestJS | 10.4.x |
-| Prisma | 5.22.0 |
-| TypeScript | 5.9.3 |
-| Vitest | 2.1.9 |
-| Tailwind CSS | 3.4.x |
-| Zustand | 5.0.x |
+| Роль | Email | Password |
+|------|-------|----------|
+| Admin | admin@ilona.edu | admin123 |
+| Teacher | teacher@ilona.edu | teacher123 |
+| Student | student@ilona.edu | student123 |
 
 ---
 
 ## 📝 Git
 
 **URL:** https://github.com/neetrino-development/ilona-english-center.git
-**Backup:** `backup/pre-upgrade-2026-02-02`
-
-**Последние коммиты:**
-- `fix: Auth redirect loop - wait for Zustand hydration`
-- `chore: Upgrade React 18 → 19 + Next.js 14 → 15`
-- `chore: Upgrade NestJS 10.3 → 10.4`
-- `chore: Upgrade Prisma 5.8 → 5.22`
-- `chore: Upgrade TypeScript 5.3 → 5.5`
