@@ -43,7 +43,7 @@ export function useSocket(options: UseSocketOptions = {}) {
   useEffect(() => {
     if (!token) return;
 
-    const socket = initSocket({
+    initSocket({
       token,
       onConnect: () => setIsConnected(true),
       onDisconnect: () => setIsConnected(false),

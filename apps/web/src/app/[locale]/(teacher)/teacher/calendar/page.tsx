@@ -8,7 +8,6 @@ import { cn } from '@/shared/lib/utils';
 type ViewMode = 'week' | 'month';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-const HOURS = Array.from({ length: 14 }, (_, i) => i + 8); // 8 AM to 9 PM
 
 function getWeekDates(date: Date): Date[] {
   const day = date.getDay();

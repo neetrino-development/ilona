@@ -93,6 +93,10 @@ export default function TeacherAnalyticsPage() {
   const { data: salarySummary } = useMySalarySummary();
   const { data: deductions } = useMyDeductions();
 
+  // Keep queries active for cache, even if not directly rendered
+  void todayLessons;
+  void salaries;
+
   // Calculate stats
   const lessons = monthLessons?.items || [];
   const completedLessons = lessons.filter((l) => l.status === 'COMPLETED').length;

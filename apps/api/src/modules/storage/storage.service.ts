@@ -96,7 +96,7 @@ export class StorageService {
         }),
       );
 
-      this.logger.log(`File uploaded: ${key}`);
+      this.logger.log(`File uploaded: ${String(key)}`);
 
       return {
         key,
@@ -106,7 +106,9 @@ export class StorageService {
         mimeType,
       };
     } catch (error) {
-      this.logger.error(`Failed to upload file: ${error}`);
+      this.logger.error(
+        `Failed to upload file: ${error instanceof Error ? error.message : String(error)}`,
+      );
       throw error;
     }
   }
@@ -137,7 +139,9 @@ export class StorageService {
         publicUrl: this.getPublicUrl(key),
       };
     } catch (error) {
-      this.logger.error(`Failed to generate presigned URL: ${error}`);
+      this.logger.error(
+        `Failed to generate presigned URL: ${error instanceof Error ? error.message : String(error)}`,
+      );
       throw error;
     }
   }
@@ -154,7 +158,9 @@ export class StorageService {
 
       return await getSignedUrl(this.s3Client, command, { expiresIn });
     } catch (error) {
-      this.logger.error(`Failed to generate download URL: ${error}`);
+      this.logger.error(
+        `Failed to generate download URL: ${error instanceof Error ? error.message : String(error)}`,
+      );
       throw error;
     }
   }
@@ -171,9 +177,11 @@ export class StorageService {
         }),
       );
 
-      this.logger.log(`File deleted: ${key}`);
+      this.logger.log(`File deleted: ${String(key)}`);
     } catch (error) {
-      this.logger.error(`Failed to delete file: ${error}`);
+      this.logger.error(
+        `Failed to delete file: ${error instanceof Error ? error.message : String(error)}`,
+      );
       throw error;
     }
   }

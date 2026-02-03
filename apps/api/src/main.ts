@@ -76,6 +76,6 @@ async function bootstrap() {
   console.log(`📚 Swagger docs: http://localhost:${port}/${apiPrefix}/docs`);
 }
 
-bootstrap();
+void bootstrap();
 
 

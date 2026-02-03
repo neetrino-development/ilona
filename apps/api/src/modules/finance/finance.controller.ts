@@ -188,7 +188,7 @@ export class FinanceController {
       skip: query.skip,
       take: query.take,
       studentId: query.studentId,
-      status: query.status as PaymentStatus | undefined,
+      status: query.status,
       dateFrom: query.dateFrom ? new Date(query.dateFrom) : undefined,
       dateTo: query.dateTo ? new Date(query.dateTo) : undefined,
     });

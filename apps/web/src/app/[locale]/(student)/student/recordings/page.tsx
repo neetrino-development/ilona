@@ -2,8 +2,6 @@
 
 import { useState } from 'react';
 import { DashboardLayout } from '@/shared/components/layout/DashboardLayout';
-import { useMyLessons } from '@/features/lessons';
-import { cn } from '@/shared/lib/utils';
 
 interface Recording {
   id: string;

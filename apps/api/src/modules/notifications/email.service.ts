@@ -32,7 +32,8 @@ export class EmailService {
 
     // If Resend is not configured, just log
     if (!this.resend) {
-      this.logger.log(`[EMAIL MOCK] To: ${to}, Subject: ${subject}`);
+      const toDisplay = Array.isArray(to) ? to.join(', ') : to;
+      this.logger.log(`[EMAIL MOCK] To: ${toDisplay}, Subject: ${subject}`);
       this.logger.debug(`[EMAIL MOCK] HTML: ${html.substring(0, 200)}...`);
       return true;
     }
@@ -46,10 +47,12 @@ export class EmailService {
         text,
       });
 
-      this.logger.log(`Email sent successfully to ${to}, id: ${response.data?.id}`);
+      const toDisplay = Array.isArray(to) ? to.join(', ') : to;
+      this.logger.log(`Email sent successfully to ${toDisplay}, id: ${response.data?.id}`);
       return true;
     } catch (error) {
-      this.logger.error(`Failed to send email to ${to}:`, error);
+      const toDisplay = Array.isArray(to) ? to.join(', ') : to;
+      this.logger.error(`Failed to send email to ${toDisplay}:`, error);
       return false;
     }
   }

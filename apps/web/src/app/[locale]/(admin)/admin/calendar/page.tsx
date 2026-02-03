@@ -45,7 +45,6 @@ export default function CalendarPage() {
   
   const weekDates = useMemo(() => getWeekDates(currentDate), [currentDate]);
   const dateFrom = formatDate(weekDates[0]);
-  const dateTo = formatDate(weekDates[6]);
 
   // Fetch lessons for the week
   const { 

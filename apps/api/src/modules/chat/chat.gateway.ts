@@ -63,7 +63,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // Get user's chats and join rooms
       const chats = await this.chatService.getUserChats(payload.sub);
       chats.forEach((chat) => {
-        client.join(`chat:${chat.id}`);
+        void client.join(`chat:${chat.id}`);
         
         // Track online status
         if (!this.onlineUsers.has(chat.id)) {
@@ -92,7 +92,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
-  async handleDisconnect(client: AuthenticatedSocket) {
+  handleDisconnect(client: AuthenticatedSocket) {
     if (!client.user) return;
 
     const userId = client.user.sub;
@@ -243,7 +243,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // Verify user is participant
       await this.chatService.getChatById(data.chatId, client.user.sub);
       
-      client.join(`chat:${data.chatId}`);
+      void client.join(`chat:${data.chatId}`);
       
       if (!this.onlineUsers.has(data.chatId)) {
         this.onlineUsers.set(data.chatId, new Set());

@@ -45,7 +45,7 @@ export function useChatDetail(chatId: string, enabled = true) {
 export function useMessages(chatId: string, enabled = true) {
   return useInfiniteQuery({
     queryKey: chatKeys.messages(chatId),
-    queryFn: ({ pageParam }) => fetchMessages(chatId, pageParam as string | undefined),
+    queryFn: ({ pageParam }) => fetchMessages(chatId, pageParam),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.nextCursor || undefined,
     enabled: enabled && !!chatId,

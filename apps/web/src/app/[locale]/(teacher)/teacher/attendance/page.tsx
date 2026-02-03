@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/shared/components/layout/DashboardLayout';
-import { useTodayLessons, useMyLessons, type Lesson } from '@/features/lessons';
+import { useTodayLessons, useMyLessons } from '@/features/lessons';
 import {
   useLessonAttendance,
   useMarkBulkAttendance,

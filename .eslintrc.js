@@ -27,6 +27,15 @@ module.exports = {
         'plugin:@typescript-eslint/recommended-requiring-type-checking',
       ],
       parser: '@typescript-eslint/parser',
+      parserOptions: {
+        project: [
+          './apps/api/tsconfig.eslint.json',
+          './apps/web/tsconfig.json',
+          './packages/database/tsconfig.json',
+          './packages/types/tsconfig.json',
+        ],
+        tsconfigRootDir: __dirname,
+      },
       plugins: ['@typescript-eslint'],
       rules: {
         '@typescript-eslint/no-unused-vars': [

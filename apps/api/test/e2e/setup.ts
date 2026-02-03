@@ -1,4 +1,4 @@
-import { beforeAll, afterAll, vi } from 'vitest';
+import { beforeAll, afterAll } from 'vitest';
 
 // Set test environment variables
 process.env.NODE_ENV = 'test';
@@ -7,12 +7,12 @@ process.env.JWT_ACCESS_EXPIRATION = '15m';
 process.env.JWT_REFRESH_EXPIRATION = '7d';
 process.env.API_PORT = '4001'; // Different port for e2e tests
 
-beforeAll(async () => {
+beforeAll(() => {
   // Setup before all e2e tests
   console.log('Setting up e2e tests...');
 });
 
-afterAll(async () => {
+afterAll(() => {
   // Cleanup after all e2e tests
   console.log('Cleaning up e2e tests...');
 });
