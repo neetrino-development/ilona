@@ -2,7 +2,8 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { useState, type ReactNode } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
+import { initializeApiClient } from '@/features/auth/store/auth.store';
 
 interface QueryProviderProps {
   children: ReactNode;
@@ -25,6 +26,11 @@ export function QueryProvider({ children }: QueryProviderProps) {
         },
       })
   );
+
+  // Initialize API client with token refresh callback
+  useEffect(() => {
+    initializeApiClient();
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

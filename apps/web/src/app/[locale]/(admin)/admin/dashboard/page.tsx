@@ -1,11 +1,14 @@
 'use client';
 
+import { useState } from 'react';
 import { DashboardLayout } from '@/shared/components/layout/DashboardLayout';
 import { StatCard, DataTable, Badge, Button } from '@/shared/components/ui';
-import { useTeachers, type Teacher } from '@/features/teachers';
+import { useTeachers, AddTeacherForm, type Teacher } from '@/features/teachers';
 import { useAdminDashboardStats } from '@/features/dashboard';
 
 export default function AdminDashboardPage() {
+  const [isAddTeacherOpen, setIsAddTeacherOpen] = useState(false);
+  
   // Fetch teachers list (top 5 for dashboard)
   const { 
     data: teachersData, 
@@ -156,7 +159,10 @@ export default function AdminDashboardPage() {
               className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
             />
           </div>
-          <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium shadow-lg shadow-blue-500/20">
+          <Button 
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium shadow-lg shadow-blue-500/20"
+            onClick={() => setIsAddTeacherOpen(true)}
+          >
             + Add teacher
           </Button>
           <button className="p-3 bg-white border border-slate-200 rounded-xl hover:bg-slate-50">
@@ -239,6 +245,12 @@ export default function AdminDashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Add Teacher Modal */}
+      <AddTeacherForm 
+        open={isAddTeacherOpen} 
+        onOpenChange={setIsAddTeacherOpen} 
+      />
     </DashboardLayout>
   );
 }

@@ -3,11 +3,12 @@
 import { useState } from 'react';
 import { DashboardLayout } from '@/shared/components/layout/DashboardLayout';
 import { StatCard, DataTable, Badge, Button } from '@/shared/components/ui';
-import { useTeachers, useDeleteTeacher, type Teacher } from '@/features/teachers';
+import { useTeachers, useDeleteTeacher, AddTeacherForm, type Teacher } from '@/features/teachers';
 
 export default function TeachersPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(0);
+  const [isAddTeacherOpen, setIsAddTeacherOpen] = useState(false);
   const pageSize = 10;
 
   // Fetch teachers with search and pagination
@@ -213,7 +214,10 @@ export default function TeachersPage() {
               className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
             />
           </div>
-          <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium">
+          <Button 
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium"
+            onClick={() => setIsAddTeacherOpen(true)}
+          >
             + Add teacher
           </Button>
           <button className="p-3 bg-white border border-slate-200 rounded-xl hover:bg-slate-50">
@@ -310,6 +314,12 @@ export default function TeachersPage() {
           </div>
         </div>
       </div>
+
+      {/* Add Teacher Modal */}
+      <AddTeacherForm 
+        open={isAddTeacherOpen} 
+        onOpenChange={setIsAddTeacherOpen} 
+      />
     </DashboardLayout>
   );
 }

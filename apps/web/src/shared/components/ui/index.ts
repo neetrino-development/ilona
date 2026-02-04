@@ -5,3 +5,15 @@ export { Label } from './label';
 export { StatCard } from './stat-card';
 export { DataTable } from './data-table';
 export { Badge } from './badge';
+export {
+  Dialog,
+  DialogPortal,
+  DialogOverlay,
+  DialogClose,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+} from './dialog';

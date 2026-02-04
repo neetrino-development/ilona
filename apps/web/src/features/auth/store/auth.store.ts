@@ -129,3 +129,26 @@ export function getDashboardPath(role: UserRole): string {
       return '/';
   }
 }
+
+// Initialize API client with token refresh callback
+// This should be called after the store is created (e.g., in QueryProvider)
+export function initializeApiClient() {
+  if (typeof window === 'undefined') return;
+  
+  api.setRefreshCallback(async () => {
+    try {
+      const store = useAuthStore.getState();
+      await store.refreshToken();
+      return true;
+    } catch {
+      // If refresh fails, logout the user
+      const store = useAuthStore.getState();
+      store.logout();
+      // Redirect to login page
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
+      return false;
+    }
+  });
+}

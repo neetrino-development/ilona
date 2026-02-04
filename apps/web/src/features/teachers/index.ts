@@ -9,6 +9,9 @@ export {
   teacherKeys,
 } from './hooks';
 
+// Components
+export { AddTeacherForm } from './components/AddTeacherForm';
+
 // Types
 export type {
   Teacher,

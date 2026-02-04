@@ -1,8 +1,3 @@
-import { config } from 'dotenv';
-// Load .env files early, before any module imports that might need env vars (e.g., Prisma)
-config({ path: '.env.local' });
-config({ path: '.env' });
-
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -76,6 +71,6 @@ async function bootstrap() {
   console.log(`📚 Swagger docs: http://localhost:${port}/${apiPrefix}/docs`);
 }
 
-void bootstrap();
+bootstrap();
 
 
