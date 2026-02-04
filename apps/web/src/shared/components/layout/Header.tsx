@@ -1,7 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import { useLocale } from 'next-intl';
 import { Input } from '@/shared/components/ui/input';
+import { LanguageSwitcher } from '@/shared/components/LanguageSwitcher';
 
 interface HeaderProps {
   title: string;
@@ -10,8 +12,9 @@ interface HeaderProps {
 
 export function Header({ title, subtitle }: HeaderProps) {
   const [searchValue, setSearchValue] = useState('');
+  const locale = useLocale();
 
-  const today = new Date().toLocaleDateString('en-US', {
+  const today = new Date().toLocaleDateString(locale === 'hy' ? 'hy-AM' : 'en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
@@ -25,6 +28,9 @@ export function Header({ title, subtitle }: HeaderProps) {
       </div>
 
       <div className="flex items-center gap-4">
+        {/* Language Switcher */}
+        <LanguageSwitcher />
+
         {/* Search */}
         <div className="relative">
           <svg

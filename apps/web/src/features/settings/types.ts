@@ -31,7 +31,7 @@ export interface NotificationSettings {
 }
 
 export interface AppSettings {
-  language: 'en' | 'ru' | 'pl';
+  language: 'en' | 'hy';
   theme: 'light' | 'dark' | 'system';
   timezone: string;
 }

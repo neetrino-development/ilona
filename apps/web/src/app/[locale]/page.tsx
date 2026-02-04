@@ -1,8 +1,9 @@
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import Link from 'next/link';
 
 export default function HomePage() {
   const t = useTranslations('home');
+  const locale = useLocale();
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-24">
@@ -16,7 +17,7 @@ export default function HomePage() {
 
         <div className="flex justify-center gap-4">
           <Link
-            href="/en/login"
+            href={`/${locale}/login`}
             className="rounded-lg bg-primary px-6 py-3 text-primary-foreground hover:bg-primary/90 transition"
           >
             {t('login')}

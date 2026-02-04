@@ -1,9 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations, useLocale } from 'next-intl';
 import { DashboardLayout } from '@/shared/components/layout/DashboardLayout';
 import { Button, Badge } from '@/shared/components/ui';
 import { useAuthStore } from '@/features/auth/store/auth.store';
+import { LanguageSwitcher } from '@/shared/components/LanguageSwitcher';
+import { Locale } from '@/config/i18n';
 
 type SettingsTab = 'profile' | 'security' | 'notifications' | 'system';
 
@@ -11,6 +14,9 @@ export default function SettingsPage() {
   const { user, logout } = useAuthStore();
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
   const [isSaving, setIsSaving] = useState(false);
+  const t = useTranslations('settings');
+  const tCommon = useTranslations('common');
+  const locale = useLocale() as Locale;
 
   // Profile form state
   const [firstName, setFirstName] = useState(user?.firstName || '');
@@ -55,7 +61,7 @@ export default function SettingsPage() {
   const tabs: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
     {
       id: 'profile',
-      label: 'Profile',
+      label: t('profile'),
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -64,7 +70,7 @@ export default function SettingsPage() {
     },
     {
       id: 'security',
-      label: 'Security',
+      label: t('security'),
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -73,7 +79,7 @@ export default function SettingsPage() {
     },
     {
       id: 'notifications',
-      label: 'Notifications',
+      label: t('notifications'),
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
@@ -82,7 +88,7 @@ export default function SettingsPage() {
     },
     {
       id: 'system',
-      label: 'System',
+      label: t('systemSettings'),
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -96,7 +102,7 @@ export default function SettingsPage() {
 
   return (
     <DashboardLayout 
-      title="Settings" 
+      title={t('title')} 
       subtitle="Manage your account settings and preferences."
     >
       <div className="flex gap-6">
@@ -123,14 +129,14 @@ export default function SettingsPage() {
           <div className="mt-6 bg-white rounded-2xl border border-slate-200 p-4">
             <h3 className="font-medium text-slate-800 mb-2">Session</h3>
             <p className="text-sm text-slate-500 mb-4">
-              Sign out from your account on this device.
+              {t('signOutFromAccount')}
             </p>
             <Button 
               variant="outline" 
               className="w-full text-red-600 border-red-200 hover:bg-red-50"
               onClick={logout}
             >
-              Sign Out
+              {t('signOut')}
             </Button>
           </div>
         </div>
@@ -140,7 +146,7 @@ export default function SettingsPage() {
           {/* Profile Tab */}
           {activeTab === 'profile' && (
             <div className="bg-white rounded-2xl border border-slate-200 p-6">
-              <h2 className="text-lg font-semibold text-slate-800 mb-6">Profile Information</h2>
+              <h2 className="text-lg font-semibold text-slate-800 mb-6">{t('profileInformation')}</h2>
               
               {/* Avatar */}
               <div className="flex items-center gap-6 mb-8 pb-8 border-b border-slate-200">
@@ -151,8 +157,8 @@ export default function SettingsPage() {
                   <h3 className="font-medium text-slate-800">{user?.firstName} {user?.lastName}</h3>
                   <p className="text-sm text-slate-500">{user?.email}</p>
                   <div className="flex gap-2 mt-2">
-                    <Button variant="outline" size="sm">Upload Photo</Button>
-                    <Button variant="ghost" size="sm" className="text-red-600">Remove</Button>
+                    <Button variant="outline" size="sm">{t('uploadPhoto')}</Button>
+                    <Button variant="ghost" size="sm" className="text-red-600">{t('remove')}</Button>
                   </div>
                 </div>
               </div>
@@ -161,7 +167,7 @@ export default function SettingsPage() {
                 <div className="grid grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-2">
-                      First Name
+                      {t('firstName')}
                     </label>
                     <input
                       type="text"
@@ -172,7 +178,7 @@ export default function SettingsPage() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-2">
-                      Last Name
+                      {t('lastName')}
                     </label>
                     <input
                       type="text"
@@ -185,7 +191,7 @@ export default function SettingsPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Email Address
+                    {t('emailAddress')}
                   </label>
                   <input
                     type="email"
@@ -193,12 +199,12 @@ export default function SettingsPage() {
                     disabled
                     className="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 text-slate-500"
                   />
-                  <p className="text-xs text-slate-500 mt-1">Contact admin to change email</p>
+                  <p className="text-xs text-slate-500 mt-1">{t('contactAdminToChangeEmail')}</p>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Phone Number
+                    {t('phoneNumber')}
                   </label>
                   <input
                     type="tel"
@@ -211,11 +217,11 @@ export default function SettingsPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Role
+                    {tCommon('status')}
                   </label>
                   <div className="flex items-center gap-2">
                     <Badge variant="info">{user?.role || 'ADMIN'}</Badge>
-                    <span className="text-sm text-slate-500">Assigned by system</span>
+                    <span className="text-sm text-slate-500">{t('assignedBySystem')}</span>
                   </div>
                 </div>
 
@@ -225,7 +231,7 @@ export default function SettingsPage() {
                     className="bg-blue-600 hover:bg-blue-700 text-white px-6"
                     disabled={isSaving}
                   >
-                    {isSaving ? 'Saving...' : 'Save Changes'}
+                    {isSaving ? t('saving') : t('saveChanges')}
                   </Button>
                 </div>
               </form>
@@ -236,12 +242,12 @@ export default function SettingsPage() {
           {activeTab === 'security' && (
             <div className="space-y-6">
               <div className="bg-white rounded-2xl border border-slate-200 p-6">
-                <h2 className="text-lg font-semibold text-slate-800 mb-6">Change Password</h2>
+                <h2 className="text-lg font-semibold text-slate-800 mb-6">{t('changePassword')}</h2>
                 
                 <form onSubmit={handleChangePassword} className="space-y-6">
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-2">
-                      Current Password
+                      {t('currentPassword')}
                     </label>
                     <input
                       type="password"
@@ -253,7 +259,7 @@ export default function SettingsPage() {
 
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-2">
-                      New Password
+                      {t('newPassword')}
                     </label>
                     <input
                       type="password"
@@ -261,12 +267,12 @@ export default function SettingsPage() {
                       onChange={(e) => setNewPassword(e.target.value)}
                       className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                     />
-                    <p className="text-xs text-slate-500 mt-1">Minimum 8 characters</p>
+                    <p className="text-xs text-slate-500 mt-1">{t('minimum8Characters')}</p>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-2">
-                      Confirm New Password
+                      {t('confirmNewPassword')}
                     </label>
                     <input
                       type="password"
@@ -282,16 +288,16 @@ export default function SettingsPage() {
                       className="bg-blue-600 hover:bg-blue-700 text-white px-6"
                       disabled={isSaving}
                     >
-                      {isSaving ? 'Updating...' : 'Update Password'}
+                      {isSaving ? t('updating') : t('updatePassword')}
                     </Button>
                   </div>
                 </form>
               </div>
 
               <div className="bg-white rounded-2xl border border-slate-200 p-6">
-                <h2 className="text-lg font-semibold text-slate-800 mb-4">Sessions</h2>
+                <h2 className="text-lg font-semibold text-slate-800 mb-4">{t('sessions')}</h2>
                 <p className="text-sm text-slate-500 mb-4">
-                  Manage your active sessions and sign out from other devices.
+                  {t('manageActiveSessions')}
                 </p>
                 <div className="p-4 bg-slate-50 rounded-xl flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -301,11 +307,11 @@ export default function SettingsPage() {
                       </svg>
                     </div>
                     <div>
-                      <p className="font-medium text-slate-800">Current Session</p>
-                      <p className="text-xs text-slate-500">This device • Active now</p>
+                      <p className="font-medium text-slate-800">{t('currentSession')}</p>
+                      <p className="text-xs text-slate-500">{t('thisDevice')} • {t('activeNow')}</p>
                     </div>
                   </div>
-                  <Badge variant="success">Active</Badge>
+                  <Badge variant="success">{t('active')}</Badge>
                 </div>
               </div>
             </div>
@@ -314,13 +320,13 @@ export default function SettingsPage() {
           {/* Notifications Tab */}
           {activeTab === 'notifications' && (
             <div className="bg-white rounded-2xl border border-slate-200 p-6">
-              <h2 className="text-lg font-semibold text-slate-800 mb-6">Notification Preferences</h2>
+              <h2 className="text-lg font-semibold text-slate-800 mb-6">{t('notificationPreferences')}</h2>
               
               <div className="space-y-6">
                 <div className="flex items-center justify-between py-4 border-b border-slate-100">
                   <div>
-                    <h3 className="font-medium text-slate-800">Email Notifications</h3>
-                    <p className="text-sm text-slate-500">Receive important updates via email</p>
+                    <h3 className="font-medium text-slate-800">{t('emailNotifications')}</h3>
+                    <p className="text-sm text-slate-500">{t('receiveImportantUpdates')}</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
@@ -335,8 +341,8 @@ export default function SettingsPage() {
 
                 <div className="flex items-center justify-between py-4 border-b border-slate-100">
                   <div>
-                    <h3 className="font-medium text-slate-800">Lesson Reminders</h3>
-                    <p className="text-sm text-slate-500">Get notified before scheduled lessons</p>
+                    <h3 className="font-medium text-slate-800">{t('lessonReminders')}</h3>
+                    <p className="text-sm text-slate-500">{t('getNotifiedBeforeScheduledLessons')}</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
@@ -351,8 +357,8 @@ export default function SettingsPage() {
 
                 <div className="flex items-center justify-between py-4">
                   <div>
-                    <h3 className="font-medium text-slate-800">Payment Reminders</h3>
-                    <p className="text-sm text-slate-500">Receive alerts about upcoming and overdue payments</p>
+                    <h3 className="font-medium text-slate-800">{t('paymentReminders')}</h3>
+                    <p className="text-sm text-slate-500">{t('receiveAlertsAboutPayments')}</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
@@ -368,7 +374,7 @@ export default function SettingsPage() {
 
               <div className="pt-6 flex justify-end">
                 <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6">
-                  Save Preferences
+                  {t('savePreferences')}
                 </Button>
               </div>
             </div>
@@ -378,41 +384,40 @@ export default function SettingsPage() {
           {activeTab === 'system' && (
             <div className="space-y-6">
               <div className="bg-white rounded-2xl border border-slate-200 p-6">
-                <h2 className="text-lg font-semibold text-slate-800 mb-6">Appearance</h2>
+                <h2 className="text-lg font-semibold text-slate-800 mb-6">{t('appearance')}</h2>
                 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-3">Theme</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-3">{t('theme')}</label>
                     <div className="flex gap-3">
-                      {['Light', 'Dark', 'System'].map((theme) => (
+                      {[
+                        { value: 'light', label: t('light') },
+                        { value: 'dark', label: t('dark') },
+                        { value: 'system', label: t('system') }
+                      ].map((theme) => (
                         <button
-                          key={theme}
+                          key={theme.value}
                           className={`px-4 py-2 rounded-lg border ${
-                            theme === 'Light'
+                            theme.value === 'light'
                               ? 'border-blue-500 bg-blue-50 text-blue-600'
                               : 'border-slate-200 text-slate-600 hover:bg-slate-50'
                           }`}
                         >
-                          {theme}
+                          {theme.label}
                         </button>
                       ))}
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-3">Language</label>
-                    <select className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
-                      <option value="en">English</option>
-                      <option value="ru">Русский</option>
-                      <option value="pl">Polski</option>
-                    </select>
+                    <label className="block text-sm font-medium text-slate-700 mb-3">{t('language')}</label>
+                    <LanguageSwitcher />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-3">Timezone</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-3">{t('timezone')}</label>
                     <select className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
-                      <option value="Europe/Warsaw">Europe/Warsaw (UTC+1)</option>
-                      <option value="Europe/Moscow">Europe/Moscow (UTC+3)</option>
+                      <option value="Asia/Yerevan">Asia/Yerevan (UTC+4)</option>
                       <option value="UTC">UTC</option>
                     </select>
                   </div>
@@ -420,11 +425,11 @@ export default function SettingsPage() {
               </div>
 
               <div className="bg-white rounded-2xl border border-slate-200 p-6">
-                <h2 className="text-lg font-semibold text-slate-800 mb-4">About</h2>
+                <h2 className="text-lg font-semibold text-slate-800 mb-4">{t('about')}</h2>
                 <div className="space-y-2 text-sm text-slate-600">
-                  <p><span className="text-slate-500">Version:</span> 1.0.0</p>
-                  <p><span className="text-slate-500">Environment:</span> Production</p>
-                  <p><span className="text-slate-500">Build:</span> {new Date().toISOString().split('T')[0]}</p>
+                  <p><span className="text-slate-500">{t('version')}:</span> 1.0.0</p>
+                  <p><span className="text-slate-500">{t('environment')}:</span> Production</p>
+                  <p><span className="text-slate-500">{t('build')}:</span> {new Date().toISOString().split('T')[0]}</p>
                 </div>
               </div>
             </div>

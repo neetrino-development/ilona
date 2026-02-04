@@ -3,6 +3,7 @@ import { getMessages, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { locales, Locale } from '@/config/i18n';
 import { QueryProvider } from '@/shared/lib/query-client';
+import { SetLangAttribute } from '@/shared/components/SetLangAttribute';
 
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
@@ -32,6 +33,7 @@ export default async function LocaleLayout({
 
   return (
     <NextIntlClientProvider messages={messages}>
+      <SetLangAttribute locale={locale} />
       <QueryProvider>
         {children}
       </QueryProvider>
