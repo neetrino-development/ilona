@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import { DashboardLayout } from '@/shared/components/layout/DashboardLayout';
 import { StatCard, DataTable, Badge, Button } from '@/shared/components/ui';
 import { useTeachers, useDeleteTeacher, AddTeacherForm, type Teacher } from '@/features/teachers';
@@ -9,6 +10,9 @@ export default function TeachersPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(0);
   const [isAddTeacherOpen, setIsAddTeacherOpen] = useState(false);
+  const params = useParams();
+  const router = useRouter();
+  const locale = params.locale as string;
   const pageSize = 10;
 
   // Fetch teachers with search and pagination
@@ -46,6 +50,11 @@ export default function TeachersPage() {
     }
   };
 
+  // Handle row click to navigate to teacher profile
+  const handleRowClick = (teacher: Teacher) => {
+    router.push(`/${locale}/admin/teachers/${teacher.id}`);
+  };
+
   // Stats calculation
   const activeTeachers = teachers.filter(t => t.user?.status === 'ACTIVE').length;
   const totalLessons = teachers.reduce((sum, t) => sum + (t._count?.lessons || 0), 0);
@@ -62,7 +71,11 @@ export default function TeachersPage() {
         <input type="checkbox" className="w-4 h-4 rounded border-slate-300" />
       ),
       render: () => (
-        <input type="checkbox" className="w-4 h-4 rounded border-slate-300" />
+        <input 
+          type="checkbox" 
+          className="w-4 h-4 rounded border-slate-300" 
+          onClick={(e) => e.stopPropagation()}
+        />
       ),
     },
     {
@@ -79,7 +92,7 @@ export default function TeachersPage() {
               {initials}
             </div>
             <div>
-              <p className="font-semibold text-slate-800">
+              <p className="font-semibold text-slate-800 hover:text-blue-600 transition-colors">
                 {firstName} {lastName}
               </p>
               <p className="text-sm text-slate-500">{teacher.user?.email || ''}</p>
@@ -153,15 +166,26 @@ export default function TeachersPage() {
       key: 'actions',
       header: 'Actions',
       render: (teacher: Teacher) => (
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 font-medium">
+        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="text-blue-600 hover:text-blue-700 font-medium"
+            onClick={(e) => {
+              e.stopPropagation();
+              // TODO: Implement edit functionality
+            }}
+          >
             Edit
           </Button>
           <Button 
             variant="ghost" 
             size="sm" 
             className="text-red-600 hover:text-red-700 font-medium"
-            onClick={() => handleDelete(teacher.id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDelete(teacher.id);
+            }}
           >
             Delete
           </Button>
@@ -240,6 +264,7 @@ export default function TeachersPage() {
           columns={teacherColumns}
           data={teachers}
           keyExtractor={(teacher) => teacher.id}
+          onRowClick={handleRowClick}
           isLoading={isLoading}
           emptyMessage={searchQuery ? "No teachers match your search" : "No teachers found"}
         />
