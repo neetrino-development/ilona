@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { cn } from '@/shared/lib/utils';
+import { Button } from '@/shared/components/ui/button';
 import type { Lesson } from '@/features/lessons';
 import type { StudentWithAttendance, AbsenceType } from '@/features/attendance';
 
@@ -31,8 +32,10 @@ interface AttendanceGridProps {
   onLessonSave?: (lessonId: string, attendances: Array<{ studentId: string; isPresent: boolean; absenceType?: AbsenceType }>) => Promise<void>;
   isLoading?: boolean;
   isSaving?: Record<string, boolean>; // lessonId -> isSaving
-  autoSaveDelay?: number; // milliseconds
   dateRange?: { from: string; to: string };
+  onSaveSuccess?: (lessonId: string) => void;
+  onSaveError?: (lessonId: string, error: string) => void;
+  onUnsavedChangesChange?: (hasUnsavedChanges: boolean) => void;
 }
 
 export function AttendanceGrid({
@@ -43,8 +46,10 @@ export function AttendanceGrid({
   onLessonSave,
   isLoading = false,
   isSaving = {},
-  autoSaveDelay = 2000,
   dateRange,
+  onSaveSuccess,
+  onSaveError,
+  onUnsavedChangesChange,
 }: AttendanceGridProps) {
   const [attendanceData, setAttendanceData] = useState<Record<string, Record<string, AttendanceCell>>>(
     initialAttendance
@@ -52,16 +57,50 @@ export function AttendanceGrid({
   const [focusedCell, setFocusedCell] = useState<{ studentId: string; lessonId: string } | null>(null);
   const [pendingChanges, setPendingChanges] = useState<Record<string, Set<string>>>({}); // lessonId -> Set of studentIds
   const [saveError, setSaveError] = useState<Record<string, string>>({}); // lessonId -> error message
+  const [saveSuccess, setSaveSuccess] = useState<Record<string, boolean>>({}); // lessonId -> success
   const gridRef = useRef<HTMLDivElement>(null);
-  const saveTimeoutRef = useRef<Record<string, NodeJS.Timeout>>({});
   const cellRefs = useRef<Record<string, HTMLTableCellElement>>({});
+  const initialDataRef = useRef<Record<string, Record<string, AttendanceCell>>>(initialAttendance);
 
   // Initialize attendance data
   useEffect(() => {
     if (Object.keys(initialAttendance).length > 0) {
       setAttendanceData(initialAttendance);
+      initialDataRef.current = initialAttendance;
+      // Clear pending changes when initial data changes (e.g., after save or data refresh)
+      setPendingChanges({});
+      setSaveError({});
+      setSaveSuccess({});
     }
   }, [initialAttendance]);
+
+  // Track unsaved changes for navigation warning
+  const hasUnsavedChanges = useMemo(() => {
+    return Object.values(pendingChanges).some((set) => set.size > 0);
+  }, [pendingChanges]);
+
+  // Notify parent component about unsaved changes state
+  useEffect(() => {
+    if (onUnsavedChangesChange) {
+      onUnsavedChangesChange(hasUnsavedChanges);
+    }
+  }, [hasUnsavedChanges, onUnsavedChangesChange]);
+
+  // Warn user before leaving page with unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [hasUnsavedChanges]);
 
   // Get cell status
   const getCellStatus = useCallback(
@@ -108,25 +147,27 @@ export function AttendanceGrid({
         };
       });
 
+      // Clear success/error state for this lesson when new changes are made
+      setSaveSuccess((prev) => {
+        const next = { ...prev };
+        delete next[lessonId];
+        return next;
+      });
+      setSaveError((prev) => {
+        const next = { ...prev };
+        delete next[lessonId];
+        return next;
+      });
+
       if (onCellChange) {
         onCellChange(studentId, lessonId, newStatus);
       }
-
-      // Auto-save with debounce per lesson
-      if (onLessonSave && autoSaveDelay > 0) {
-        if (saveTimeoutRef.current[lessonId]) {
-          clearTimeout(saveTimeoutRef.current[lessonId]);
-        }
-        saveTimeoutRef.current[lessonId] = setTimeout(() => {
-          handleAutoSave(lessonId);
-        }, autoSaveDelay);
-      }
     },
-    [getCellStatus, onCellChange, onLessonSave, autoSaveDelay]
+    [getCellStatus, onCellChange]
   );
 
-  // Handle auto-save for a specific lesson
-  const handleAutoSave = useCallback(
+  // Handle manual save for a specific lesson
+  const handleManualSave = useCallback(
     async (lessonId: string) => {
       if (!onLessonSave || !pendingChanges[lessonId] || pendingChanges[lessonId].size === 0) return;
 
@@ -145,28 +186,70 @@ export function AttendanceGrid({
 
       if (attendances.length > 0) {
         try {
+          // Clear previous errors
           setSaveError((prev) => {
             const next = { ...prev };
             delete next[lessonId];
             return next;
           });
+          setSaveSuccess((prev) => {
+            const next = { ...prev };
+            delete next[lessonId];
+            return next;
+          });
+
           await onLessonSave(lessonId, attendances);
+
+          // Mark as saved
           setPendingChanges((prev) => {
             const next = { ...prev };
             delete next[lessonId];
             return next;
           });
+          setSaveSuccess((prev) => ({ ...prev, [lessonId]: true }));
+
+          // Call success callback
+          if (onSaveSuccess) {
+            onSaveSuccess(lessonId);
+          }
+
+          // Clear success message after 3 seconds
+          setTimeout(() => {
+            setSaveSuccess((prev) => {
+              const next = { ...prev };
+              delete next[lessonId];
+              return next;
+            });
+          }, 3000);
         } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Failed to save attendance';
           setSaveError((prev) => ({
             ...prev,
-            [lessonId]: error instanceof Error ? error.message : 'Failed to save attendance',
+            [lessonId]: errorMessage,
           }));
-          console.error('Auto-save failed:', error);
+
+          // Call error callback
+          if (onSaveError) {
+            onSaveError(lessonId, errorMessage);
+          }
+
+          console.error('Save failed:', error);
         }
       }
     },
-    [onLessonSave, pendingChanges, attendanceData]
+    [onLessonSave, pendingChanges, attendanceData, onSaveSuccess, onSaveError]
   );
+
+  // Handle save all lessons with pending changes
+  const handleSaveAll = useCallback(async () => {
+    const lessonsWithChanges = Object.keys(pendingChanges).filter(
+      (lessonId) => pendingChanges[lessonId] && pendingChanges[lessonId].size > 0
+    );
+
+    for (const lessonId of lessonsWithChanges) {
+      await handleManualSave(lessonId);
+    }
+  }, [pendingChanges, handleManualSave]);
 
   // Scroll to focused cell
   useEffect(() => {
@@ -303,29 +386,54 @@ export function AttendanceGrid({
 
   const totalPendingChanges = Object.values(pendingChanges).reduce((sum, set) => sum + set.size, 0);
   const hasAnySaving = isSaving && Object.values(isSaving).some((saving) => saving);
+  const lessonsWithChanges = Object.keys(pendingChanges).filter(
+    (lessonId) => pendingChanges[lessonId] && pendingChanges[lessonId].size > 0
+  );
 
   return (
     <div className="space-y-4">
-      {/* Status indicator */}
-      {(hasAnySaving || totalPendingChanges > 0) && (
-        <div className="flex items-center justify-between rounded-lg bg-blue-50 px-4 py-2 text-sm">
-          <div className="flex items-center gap-2">
+      {/* Status indicator and Save button */}
+      {(hasAnySaving || totalPendingChanges > 0 || Object.keys(saveSuccess).length > 0) && (
+        <div className="flex items-center justify-between rounded-lg bg-blue-50 px-4 py-3 text-sm border border-blue-200">
+          <div className="flex items-center gap-3 flex-1">
             {hasAnySaving ? (
               <>
                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
-                <span className="text-blue-700">Saving changes...</span>
+                <span className="text-blue-700 font-medium">Saving changes...</span>
               </>
-            ) : (
-              <span className="text-blue-700">
-                {totalPendingChanges} unsaved {totalPendingChanges === 1 ? 'change' : 'changes'}
+            ) : totalPendingChanges > 0 ? (
+              <>
+                <div className="h-2 w-2 rounded-full bg-amber-500"></div>
+                <span className="text-amber-700 font-medium">
+                  {totalPendingChanges} unsaved {totalPendingChanges === 1 ? 'change' : 'changes'}
+                </span>
+              </>
+            ) : Object.keys(saveSuccess).length > 0 ? (
+              <>
+                <svg className="h-4 w-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span className="text-green-700 font-medium">Changes saved successfully</span>
+              </>
+            ) : null}
+          </div>
+          <div className="flex items-center gap-3">
+            {Object.keys(saveError).length > 0 && (
+              <span className="text-red-600 text-xs font-medium">
+                {Object.values(saveError)[0]} {Object.keys(saveError).length > 1 && `(+${Object.keys(saveError).length - 1} more)`}
               </span>
             )}
+            {totalPendingChanges > 0 && !hasAnySaving && (
+              <Button
+                onClick={handleSaveAll}
+                disabled={lessonsWithChanges.length === 0 || hasAnySaving}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+                size="sm"
+              >
+                Save All Changes
+              </Button>
+            )}
           </div>
-          {Object.keys(saveError).length > 0 && (
-            <span className="text-red-600 text-xs">
-              {Object.values(saveError)[0]} {Object.keys(saveError).length > 1 && `(+${Object.keys(saveError).length - 1} more)`}
-            </span>
-          )}
         </div>
       )}
 
@@ -392,46 +500,50 @@ export function AttendanceGrid({
                       </div>
                     </td>
                     {/* Attendance cells */}
-                    {Object.entries(lessonsByDate).map(([date, dateLessons]) =>
-                      dateLessons.map((lesson) => {
-                        const status = getCellStatus(student.id, lesson.id);
-                        const isFocused = focusedCell?.studentId === student.id && focusedCell?.lessonId === lesson.id;
-                        const hasPendingChange = pendingChanges[lesson.id]?.has(student.id) || false;
-                        const isLessonSaving = isSaving?.[lesson.id] || false;
+                {Object.entries(lessonsByDate).map(([date, dateLessons]) =>
+                  dateLessons.map((lesson) => {
+                    const status = getCellStatus(student.id, lesson.id);
+                    const isFocused = focusedCell?.studentId === student.id && focusedCell?.lessonId === lesson.id;
+                    const hasPendingChange = pendingChanges[lesson.id]?.has(student.id) || false;
+                    const isLessonSaving = isSaving?.[lesson.id] || false;
+                    const hasLessonChanges = pendingChanges[lesson.id] && pendingChanges[lesson.id].size > 0;
 
-                        const cellKey = `${student.id}-${lesson.id}`;
-                        return (
-                          <td
-                            key={lesson.id}
-                            ref={(el) => {
-                              if (el) cellRefs.current[cellKey] = el;
-                            }}
-                            className={cn(
-                              'border-r border-b border-slate-200 px-1 md:px-2 py-2 text-center cursor-pointer transition-all',
-                              getStatusStyles(status),
-                              isFocused && 'ring-2 ring-blue-500 ring-offset-1',
-                              hasPendingChange && 'ring-1 ring-blue-400',
-                              isLessonSaving && 'opacity-75'
-                            )}
-                            onClick={() => !isLessonSaving && toggleCellStatus(student.id, lesson.id)}
-                            onKeyDown={(e) => !isLessonSaving && handleKeyDown(e, student.id, lesson.id)}
-                            tabIndex={isLessonSaving ? -1 : 0}
-                            role="gridcell"
-                            aria-label={`${student.user.firstName} ${student.user.lastName} - ${formatDate(lesson.scheduledAt)} ${formatTime(lesson.scheduledAt)} - ${status}`}
-                            aria-disabled={isLessonSaving}
-                          >
-                            <div className="flex items-center justify-center h-7 w-7 md:h-8 md:w-8 mx-auto rounded text-xs md:text-sm font-semibold relative">
-                              {getStatusIcon(status)}
-                              {isLessonSaving && (
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                  <div className="h-2.5 w-2.5 md:h-3 md:w-3 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
-                                </div>
-                              )}
+                    const cellKey = `${student.id}-${lesson.id}`;
+                    return (
+                      <td
+                        key={lesson.id}
+                        ref={(el) => {
+                          if (el) cellRefs.current[cellKey] = el;
+                        }}
+                        className={cn(
+                          'border-r border-b border-slate-200 px-1 md:px-2 py-2 text-center cursor-pointer transition-all relative',
+                          getStatusStyles(status),
+                          isFocused && 'ring-2 ring-blue-500 ring-offset-1',
+                          hasPendingChange && 'ring-1 ring-amber-400',
+                          isLessonSaving && 'opacity-75'
+                        )}
+                        onClick={() => !isLessonSaving && toggleCellStatus(student.id, lesson.id)}
+                        onKeyDown={(e) => !isLessonSaving && handleKeyDown(e, student.id, lesson.id)}
+                        tabIndex={isLessonSaving ? -1 : 0}
+                        role="gridcell"
+                        aria-label={`${student.user.firstName} ${student.user.lastName} - ${formatDate(lesson.scheduledAt)} ${formatTime(lesson.scheduledAt)} - ${status}`}
+                        aria-disabled={isLessonSaving}
+                      >
+                        <div className="flex items-center justify-center h-7 w-7 md:h-8 md:w-8 mx-auto rounded text-xs md:text-sm font-semibold relative">
+                          {getStatusIcon(status)}
+                          {isLessonSaving && (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="h-2.5 w-2.5 md:h-3 md:w-3 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
                             </div>
-                          </td>
-                        );
-                      })
-                    )}
+                          )}
+                        </div>
+                        {hasPendingChange && !isLessonSaving && (
+                          <div className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-amber-500"></div>
+                        )}
+                      </td>
+                    );
+                  })
+                )}
                   </tr>
                 );
               })}
@@ -439,6 +551,56 @@ export function AttendanceGrid({
           </table>
         </div>
       </div>
+
+      {/* Lesson-specific Save buttons */}
+      {Object.entries(lessonsByDate).map(([date, dateLessons]) =>
+        dateLessons.map((lesson) => {
+          const hasLessonChanges = pendingChanges[lesson.id] && pendingChanges[lesson.id].size > 0;
+          const isLessonSaving = isSaving?.[lesson.id] || false;
+          const lessonSaveError = saveError[lesson.id];
+          const lessonSaveSuccess = saveSuccess[lesson.id];
+
+          if (!hasLessonChanges && !isLessonSaving && !lessonSaveError && !lessonSaveSuccess) {
+            return null;
+          }
+
+          return (
+            <div
+              key={lesson.id}
+              className="flex items-center justify-between rounded-lg bg-slate-50 px-4 py-2 text-sm border border-slate-200"
+            >
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-slate-700">
+                  {formatDate(lesson.scheduledAt)} {formatTime(lesson.scheduledAt)}
+                </span>
+                {lesson.topic && <span className="text-slate-500">• {lesson.topic}</span>}
+                {hasLessonChanges && (
+                  <span className="text-amber-600">
+                    ({pendingChanges[lesson.id].size} {pendingChanges[lesson.id].size === 1 ? 'change' : 'changes'})
+                  </span>
+                )}
+                {lessonSaveSuccess && (
+                  <span className="text-green-600 font-medium">✓ Saved</span>
+                )}
+                {lessonSaveError && (
+                  <span className="text-red-600 text-xs">{lessonSaveError}</span>
+                )}
+              </div>
+              {hasLessonChanges && !isLessonSaving && (
+                <Button
+                  onClick={() => handleManualSave(lesson.id)}
+                  disabled={isLessonSaving}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  size="sm"
+                  isLoading={isLessonSaving}
+                >
+                  Save
+                </Button>
+              )}
+            </div>
+          );
+        })
+      )}
 
       {/* Legend */}
       <div className="flex items-center gap-4 text-xs text-slate-600 bg-slate-50 rounded-lg px-4 py-2">

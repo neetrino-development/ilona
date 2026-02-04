@@ -1,6 +1,8 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { cn } from '@/shared/lib/utils';
 import { DashboardLayout } from '@/shared/components/layout/DashboardLayout';
 import { AttendanceGrid } from '@/shared/components/attendance';
 import { useGroups } from '@/features/groups';
@@ -21,6 +23,7 @@ interface AttendanceCell {
 }
 
 export default function TeacherAttendanceRegisterPage() {
+  const router = useRouter();
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [dateFrom, setDateFrom] = useState<string>(() => {
     const date = new Date();
@@ -29,6 +32,9 @@ export default function TeacherAttendanceRegisterPage() {
   });
   const [dateTo, setDateTo] = useState<string>(() => new Date().toISOString().split('T')[0]);
   const [savingLessons, setSavingLessons] = useState<Record<string, boolean>>({});
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [saveMessages, setSaveMessages] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const messageTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Fetch teacher's groups (backend filters automatically)
   const { data: groupsData, isLoading: isLoadingGroups } = useGroups({ take: 100, isActive: true });
@@ -121,6 +127,57 @@ export default function TeacherAttendanceRegisterPage() {
     }
   };
 
+  // Handle save success
+  const handleSaveSuccess = (lessonId: string) => {
+    setSaveMessages({ type: 'success', message: 'Attendance saved successfully' });
+    if (messageTimeoutRef.current) {
+      clearTimeout(messageTimeoutRef.current);
+    }
+    messageTimeoutRef.current = setTimeout(() => {
+      setSaveMessages(null);
+    }, 3000);
+  };
+
+  // Handle save error
+  const handleSaveError = (lessonId: string, error: string) => {
+    setSaveMessages({ type: 'error', message: `Failed to save attendance: ${error}` });
+    if (messageTimeoutRef.current) {
+      clearTimeout(messageTimeoutRef.current);
+    }
+    messageTimeoutRef.current = setTimeout(() => {
+      setSaveMessages(null);
+    }, 5000);
+  };
+
+  // Cleanup message timeout
+  useEffect(() => {
+    return () => {
+      if (messageTimeoutRef.current) {
+        clearTimeout(messageTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Handle navigation with unsaved changes
+  useEffect(() => {
+    if (!hasUnsavedChanges) return;
+
+    const handleRouteChange = () => {
+      if (hasUnsavedChanges) {
+        const confirmed = window.confirm(
+          'You have unsaved changes. Are you sure you want to leave? Your changes will be lost.'
+        );
+        if (!confirmed) {
+          throw new Error('Navigation cancelled');
+        }
+      }
+    };
+
+    // Note: Next.js App Router doesn't have a built-in way to intercept navigation
+    // The beforeunload event in AttendanceGrid handles browser navigation
+    // For programmatic navigation, we rely on the confirmation prompt
+  }, [hasUnsavedChanges]);
+
   const selectedGroup = groups.find((g) => g.id === selectedGroupId);
 
   // Calculate statistics
@@ -150,6 +207,19 @@ export default function TeacherAttendanceRegisterPage() {
   return (
     <DashboardLayout title="Attendance Register" subtitle="Mark and manage student attendance">
       <div className="space-y-6">
+        {/* Save messages */}
+        {saveMessages && (
+          <div
+            className={cn(
+              'rounded-lg px-4 py-3 text-sm font-medium',
+              saveMessages.type === 'success'
+                ? 'bg-green-50 text-green-700 border border-green-200'
+                : 'bg-red-50 text-red-700 border border-red-200'
+            )}
+          >
+            {saveMessages.message}
+          </div>
+        )}
         {/* Selection Controls */}
         <div className="bg-white rounded-xl border border-slate-200 p-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -259,8 +329,10 @@ export default function TeacherAttendanceRegisterPage() {
                 onLessonSave={handleLessonSave}
                 isLoading={isLoadingAttendance}
                 isSaving={savingLessons}
-                autoSaveDelay={2000}
                 dateRange={{ from: dateFrom, to: dateTo }}
+                onSaveSuccess={handleSaveSuccess}
+                onSaveError={handleSaveError}
+                onUnsavedChangesChange={setHasUnsavedChanges}
               />
             )}
           </div>
