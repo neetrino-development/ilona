@@ -9,6 +9,8 @@ import {
   deleteAvatar,
 } from '../api/settings.api';
 import type { UpdateProfileDto, ChangePasswordDto } from '../types';
+import { useAuthStore } from '@/features/auth/store/auth.store';
+import { teacherKeys } from '@/features/teachers';
 
 // Query keys
 export const settingsKeys = {
@@ -31,11 +33,30 @@ export function useProfile() {
  */
 export function useUpdateProfile() {
   const queryClient = useQueryClient();
+  const { user, setUser } = useAuthStore();
 
   return useMutation({
     mutationFn: (data: UpdateProfileDto) => updateProfile(data),
-    onSuccess: () => {
+    onSuccess: (updatedProfile) => {
+      // Invalidate profile query
       queryClient.invalidateQueries({ queryKey: settingsKeys.profile() });
+      
+      // If user is a teacher, also invalidate teacher queries
+      if (user?.role === 'TEACHER' && user.id) {
+        // Find teacher by userId - we need to invalidate all teacher queries
+        // since we don't know the teacher ID from the user ID directly
+        queryClient.invalidateQueries({ queryKey: teacherKeys.all });
+      }
+      
+      // Update auth store with new user data
+      if (updatedProfile && user) {
+        setUser({
+          ...user,
+          firstName: updatedProfile.firstName || user.firstName,
+          lastName: updatedProfile.lastName || user.lastName,
+          phone: updatedProfile.phone || user.phone,
+        });
+      }
     },
   });
 }

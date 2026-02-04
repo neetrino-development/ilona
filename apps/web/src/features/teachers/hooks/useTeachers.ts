@@ -13,7 +13,10 @@ import type {
   TeacherFilters,
   CreateTeacherDto,
   UpdateTeacherDto,
+  Teacher,
 } from '../types';
+import { useAuthStore } from '@/features/auth/store/auth.store';
+import { settingsKeys } from '@/features/settings/hooks/useSettings';
 
 // Query keys
 export const teacherKeys = {
@@ -32,6 +35,10 @@ export function useTeachers(filters?: TeacherFilters) {
   return useQuery({
     queryKey: teacherKeys.list(filters),
     queryFn: () => fetchTeachers(filters),
+    // Refetch on window focus to ensure data consistency
+    refetchOnWindowFocus: true,
+    // Data is considered stale after 30 seconds
+    staleTime: 30 * 1000,
   });
 }
 
@@ -43,6 +50,10 @@ export function useTeacher(id: string, enabled = true) {
     queryKey: teacherKeys.detail(id),
     queryFn: () => fetchTeacher(id),
     enabled: enabled && !!id,
+    // Refetch on window focus to ensure data consistency
+    refetchOnWindowFocus: true,
+    // Data is considered stale after 30 seconds
+    staleTime: 30 * 1000,
   });
 }
 
@@ -82,14 +93,62 @@ export function useCreateTeacher() {
  */
 export function useUpdateTeacher() {
   const queryClient = useQueryClient();
+  const { user, setUser } = useAuthStore();
 
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateTeacherDto }) =>
       updateTeacher(id, data),
-    onSuccess: (_, { id }) => {
-      // Invalidate specific teacher and list
+    // Optimistic update for better UX
+    onMutate: async ({ id, data }) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: teacherKeys.detail(id) });
+      await queryClient.cancelQueries({ queryKey: teacherKeys.lists() });
+
+      // Snapshot the previous value
+      const previousTeacher = queryClient.getQueryData<Teacher>(teacherKeys.detail(id));
+
+      // Optimistically update the cache
+      if (previousTeacher) {
+        queryClient.setQueryData<Teacher>(teacherKeys.detail(id), {
+          ...previousTeacher,
+          ...data,
+          user: {
+            ...previousTeacher.user,
+            ...(data.firstName && { firstName: data.firstName }),
+            ...(data.lastName && { lastName: data.lastName }),
+            ...(data.phone !== undefined && { phone: data.phone }),
+            ...(data.status && { status: data.status }),
+          },
+        });
+      }
+
+      return { previousTeacher };
+    },
+    onError: (err, { id }, context) => {
+      // Rollback on error
+      if (context?.previousTeacher) {
+        queryClient.setQueryData(teacherKeys.detail(id), context.previousTeacher);
+      }
+    },
+    onSuccess: (updatedTeacher, { id }) => {
+      // Invalidate and refetch all related queries
       queryClient.invalidateQueries({ queryKey: teacherKeys.detail(id) });
       queryClient.invalidateQueries({ queryKey: teacherKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: teacherKeys.all });
+      // Also invalidate user profile queries (settings)
+      queryClient.invalidateQueries({ queryKey: settingsKeys.profile() });
+      queryClient.invalidateQueries({ queryKey: settingsKeys.all });
+
+      // Update auth store if this is the current user
+      if (user && updatedTeacher.user && user.id === updatedTeacher.user.id) {
+        setUser({
+          ...user,
+          firstName: updatedTeacher.user.firstName,
+          lastName: updatedTeacher.user.lastName,
+          phone: updatedTeacher.user.phone,
+          status: updatedTeacher.user.status,
+        });
+      }
     },
   });
 }
