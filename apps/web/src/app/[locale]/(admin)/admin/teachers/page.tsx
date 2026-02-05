@@ -154,13 +154,11 @@ export default function TeachersPage() {
       className: 'text-right',
       render: (teacher: Teacher) => {
         const rate = typeof teacher.hourlyRate === 'string' ? parseFloat(teacher.hourlyRate) : Number(teacher.hourlyRate || 0);
-        const localeForFormatting = locale === 'hy' ? 'hy-AM' : 'en-US';
-        const currency = locale === 'hy' ? 'AMD' : 'USD';
         return (
           <span className="text-slate-700 font-medium">
-            {new Intl.NumberFormat(localeForFormatting, {
+            {new Intl.NumberFormat('hy-AM', {
               style: 'currency',
-              currency: currency,
+              currency: 'AMD',
               minimumFractionDigits: 0,
               maximumFractionDigits: 0,
             }).format(rate)}/hr
