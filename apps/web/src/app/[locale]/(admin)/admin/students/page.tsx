@@ -1,16 +1,24 @@
 'use client';
 
 import { useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { DashboardLayout } from '@/shared/components/layout/DashboardLayout';
 import { StatCard, DataTable, Badge, Button } from '@/shared/components/ui';
-import { useStudents, useDeleteStudent, AddStudentForm, type Student } from '@/features/students';
+import { useStudents, useDeleteStudent, AddStudentForm, DeleteConfirmationDialog, type Student } from '@/features/students';
 import { formatCurrency } from '@/shared/lib/utils';
 
 export default function StudentsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(0);
   const [isAddStudentOpen, setIsAddStudentOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleteSuccess, setDeleteSuccess] = useState(false);
+  const params = useParams();
+  const router = useRouter();
+  const locale = params.locale as string;
   const t = useTranslations('students');
   const tCommon = useTranslations('common');
   const pageSize = 10;
@@ -39,15 +47,40 @@ export default function StudentsPage() {
     setPage(0);
   };
 
-  // Handle delete
-  const handleDelete = async (id: string) => {
-    if (confirm('Are you sure you want to delete this student?')) {
-      try {
-        await deleteStudent.mutateAsync(id);
-      } catch (err) {
-        console.error('Failed to delete student:', err);
-      }
+  // Handle delete button click
+  const handleDeleteClick = (student: Student) => {
+    setSelectedStudent(student);
+    setDeleteError(null);
+    setDeleteSuccess(false);
+    setIsDeleteDialogOpen(true);
+  };
+
+  // Handle delete confirmation
+  const handleDeleteConfirm = async () => {
+    if (!selectedStudent) return;
+
+    setDeleteError(null);
+    setDeleteSuccess(false);
+
+    try {
+      await deleteStudent.mutateAsync(selectedStudent.id);
+      setDeleteSuccess(true);
+      setIsDeleteDialogOpen(false);
+      setSelectedStudent(null);
+      
+      // Clear success message after a delay
+      setTimeout(() => {
+        setDeleteSuccess(false);
+      }, 3000);
+    } catch (err: any) {
+      const message = err?.response?.data?.message || err?.message || 'Failed to delete student. Please try again.';
+      setDeleteError(message);
     }
+  };
+
+  // Handle view button click
+  const handleViewClick = (studentId: string) => {
+    router.push(`/${locale}/admin/students/${studentId}`);
   };
 
   // Stats calculation
@@ -145,15 +178,22 @@ export default function StudentsPage() {
       key: 'actions',
       header: 'Actions',
       render: (student: Student) => (
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 font-medium">
+        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="text-blue-600 hover:text-blue-700 font-medium"
+            onClick={() => handleViewClick(student.id)}
+            disabled={deleteStudent.isPending}
+          >
             View
           </Button>
           <Button 
             variant="ghost" 
             size="sm" 
             className="text-red-600 hover:text-red-700 font-medium"
-            onClick={() => handleDelete(student.id)}
+            onClick={() => handleDeleteClick(student)}
+            disabled={deleteStudent.isPending}
           >
             Delete
           </Button>
@@ -311,6 +351,23 @@ export default function StudentsPage() {
         open={isAddStudentOpen} 
         onOpenChange={setIsAddStudentOpen} 
       />
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteConfirmationDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        onConfirm={handleDeleteConfirm}
+        studentName={selectedStudent ? `${selectedStudent.user?.firstName || ''} ${selectedStudent.user?.lastName || ''}`.trim() : undefined}
+        isLoading={deleteStudent.isPending}
+        error={deleteError}
+      />
+
+      {/* Success Message */}
+      {deleteSuccess && (
+        <div className="fixed bottom-4 right-4 p-4 bg-green-50 border border-green-200 rounded-lg shadow-lg z-50">
+          <p className="text-sm text-green-600">Student deleted successfully!</p>
+        </div>
+      )}
     </DashboardLayout>
   );
 }
