@@ -51,8 +51,6 @@ export interface CreateTeacherDto {
   firstName: string;
   lastName: string;
   phone?: string;
-  bio?: string;
-  specialization?: string;
   hourlyRate: number;
   workingDays?: string[];
   workingHours?: {
@@ -66,8 +64,6 @@ export interface UpdateTeacherDto {
   lastName?: string;
   phone?: string;
   status?: UserStatus;
-  bio?: string;
-  specialization?: string;
   hourlyRate?: number;
   workingDays?: string[];
   workingHours?: {

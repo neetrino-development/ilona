@@ -13,8 +13,6 @@ const updateTeacherSchema = z.object({
   lastName: z.string().min(2, 'Last name must be at least 2 characters').max(50, 'Last name must be at most 50 characters'),
   phone: z.string().optional(),
   status: z.enum(['ACTIVE', 'INACTIVE', 'SUSPENDED']).optional(),
-  bio: z.string().max(1000, 'Bio must be at most 1000 characters').optional(),
-  specialization: z.string().max(200, 'Specialization must be at most 200 characters').optional(),
   hourlyRate: z.number().min(0, 'Hourly rate must be positive').optional(),
   workingDays: z.array(z.string()).optional(),
   workingHours: z.object({
@@ -49,8 +47,6 @@ export function EditTeacherForm({ open, onOpenChange, teacherId }: EditTeacherFo
       firstName: '',
       lastName: '',
       phone: '',
-      bio: '',
-      specialization: '',
       hourlyRate: 0,
       workingDays: [],
       workingHours: {
@@ -67,8 +63,6 @@ export function EditTeacherForm({ open, onOpenChange, teacherId }: EditTeacherFo
       setValue('lastName', teacher.user.lastName || '');
       setValue('phone', teacher.user.phone || '');
       setValue('status', teacher.user.status);
-      setValue('bio', teacher.bio || '');
-      setValue('specialization', teacher.specialization || '');
       setValue('hourlyRate', teacher.hourlyRate || 0);
       setValue('workingDays', teacher.workingDays || []);
       setValue('workingHours', teacher.workingHours || { start: '09:00', end: '18:00' });
@@ -95,8 +89,6 @@ export function EditTeacherForm({ open, onOpenChange, teacherId }: EditTeacherFo
         lastName: data.lastName,
         phone: data.phone || undefined,
         status: data.status,
-        bio: data.bio || undefined,
-        specialization: data.specialization || undefined,
         hourlyRate: data.hourlyRate,
         workingDays: data.workingDays,
         workingHours: data.workingHours,
@@ -214,30 +206,6 @@ export function EditTeacherForm({ open, onOpenChange, teacherId }: EditTeacherFo
                 error={errors.hourlyRate?.message}
                 placeholder="25.00"
               />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="specialization">Specialization</Label>
-              <Input
-                id="specialization"
-                {...register('specialization')}
-                error={errors.specialization?.message}
-                placeholder="English Literature, Business English, etc."
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="bio">Bio</Label>
-              <textarea
-                id="bio"
-                {...register('bio')}
-                rows={4}
-                className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                placeholder="Brief description about the teacher..."
-              />
-              {errors.bio && (
-                <p className="text-sm text-red-600">{errors.bio.message}</p>
-              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">

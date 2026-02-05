@@ -16,8 +16,6 @@ const updateTeacherSchema = z.object({
   lastName: z.string().min(2, 'Last name must be at least 2 characters').max(50, 'Last name must be at most 50 characters'),
   phone: z.string().max(50, 'Phone must be at most 50 characters').optional().or(z.literal('')),
   status: z.enum(['ACTIVE', 'INACTIVE', 'SUSPENDED']),
-  bio: z.string().max(1000, 'Bio must be at most 1000 characters').optional().or(z.literal('')),
-  specialization: z.string().max(200, 'Specialization must be at most 200 characters').optional().or(z.literal('')),
   hourlyRate: z.number().min(0, 'Hourly rate must be positive'),
   workingDays: z.array(z.string()).optional(),
   workingHours: z.object({
@@ -59,8 +57,6 @@ export default function TeacherProfilePage() {
       lastName: '',
       phone: '',
       status: 'ACTIVE' as UserStatus,
-      bio: '',
-      specialization: '',
       hourlyRate: 0,
       workingDays: [],
       workingHours: {
@@ -82,8 +78,6 @@ export default function TeacherProfilePage() {
         lastName: teacher.user?.lastName || '',
         phone: teacher.user?.phone || '',
         status: (teacher.user?.status || 'ACTIVE') as UserStatus,
-        bio: teacher.bio || '',
-        specialization: teacher.specialization || '',
         hourlyRate,
         workingDays: teacher.workingDays || [],
         workingHours: teacher.workingHours || { start: '09:00', end: '18:00' },
@@ -152,8 +146,6 @@ export default function TeacherProfilePage() {
         lastName: data.lastName,
         phone: data.phone || undefined,
         status: data.status,
-        bio: data.bio || undefined,
-        specialization: data.specialization || undefined,
         hourlyRate: data.hourlyRate,
         workingDays: data.workingDays && data.workingDays.length > 0 ? data.workingDays : undefined,
         workingHours: data.workingHours,
@@ -502,28 +494,6 @@ export default function TeacherProfilePage() {
               {isEditMode ? (
                 <>
                   <div className="space-y-2">
-                    <Label htmlFor="specialization">Specialization</Label>
-                    <Input
-                      id="specialization"
-                      {...register('specialization')}
-                      error={errors.specialization?.message}
-                      placeholder={t('specializationPlaceholder')}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="bio">Bio</Label>
-                    <textarea
-                      id="bio"
-                      {...register('bio')}
-                      rows={4}
-                      className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                      placeholder={t('bioPlaceholder')}
-                    />
-                    {errors.bio && (
-                      <p className="text-sm text-red-600">{errors.bio.message}</p>
-                    )}
-                  </div>
-                  <div className="space-y-2">
                     <Label>Working Days</Label>
                     <div className="flex flex-wrap gap-2">
                       {DAYS_OF_WEEK.map((day) => {
@@ -575,18 +545,6 @@ export default function TeacherProfilePage() {
                 </>
               ) : (
                 <>
-                  {teacher.specialization && (
-                    <div>
-                      <label className="text-sm font-medium text-slate-500">Specialization</label>
-                      <p className="text-slate-800 mt-1">{teacher.specialization}</p>
-                    </div>
-                  )}
-                  {teacher.bio && (
-                    <div>
-                      <label className="text-sm font-medium text-slate-500">Bio</label>
-                      <p className="text-slate-800 mt-1">{teacher.bio}</p>
-                    </div>
-                  )}
                   {teacher.workingDays && teacher.workingDays.length > 0 && (
                     <div>
                       <label className="text-sm font-medium text-slate-500">Working Days</label>
