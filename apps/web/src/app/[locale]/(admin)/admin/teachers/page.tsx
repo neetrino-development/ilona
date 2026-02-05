@@ -5,12 +5,24 @@ import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { DashboardLayout } from '@/shared/components/layout/DashboardLayout';
 import { StatCard, DataTable, Badge, Button } from '@/shared/components/ui';
-import { useTeachers, useDeleteTeacher, AddTeacherForm, type Teacher } from '@/features/teachers';
+import { 
+  useTeachers, 
+  useDeleteTeacher, 
+  AddTeacherForm, 
+  EditTeacherForm,
+  DeleteConfirmationDialog,
+  type Teacher 
+} from '@/features/teachers';
 
 export default function TeachersPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(0);
   const [isAddTeacherOpen, setIsAddTeacherOpen] = useState(false);
+  const [isEditTeacherOpen, setIsEditTeacherOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleteSuccess, setDeleteSuccess] = useState(false);
   const params = useParams();
   const router = useRouter();
   const locale = params.locale as string;
@@ -43,21 +55,44 @@ export default function TeachersPage() {
     setPage(0); // Reset to first page on search
   };
 
-  // Handle delete
-  const handleDelete = async (id: string) => {
-    if (confirm(t('confirmDelete'))) {
-      try {
-        await deleteTeacher.mutateAsync(id);
-      } catch (err) {
-        console.error('Failed to delete teacher:', err);
-      }
+  // Handle edit button click
+  const handleEditClick = (teacher: Teacher) => {
+    setSelectedTeacher(teacher);
+    setIsEditTeacherOpen(true);
+  };
+
+  // Handle delete button click
+  const handleDeleteClick = (teacher: Teacher) => {
+    setSelectedTeacher(teacher);
+    setDeleteError(null);
+    setDeleteSuccess(false);
+    setIsDeleteDialogOpen(true);
+  };
+
+  // Handle delete confirmation
+  const handleDeleteConfirm = async () => {
+    if (!selectedTeacher) return;
+
+    setDeleteError(null);
+    setDeleteSuccess(false);
+
+    try {
+      await deleteTeacher.mutateAsync(selectedTeacher.id);
+      setDeleteSuccess(true);
+      setIsDeleteDialogOpen(false);
+      setSelectedTeacher(null);
+      
+      // Clear success message after a delay
+      setTimeout(() => {
+        setDeleteSuccess(false);
+      }, 3000);
+    } catch (err: any) {
+      const message = err?.response?.data?.message || err?.message || 'Failed to delete teacher. Please try again.';
+      setDeleteError(message);
     }
   };
 
-  // Handle row click to navigate to teacher profile
-  const handleRowClick = (teacher: Teacher) => {
-    router.push(`/${locale}/admin/teachers/${teacher.id}`);
-  };
+  // Row clicks are disabled - only Edit button opens edit form
 
   // Stats calculation
   const activeTeachers = teachers.filter(t => t.user?.status === 'ACTIVE').length;
@@ -92,12 +127,12 @@ export default function TeachersPage() {
         const phone = teacher.user?.phone || t('noPhoneNumber');
         const initials = `${firstName[0] || ''}${lastName[0] || ''}` || '?';
         return (
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
             <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-semibold">
               {initials}
             </div>
             <div>
-              <p className="font-semibold text-slate-800 hover:text-blue-600 transition-colors">
+              <p className="font-semibold text-slate-800">
                 {firstName} {lastName}
               </p>
               <p className="text-sm text-slate-500">{phone}</p>
@@ -112,7 +147,7 @@ export default function TeachersPage() {
       render: (teacher: Teacher) => {
         const groups = teacher.groups || [];
         return (
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-1.5" onClick={(e) => e.stopPropagation()}>
             {groups.slice(0, 2).map((group) => (
               <Badge key={group.id} variant="info">
                 {group.name}
@@ -134,9 +169,11 @@ export default function TeachersPage() {
       render: (teacher: Teacher) => {
         const status = teacher.user?.status || 'ACTIVE';
         return (
-          <Badge variant={status === 'ACTIVE' ? 'success' : 'warning'}>
-            {tStatus(status.toLowerCase())}
-          </Badge>
+          <div onClick={(e) => e.stopPropagation()}>
+            <Badge variant={status === 'ACTIVE' ? 'success' : 'warning'}>
+              {tStatus(status.toLowerCase())}
+            </Badge>
+          </div>
         );
       },
     },
@@ -147,7 +184,7 @@ export default function TeachersPage() {
       render: (teacher: Teacher) => {
         const rate = typeof teacher.hourlyRate === 'string' ? parseFloat(teacher.hourlyRate) : Number(teacher.hourlyRate || 0);
         return (
-          <span className="text-slate-700 font-medium">
+          <span className="text-slate-700 font-medium" onClick={(e) => e.stopPropagation()}>
             {new Intl.NumberFormat('hy-AM', {
               style: 'currency',
               currency: 'AMD',
@@ -169,7 +206,7 @@ export default function TeachersPage() {
             className="text-blue-600 hover:text-blue-700 font-medium"
             onClick={(e) => {
               e.stopPropagation();
-              // TODO: Implement edit functionality
+              handleEditClick(teacher);
             }}
           >
             {t('edit')}
@@ -180,7 +217,7 @@ export default function TeachersPage() {
             className="text-red-600 hover:text-red-700 font-medium"
             onClick={(e) => {
               e.stopPropagation();
-              handleDelete(teacher.id);
+              handleDeleteClick(teacher);
             }}
           >
             {t('delete')}
@@ -260,7 +297,6 @@ export default function TeachersPage() {
           columns={teacherColumns}
           data={teachers}
           keyExtractor={(teacher) => teacher.id}
-          onRowClick={handleRowClick}
           isLoading={isLoading}
           emptyMessage={searchQuery ? t('noTeachersMatch') : t('noTeachersFound')}
         />
@@ -353,10 +389,53 @@ export default function TeachersPage() {
         </div>
       </div>
 
+      {/* Success/Error Messages */}
+      {deleteSuccess && (
+        <div className="fixed bottom-4 right-4 p-4 bg-green-50 border border-green-200 rounded-lg shadow-lg z-50">
+          <p className="text-sm text-green-600 font-medium">Teacher deleted successfully!</p>
+        </div>
+      )}
+      {deleteError && (
+        <div className="fixed bottom-4 right-4 p-4 bg-red-50 border border-red-200 rounded-lg shadow-lg z-50">
+          <p className="text-sm text-red-600 font-medium">{deleteError}</p>
+        </div>
+      )}
+
       {/* Add Teacher Modal */}
       <AddTeacherForm 
         open={isAddTeacherOpen} 
         onOpenChange={setIsAddTeacherOpen} 
+      />
+
+      {/* Edit Teacher Modal */}
+      {selectedTeacher && (
+        <EditTeacherForm 
+          open={isEditTeacherOpen} 
+          onOpenChange={(open) => {
+            setIsEditTeacherOpen(open);
+            if (!open) {
+              setSelectedTeacher(null);
+            }
+          }}
+          teacherId={selectedTeacher.id}
+        />
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteConfirmationDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={(open) => {
+          setIsDeleteDialogOpen(open);
+          if (!open) {
+            setSelectedTeacher(null);
+            setDeleteError(null);
+            setDeleteSuccess(false);
+          }
+        }}
+        onConfirm={handleDeleteConfirm}
+        teacherName={selectedTeacher ? `${selectedTeacher.user.firstName} ${selectedTeacher.user.lastName}` : undefined}
+        isLoading={deleteTeacher.isPending}
+        error={deleteError}
       />
     </DashboardLayout>
   );

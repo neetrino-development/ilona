@@ -11,6 +11,8 @@ export {
 
 // Components
 export { AddTeacherForm } from './components/AddTeacherForm';
+export { EditTeacherForm } from './components/EditTeacherForm';
+export { DeleteConfirmationDialog } from './components/DeleteConfirmationDialog';
 
 // Types
 export type {

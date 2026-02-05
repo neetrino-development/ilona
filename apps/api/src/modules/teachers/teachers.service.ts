@@ -253,9 +253,50 @@ export class TeachersService {
   async delete(id: string) {
     const teacher = await this.findById(id);
 
-    // Delete user (cascades to teacher)
-    await this.prisma.user.delete({
-      where: { id: teacher.user.id },
+    // Delete in transaction to handle foreign key constraints
+    await this.prisma.$transaction(async (tx) => {
+      // Delete related feedbacks first (they reference teacher)
+      await tx.feedback.deleteMany({
+        where: { teacherId: id },
+      });
+
+      // Delete related lessons (they reference teacher)
+      // Note: This will cascade to attendances via lesson deletion
+      await tx.lesson.deleteMany({
+        where: { teacherId: id },
+      });
+
+      // Delete salary records (they have onDelete: Cascade but let's be explicit)
+      await tx.salaryRecord.deleteMany({
+        where: { teacherId: id },
+      });
+
+      // Delete deductions (they have onDelete: Cascade but let's be explicit)
+      await tx.deduction.deleteMany({
+        where: { teacherId: id },
+      });
+
+      // Groups will have teacherId set to null automatically (onDelete: SetNull)
+      // But we need to update them explicitly
+      await tx.group.updateMany({
+        where: { teacherId: id },
+        data: { teacherId: null },
+      });
+
+      // Delete chat participants for this user
+      await tx.chatParticipant.deleteMany({
+        where: { userId: teacher.user.id },
+      });
+
+      // Delete notifications for this user
+      await tx.notification.deleteMany({
+        where: { userId: teacher.user.id },
+      });
+
+      // Finally, delete the user (this will cascade to teacher due to onDelete: Cascade)
+      await tx.user.delete({
+        where: { id: teacher.user.id },
+      });
     });
 
     return { success: true };
