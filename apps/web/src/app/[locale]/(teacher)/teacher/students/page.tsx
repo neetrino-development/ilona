@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useParams } from 'next/navigation';
 import { DashboardLayout } from '@/shared/components/layout/DashboardLayout';
 import { useMyAssignedStudents } from '@/features/students/hooks/useStudents';
 import type { Student } from '@/features/students/types';
@@ -8,6 +9,8 @@ import { cn } from '@/shared/lib/utils';
 import Link from 'next/link';
 
 export default function TeacherStudentsPage() {
+  const params = useParams();
+  const locale = params.locale as string;
   const [searchQuery, setSearchQuery] = useState('');
 
   // Fetch students assigned to the teacher
@@ -146,7 +149,7 @@ export default function TeacherStudentsPage() {
 
                     <div className="flex items-center gap-2">
                       <Link
-                        href={`/teacher/students/${student.id}`}
+                        href={`/${locale}/teacher/students/${student.id}`}
                         className="px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                       >
                         View Profile
