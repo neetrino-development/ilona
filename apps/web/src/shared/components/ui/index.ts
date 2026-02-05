@@ -5,6 +5,7 @@ export { Label } from './label';
 export { StatCard } from './stat-card';
 export { DataTable } from './data-table';
 export { Badge } from './badge';
+export { FilterDropdown } from './filter-dropdown';
 export {
   Dialog,
   DialogPortal,
