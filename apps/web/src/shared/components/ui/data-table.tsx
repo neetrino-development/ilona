@@ -17,6 +17,9 @@ interface DataTableProps<T> {
   onRowClick?: (item: T) => void;
   isLoading?: boolean;
   emptyMessage?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+  onSort?: (key: string) => void;
 }
 
 export function DataTable<T>({
@@ -26,6 +29,9 @@ export function DataTable<T>({
   onRowClick,
   isLoading = false,
   emptyMessage = 'No data available',
+  sortBy,
+  sortOrder,
+  onSort,
 }: DataTableProps<T>) {
   if (isLoading) {
     return (
@@ -47,15 +53,31 @@ export function DataTable<T>({
                 key={column.key}
                 className={cn(
                   'px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider',
-                  column.className
+                  column.className,
+                  column.sortable && onSort && 'cursor-pointer hover:bg-slate-50'
                 )}
+                onClick={() => column.sortable && onSort && onSort(column.key)}
               >
                 <div className="flex items-center gap-1">
                   {column.header}
                   {column.sortable && (
-                    <svg className="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-                    </svg>
+                    <div className="flex flex-col">
+                      {sortBy === column.key ? (
+                        sortOrder === 'asc' ? (
+                          <svg className="w-3 h-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                          </svg>
+                        ) : (
+                          <svg className="w-3 h-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        )
+                      ) : (
+                        <svg className="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                        </svg>
+                      )}
+                    </div>
                   )}
                 </div>
               </th>

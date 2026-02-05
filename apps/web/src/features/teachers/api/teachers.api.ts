@@ -20,6 +20,8 @@ export async function fetchTeachers(filters?: TeacherFilters): Promise<TeachersR
   if (filters?.take !== undefined) params.append('take', String(filters.take));
   if (filters?.search) params.append('search', filters.search);
   if (filters?.status) params.append('status', filters.status);
+  if (filters?.sortBy) params.append('sortBy', filters.sortBy);
+  if (filters?.sortOrder) params.append('sortOrder', filters.sortOrder);
 
   const query = params.toString();
   const url = query ? `${TEACHERS_ENDPOINT}?${query}` : TEACHERS_ENDPOINT;

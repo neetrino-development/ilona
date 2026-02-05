@@ -26,6 +26,8 @@ export class TeachersController {
       take: query.take,
       search: query.search,
       status: query.status as UserStatus | undefined,
+      sortBy: query.sortBy,
+      sortOrder: query.sortOrder,
     });
   }
 

@@ -16,6 +16,7 @@ export interface Teacher {
   _count: {
     groups: number;
     lessons: number;
+    students: number;
   };
   createdAt: string;
   updatedAt: string;
@@ -40,6 +41,8 @@ export interface TeacherFilters {
   take?: number;
   search?: string;
   status?: UserStatus;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
 }
 
 export interface CreateTeacherDto {

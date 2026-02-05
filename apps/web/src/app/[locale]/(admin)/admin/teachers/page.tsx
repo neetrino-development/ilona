@@ -17,6 +17,8 @@ import {
 export default function TeachersPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(0);
+  const [sortBy, setSortBy] = useState<string | undefined>(undefined);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [isAddTeacherOpen, setIsAddTeacherOpen] = useState(false);
   const [isEditTeacherOpen, setIsEditTeacherOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -31,7 +33,7 @@ export default function TeachersPage() {
   const tStatus = useTranslations('status');
   const pageSize = 10;
 
-  // Fetch teachers with search and pagination
+  // Fetch teachers with search, pagination, and sorting
   const { 
     data: teachersData, 
     isLoading,
@@ -39,7 +41,9 @@ export default function TeachersPage() {
   } = useTeachers({ 
     skip: page * pageSize,
     take: pageSize,
-    search: searchQuery || undefined 
+    search: searchQuery || undefined,
+    sortBy: sortBy,
+    sortOrder: sortOrder,
   });
 
   // Delete mutation
@@ -53,6 +57,19 @@ export default function TeachersPage() {
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
     setPage(0); // Reset to first page on search
+  };
+
+  // Handle sorting
+  const handleSort = (key: string) => {
+    if (sortBy === key) {
+      // Toggle sort order if same column
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      // Set new sort column with ascending order
+      setSortBy(key);
+      setSortOrder('asc');
+    }
+    setPage(0); // Reset to first page on sort
   };
 
   // Handle edit button click
@@ -160,6 +177,20 @@ export default function TeachersPage() {
               <span className="text-slate-400 text-sm">{t('noGroups')}</span>
             )}
           </div>
+        );
+      },
+    },
+    {
+      key: 'students',
+      header: t('students'),
+      sortable: true,
+      className: 'text-right',
+      render: (teacher: Teacher) => {
+        const studentCount = teacher._count?.students || 0;
+        return (
+          <span className="text-slate-700 font-medium" onClick={(e) => e.stopPropagation()}>
+            {studentCount}
+          </span>
         );
       },
     },
@@ -299,6 +330,9 @@ export default function TeachersPage() {
           keyExtractor={(teacher) => teacher.id}
           isLoading={isLoading}
           emptyMessage={searchQuery ? t('noTeachersMatch') : t('noTeachersFound')}
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          onSort={handleSort}
         />
 
         {/* Pagination */}

@@ -17,8 +17,10 @@ export class TeachersService {
     take?: number;
     search?: string;
     status?: UserStatus;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
   }) {
-    const { skip = 0, take = 50, search, status } = params || {};
+    const { skip = 0, take = 50, search, status, sortBy, sortOrder = 'asc' } = params || {};
 
     const where: Prisma.TeacherWhereInput = {};
     const userWhere: Prisma.UserWhereInput = {};
@@ -39,41 +41,142 @@ export class TeachersService {
       where.user = userWhere;
     }
 
-    const [items, total] = await Promise.all([
-      this.prisma.teacher.findMany({
-        where,
-        skip,
-        take,
-        orderBy: { user: { firstName: 'asc' } },
-        include: {
-          user: {
-            select: {
-              id: true,
-              email: true,
-              firstName: true,
-              lastName: true,
-              phone: true,
-              avatarUrl: true,
-              status: true,
-              lastLoginAt: true,
-              createdAt: true,
-            },
-          },
-          groups: {
-            take: 3,
-            select: {
-              id: true,
-              name: true,
-              level: true,
-            },
-          },
-          _count: {
-            select: { groups: true, lessons: true },
+    // Fetch teachers with groups
+    const teachers = await this.prisma.teacher.findMany({
+      where,
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+            phone: true,
+            avatarUrl: true,
+            status: true,
+            lastLoginAt: true,
+            createdAt: true,
           },
         },
-      }),
-      this.prisma.teacher.count({ where }),
-    ]);
+        groups: {
+          take: 3,
+          select: {
+            id: true,
+            name: true,
+            level: true,
+          },
+        },
+        _count: {
+          select: { groups: true, lessons: true },
+        },
+      },
+    });
+
+    // Get all teacher IDs
+    const teacherIds = teachers.map(t => t.id);
+
+    // Fetch student counts for all teachers in a single query using aggregation
+    const studentCounts = await this.prisma.student.groupBy({
+      by: ['groupId'],
+      where: {
+        group: {
+          teacherId: {
+            in: teacherIds,
+          },
+        },
+      },
+      _count: {
+        id: true,
+      },
+    });
+
+    // Get group-to-teacher mapping
+    const groups = await this.prisma.group.findMany({
+      where: {
+        teacherId: {
+          in: teacherIds,
+        },
+      },
+      select: {
+        id: true,
+        teacherId: true,
+      },
+    });
+
+    // Create a map of teacherId -> student count
+    const teacherStudentCountMap = new Map<string, number>();
+    groups.forEach(group => {
+      if (group.teacherId) {
+        const currentCount = teacherStudentCountMap.get(group.teacherId) || 0;
+        const groupStudentCount = studentCounts.find(sc => sc.groupId === group.id)?._count.id || 0;
+        teacherStudentCountMap.set(group.teacherId, currentCount + groupStudentCount);
+      }
+    });
+
+    // Add student counts to teachers
+    const teachersWithStudentCount = teachers.map(teacher => ({
+      ...teacher,
+      _count: {
+        ...teacher._count,
+        students: teacherStudentCountMap.get(teacher.id) || 0,
+      },
+    }));
+
+    // Apply sorting
+    let sortedTeachers = teachersWithStudentCount;
+    if (sortBy) {
+      sortedTeachers = [...teachersWithStudentCount].sort((a, b) => {
+        let aValue: any;
+        let bValue: any;
+
+        switch (sortBy) {
+          case 'students':
+            aValue = a._count.students || 0;
+            bValue = b._count.students || 0;
+            break;
+          case 'teacher':
+            aValue = `${a.user.firstName} ${a.user.lastName}`.toLowerCase();
+            bValue = `${b.user.firstName} ${b.user.lastName}`.toLowerCase();
+            break;
+          case 'groups':
+            aValue = a._count.groups || 0;
+            bValue = b._count.groups || 0;
+            break;
+          case 'lessons':
+            aValue = a._count.lessons || 0;
+            bValue = b._count.lessons || 0;
+            break;
+          default:
+            aValue = `${a.user.firstName} ${a.user.lastName}`.toLowerCase();
+            bValue = `${b.user.firstName} ${b.user.lastName}`.toLowerCase();
+        }
+
+        if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
+        if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
+        return 0;
+      });
+    } else {
+      // Default sorting by first name
+      sortedTeachers = [...teachersWithStudentCount].sort((a, b) => {
+        const aValue = `${a.user.firstName} ${a.user.lastName}`.toLowerCase();
+        const bValue = `${b.user.firstName} ${b.user.lastName}`.toLowerCase();
+        return aValue.localeCompare(bValue);
+      });
+    }
+
+    // Apply pagination
+    const total = sortedTeachers.length;
+    const paginatedTeachers = sortedTeachers.slice(skip, skip + take);
+
+    // Format response to match expected structure
+    const items = paginatedTeachers.map((teacher) => ({
+      ...teacher,
+      groups: teacher.groups.map((group) => ({
+        id: group.id,
+        name: group.name,
+        level: group.level,
+      })),
+    }));
 
     return {
       items,
