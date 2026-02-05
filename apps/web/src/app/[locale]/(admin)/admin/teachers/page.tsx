@@ -50,6 +50,8 @@ import {
   DeleteConfirmationDialog,
   type Teacher 
 } from '@/features/teachers';
+import { useCenters } from '@/features/centers';
+import { FilterDropdown } from '@/shared/components/ui/filter-dropdown';
 
 export default function TeachersPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -69,6 +71,8 @@ export default function TeachersPage() {
   const [bulkDeleteSuccess, setBulkDeleteSuccess] = useState(false);
   const [deactivateError, setDeactivateError] = useState<string | null>(null);
   const [deactivateSuccess, setDeactivateSuccess] = useState(false);
+  // Filter states
+  const [selectedBranchIds, setSelectedBranchIds] = useState<Set<string>>(new Set());
   const params = useParams();
   const router = useRouter();
   const locale = params.locale as string;
@@ -77,18 +81,27 @@ export default function TeachersPage() {
   const tStatus = useTranslations('status');
   const pageSize = 10;
 
-  // Fetch teachers with search, pagination, and sorting
+  // Fetch teachers (for client-side filtering)
+  // Note: Backend limits take to max 100, so filtering works on first 100 teachers
+  // For better scalability, server-side filtering should be implemented
   const { 
     data: teachersData, 
     isLoading,
     error 
   } = useTeachers({ 
-    skip: page * pageSize,
-    take: pageSize,
+    skip: 0,
+    take: 100, // Max allowed by backend
     search: searchQuery || undefined,
     sortBy: sortBy,
     sortOrder: sortOrder,
   });
+
+  // Fetch centers for branch filter
+  const { 
+    data: centersData, 
+    isLoading: isLoadingCenters,
+    error: centersError 
+  } = useCenters();
 
   // Delete mutation
   const deleteTeacher = useDeleteTeacher();
@@ -99,15 +112,50 @@ export default function TeachersPage() {
   // Update mutation (for deactivate)
   const updateTeacher = useUpdateTeacher();
 
-  const teachers = teachersData?.items || [];
-  const totalTeachers = teachersData?.total || 0;
-  const totalPages = teachersData?.totalPages || 1;
+  // Get all teachers from API
+  const allTeachers = teachersData?.items || [];
+  
+  // Apply filters client-side
+  const filteredTeachers = allTeachers.filter((teacher) => {
+    // Branch filter
+    if (selectedBranchIds.size > 0) {
+      const teacherCenters = teacher.centers || 
+        Array.from(
+          new Map(
+            (teacher.groups || [])
+              .filter((group) => group.center)
+              .map((group) => [group.center!.id, group.center!])
+          ).values()
+        );
+      const teacherCenterIds = new Set(teacherCenters.map(c => c.id));
+      const hasMatchingBranch = Array.from(selectedBranchIds).some(branchId => 
+        teacherCenterIds.has(branchId)
+      );
+      if (!hasMatchingBranch) return false;
+    }
+
+    return true;
+  });
+
+  // Apply pagination to filtered results
+  const startIndex = page * pageSize;
+  const endIndex = startIndex + pageSize;
+  const teachers = filteredTeachers.slice(startIndex, endIndex);
+  const totalTeachers = filteredTeachers.length;
+  const totalPages = Math.ceil(totalTeachers / pageSize);
 
   // Handle search with debounce effect
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
     setPage(0); // Reset to first page on search
     // Clear selection on search/filter change
+    setSelectedTeacherIds(new Set());
+  };
+
+  // Handle filter changes
+  const handleBranchFilterChange = (selectedIds: Set<string>) => {
+    setSelectedBranchIds(selectedIds);
+    setPage(0); // Reset to first page on filter change
     setSelectedTeacherIds(new Set());
   };
 
@@ -261,9 +309,9 @@ export default function TeachersPage() {
 
   // Row clicks are disabled - only Edit button opens edit form
 
-  // Stats calculation
-  const activeTeachers = teachers.filter(t => t.user?.status === 'ACTIVE').length;
-  const totalLessons = teachers.reduce((sum, t) => sum + (t._count?.lessons || 0), 0);
+  // Stats calculation - use filtered teachers for accurate stats
+  const activeTeachers = filteredTeachers.filter(t => t.user?.status === 'ACTIVE').length;
+  const totalLessons = filteredTeachers.reduce((sum, t) => sum + (t._count?.lessons || 0), 0);
 
   // Error state
   if (error) {
@@ -569,8 +617,27 @@ export default function TeachersPage() {
           />
           <StatCard
             title={t('avgLessonsPerTeacher')}
-            value={teachers.length > 0 ? Math.round(totalLessons / teachers.length) : 0}
+            value={filteredTeachers.length > 0 ? Math.round(totalLessons / filteredTeachers.length) : 0}
           />
+        </div>
+
+        {/* Filters - Always Visible */}
+        <div className="flex items-start gap-4">
+          <div className="flex-1">
+            <FilterDropdown
+              label={t('center')}
+              options={(centersData?.items || []).map(center => ({
+                id: center.id,
+                label: center.name,
+              }))}
+              selectedIds={selectedBranchIds}
+              onSelectionChange={handleBranchFilterChange}
+              placeholder={tCommon('all')}
+              isLoading={isLoadingCenters}
+              error={centersError ? 'Failed to load centers' : null}
+              className="w-full"
+            />
+          </div>
         </div>
 
         {/* Search & Actions Bar */}
@@ -613,14 +680,6 @@ export default function TeachersPage() {
           >
             + {t('addTeacher')}
           </Button>
-          <button 
-            className="p-3 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={deleteTeachers.isPending || deleteTeacher.isPending}
-          >
-            <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-            </svg>
-          </button>
         </div>
 
         {/* Teachers Table */}
@@ -704,8 +763,8 @@ export default function TeachersPage() {
               <div className="flex-1">
                 <h3 className="font-semibold text-slate-800 mb-2">{t('staffWorkload')}</h3>
                 <p className="text-sm text-slate-500 leading-relaxed">
-                  {teachers.length > 0 
-                    ? t('workloadDescription', { avg: Math.round(totalLessons / teachers.length) })
+                  {filteredTeachers.length > 0 
+                    ? t('workloadDescription', { avg: Math.round(totalLessons / filteredTeachers.length) })
                     : t('workloadNoTeachers')}
                 </p>
                 <button 
