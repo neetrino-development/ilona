@@ -18,6 +18,10 @@ export interface Teacher {
   } | null;
   user: Pick<User, 'id' | 'email' | 'firstName' | 'lastName' | 'phone' | 'avatarUrl' | 'status' | 'lastLoginAt' | 'createdAt'>;
   groups?: TeacherGroup[];
+  centers?: Array<{
+    id: string;
+    name: string;
+  }>;
   _count: {
     groups: number;
     lessons: number;
@@ -31,6 +35,10 @@ export interface TeacherGroup {
   id: string;
   name: string;
   level?: string;
+  center?: {
+    id: string;
+    name: string;
+  };
 }
 
 export interface TeachersResponse {

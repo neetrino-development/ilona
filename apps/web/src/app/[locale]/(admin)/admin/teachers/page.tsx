@@ -346,6 +346,44 @@ export default function TeachersPage() {
       },
     },
     {
+      key: 'center',
+      header: t('center'),
+      render: (teacher: Teacher) => {
+        // Use centers field if available (from backend), otherwise extract from groups
+        const centers = teacher.centers || 
+          Array.from(
+            new Map(
+              (teacher.groups || [])
+                .filter((group) => group.center)
+                .map((group) => [group.center!.id, group.center!])
+            ).values()
+          );
+        
+        return (
+          <div className="flex flex-wrap gap-1.5" onClick={(e) => e.stopPropagation()}>
+            {centers.length > 0 ? (
+              <>
+                {centers.slice(0, 2).map((center) => (
+                  <Badge key={center.id} variant="default">
+                    {center.name}
+                  </Badge>
+                ))}
+                {centers.length > 2 && (
+                  <div title={centers.slice(2).map(c => c.name).join(', ')}>
+                    <Badge variant="default">
+                      +{centers.length - 2}
+                    </Badge>
+                  </div>
+                )}
+              </>
+            ) : (
+              <span className="text-slate-400 text-sm">{t('noBranches')}</span>
+            )}
+          </div>
+        );
+      },
+    },
+    {
       key: 'students',
       header: t('students'),
       sortable: true,

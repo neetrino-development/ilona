@@ -154,6 +154,8 @@
     "workloadNoTeachers": "Add teachers to start tracking workload metrics.",
     "viewAnalytics": "View Analytics",
     "rate": "Rate",
+    "center": "Center",
+    "noBranches": "—",
     "loadingTeacherInfo": "Loading teacher information...",
     "errorLoadingTeacherInfo": "Error loading teacher information",
     "specializationPlaceholder": "English Literature, Business English, etc.",

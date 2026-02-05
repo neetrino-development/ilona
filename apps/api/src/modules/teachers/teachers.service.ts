@@ -64,6 +64,12 @@ export class TeachersService {
             id: true,
             name: true,
             level: true,
+            center: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
           },
         },
         _count: {
@@ -164,6 +170,40 @@ export class TeachersService {
       });
     }
 
+    // Fetch all unique centers for each teacher
+    const teacherCentersMap = new Map<string, Array<{ id: string; name: string }>>();
+    const allTeacherGroups = await this.prisma.group.findMany({
+      where: {
+        teacherId: {
+          in: teacherIds,
+        },
+      },
+      select: {
+        id: true,
+        teacherId: true,
+        center: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
+
+    allTeacherGroups.forEach((group) => {
+      if (group.teacherId && group.center) {
+        const existing = teacherCentersMap.get(group.teacherId) || [];
+        // Check if center already exists for this teacher
+        if (!existing.find((c) => c.id === group.center!.id)) {
+          existing.push({
+            id: group.center.id,
+            name: group.center.name,
+          });
+        }
+        teacherCentersMap.set(group.teacherId, existing);
+      }
+    });
+
     // Apply pagination
     const total = sortedTeachers.length;
     const paginatedTeachers = sortedTeachers.slice(skip, skip + take);
@@ -175,7 +215,13 @@ export class TeachersService {
         id: group.id,
         name: group.name,
         level: group.level,
+        center: group.center ? {
+          id: group.center.id,
+          name: group.center.name,
+        } : undefined,
       })),
+      // Add all unique centers for this teacher (from all groups, not just the first 3)
+      centers: teacherCentersMap.get(teacher.id) || [],
     }));
 
     return {
