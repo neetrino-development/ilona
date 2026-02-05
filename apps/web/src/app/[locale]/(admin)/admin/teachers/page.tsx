@@ -99,7 +99,7 @@ export default function TeachersPage() {
               <p className="font-semibold text-slate-800 hover:text-blue-600 transition-colors">
                 {firstName} {lastName}
               </p>
-              <p className="text-sm text-slate-500">{teacher.user?.email || ''}</p>
+              <p className="text-sm text-slate-500">{teacher.user?.phone || t('noPhoneNumber')}</p>
             </div>
           </div>
         );

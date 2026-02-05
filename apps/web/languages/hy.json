@@ -154,7 +154,8 @@
     "errorLoadingTeacherInfo": "Սխալ ուսուցչի տեղեկատվությունը բեռնելիս",
     "specializationPlaceholder": "Անգլերեն գրականություն, Բիզնես անգլերեն և այլն:",
     "bioPlaceholder": "Համառոտ նկարագրություն ուսուցչի մասին...",
-    "confirmDelete": "Հաստատե՞լ եք այս ուսուցչին ջնջելը"
+    "confirmDelete": "Հաստատե՞լ եք այս ուսուցչին ջնջելը",
+    "noPhoneNumber": "Հեռախոսահամար չկա"
   },
   "students": {
     "title": "Աշակերտներ",

@@ -154,7 +154,8 @@
     "errorLoadingTeacherInfo": "Error loading teacher information",
     "specializationPlaceholder": "English Literature, Business English, etc.",
     "bioPlaceholder": "Brief description about the teacher...",
-    "confirmDelete": "Are you sure you want to delete this teacher?"
+    "confirmDelete": "Are you sure you want to delete this teacher?",
+    "noPhoneNumber": "No phone number"
   },
   "students": {
     "title": "Students",
