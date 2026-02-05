@@ -50,8 +50,14 @@ export default function AdminAttendanceRegisterPage() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   
-  // View mode state
-  const [viewMode, setViewMode] = useState<ViewMode>('day');
+  // Initialize view mode from URL query params, with fallback to 'day'
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    const modeFromUrl = searchParams.get('viewMode');
+    if (modeFromUrl === 'day' || modeFromUrl === 'week' || modeFromUrl === 'month') {
+      return modeFromUrl;
+    }
+    return 'day';
+  });
   
   // Date state - for day view, this is the selected day
   // For week view, this is any date in the week (we'll calculate week start/end)
@@ -81,6 +87,18 @@ export default function AdminAttendanceRegisterPage() {
     router.push(`${pathname}?${params.toString()}`);
   };
 
+  // Update URL query params when viewMode changes
+  const updateViewModeInUrl = (mode: ViewMode) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (mode !== 'day') {
+      // Only add to URL if not default value
+      params.set('viewMode', mode);
+    } else {
+      params.delete('viewMode');
+    }
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
   // Sync selectedGroupId from URL on mount or when URL changes
   useEffect(() => {
     const groupIdFromUrl = searchParams.get('groupId');
@@ -90,6 +108,27 @@ export default function AdminAttendanceRegisterPage() {
       }
       return currentGroupId;
     });
+  }, [searchParams]);
+
+  // Sync viewMode from URL on mount or when URL changes
+  useEffect(() => {
+    const modeFromUrl = searchParams.get('viewMode');
+    if (modeFromUrl === 'day' || modeFromUrl === 'week' || modeFromUrl === 'month') {
+      setViewMode((currentMode) => {
+        if (modeFromUrl !== currentMode) {
+          return modeFromUrl;
+        }
+        return currentMode;
+      });
+    } else if (!modeFromUrl) {
+      // If no viewMode in URL, default to 'day'
+      setViewMode((currentMode) => {
+        if (currentMode !== 'day') {
+          return 'day';
+        }
+        return currentMode;
+      });
+    }
   }, [searchParams]);
 
   // Fetch groups
@@ -274,6 +313,7 @@ export default function AdminAttendanceRegisterPage() {
       return;
     }
     setViewMode(newMode);
+    updateViewModeInUrl(newMode);
     setSelectedDayForMonthView(null);
     if (newMode === 'day') {
       setCurrentDate(new Date());
