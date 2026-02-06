@@ -9,7 +9,8 @@ import {
   useStudents, 
   useDeleteStudent, 
   useUpdateStudent,
-  AddStudentForm, 
+  AddStudentForm,
+  EditStudentForm,
   DeleteConfirmationDialog, 
   InlineSelect,
   type Student 
@@ -23,10 +24,13 @@ export default function StudentsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(0);
   const [isAddStudentOpen, setIsAddStudentOpen] = useState(false);
+  const [isEditStudentOpen, setIsEditStudentOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleteSuccess, setDeleteSuccess] = useState(false);
+  const [deactivateError, setDeactivateError] = useState<string | null>(null);
+  const [deactivateSuccess, setDeactivateSuccess] = useState(false);
   const [selectedTeacherIds, setSelectedTeacherIds] = useState<Set<string>>(new Set());
   const [selectedCenterIds, setSelectedCenterIds] = useState<Set<string>>(new Set());
   const params = useParams();
@@ -34,6 +38,7 @@ export default function StudentsPage() {
   const locale = params.locale as string;
   const t = useTranslations('students');
   const tCommon = useTranslations('common');
+  const tTeachers = useTranslations('teachers');
   const pageSize = 10;
 
   // Fetch teachers, groups, and centers for filters and dropdowns
@@ -109,9 +114,35 @@ export default function StudentsPage() {
     }
   };
 
-  // Handle view button click
-  const handleViewClick = (studentId: string) => {
-    router.push(`/${locale}/admin/students/${studentId}`);
+  // Handle edit button click
+  const handleEditClick = (student: Student) => {
+    setSelectedStudent(student);
+    setIsEditStudentOpen(true);
+  };
+
+  // Handle deactivate button click
+  const handleDeactivateClick = async (student: Student) => {
+    const isCurrentlyActive = student.user?.status === 'ACTIVE';
+    const newStatus = isCurrentlyActive ? 'INACTIVE' : 'ACTIVE';
+    
+    setDeactivateError(null);
+    setDeactivateSuccess(false);
+
+    try {
+      await updateStudent.mutateAsync({
+        id: student.id,
+        data: { status: newStatus as 'ACTIVE' | 'INACTIVE' },
+      });
+      setDeactivateSuccess(true);
+      
+      // Clear success message after a delay
+      setTimeout(() => {
+        setDeactivateSuccess(false);
+      }, 3000);
+    } catch (err: any) {
+      const message = err?.response?.data?.message || err?.message || `Failed to ${isCurrentlyActive ? 'deactivate' : 'activate'} student. Please try again.`;
+      setDeactivateError(message);
+    }
   };
 
   // Handle inline updates
@@ -214,11 +245,13 @@ export default function StudentsPage() {
       key: 'checkbox',
       header: <input type="checkbox" className="w-4 h-4 rounded border-slate-300" />,
       render: () => <input type="checkbox" className="w-4 h-4 rounded border-slate-300" />,
+      className: '!pl-4 !pr-2 w-12',
     },
     {
       key: 'student',
       header: 'Student',
       sortable: true,
+      className: '!pl-0 !pr-4',
       render: (student: Student) => {
         const firstName = student.user?.firstName || '';
         const lastName = student.user?.lastName || '';
@@ -291,7 +324,7 @@ export default function StudentsPage() {
     {
       key: 'monthlyFee',
       header: 'Monthly Fee',
-      className: 'text-right',
+      className: 'text-left',
       render: (student: Student) => {
         const fee = typeof student.monthlyFee === 'string' ? parseFloat(student.monthlyFee) : Number(student.monthlyFee || 0);
         return (
@@ -302,42 +335,133 @@ export default function StudentsPage() {
       },
     },
     {
-      key: 'status',
-      header: 'Status',
-      render: (student: Student) => {
-        const status = student.user?.status || 'ACTIVE';
-        return (
-          <Badge variant={status === 'ACTIVE' ? 'success' : 'warning'}>
-            {status}
-          </Badge>
-        );
-      },
-    },
-    {
       key: 'actions',
       header: 'Actions',
-      render: (student: Student) => (
-        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="text-blue-600 hover:text-blue-700 font-medium"
-            onClick={() => handleViewClick(student.id)}
-            disabled={deleteStudent.isPending}
-          >
-            View
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="text-red-600 hover:text-red-700 font-medium"
-            onClick={() => handleDeleteClick(student)}
-            disabled={deleteStudent.isPending}
-          >
-            Delete
-          </Button>
-        </div>
-      ),
+      className: '!w-[160px] !min-w-[160px] !max-w-[160px] !px-3 !py-4 text-left',
+      render: (student: Student) => {
+        const isActive = student.user?.status === 'ACTIVE';
+        const isDeactivating = updateStudent.isPending;
+        
+        return (
+          <div className="flex items-center justify-start gap-1.5 w-full" onClick={(e) => e.stopPropagation()}>
+            {/* Edit Button */}
+            <button
+              type="button"
+              aria-label={tCommon('edit')}
+              title={tCommon('edit')}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleEditClick(student);
+              }}
+              className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+              disabled={isDeactivating || deleteStudent.isPending}
+            >
+              <svg 
+                className="w-5 h-5" 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth={2} 
+                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" 
+                />
+              </svg>
+            </button>
+            
+            {/* Delete Button */}
+            <button
+              type="button"
+              aria-label={tCommon('delete')}
+              title={tCommon('delete')}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDeleteClick(student);
+              }}
+              className="p-1.5 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+              disabled={isDeactivating || deleteStudent.isPending}
+            >
+              <svg 
+                className="w-5 h-5" 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth={2} 
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" 
+                />
+              </svg>
+            </button>
+            
+            {/* Deactivate/Activate Button */}
+            <button
+              type="button"
+              aria-label={isActive ? tTeachers('deactivate') : tTeachers('activate')}
+              title={isActive ? tTeachers('deactivate') : tTeachers('activate')}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDeactivateClick(student);
+              }}
+              className={`p-1.5 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 ${
+                isActive 
+                  ? 'text-amber-600 hover:text-amber-700 hover:bg-amber-50' 
+                  : 'text-green-600 hover:text-green-700 hover:bg-green-50'
+              }`}
+              disabled={isDeactivating || deleteStudent.isPending}
+            >
+              {isDeactivating ? (
+                <svg 
+                  className="w-5 h-5 animate-spin" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth={2} 
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" 
+                  />
+                </svg>
+              ) : (
+                <svg 
+                  className="w-5 h-5" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  {isActive ? (
+                    // Ban/Block icon for deactivate
+                    <path 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round" 
+                      strokeWidth={2} 
+                      d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" 
+                    />
+                  ) : (
+                    // Check circle icon for activate
+                    <path 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round" 
+                      strokeWidth={2} 
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" 
+                    />
+                  )}
+                </svg>
+              )}
+            </button>
+          </div>
+        );
+      },
     },
   ];
 
@@ -514,6 +638,20 @@ export default function StudentsPage() {
         onOpenChange={setIsAddStudentOpen} 
       />
 
+      {/* Edit Student Modal */}
+      {selectedStudent && (
+        <EditStudentForm
+          open={isEditStudentOpen}
+          onOpenChange={(open) => {
+            setIsEditStudentOpen(open);
+            if (!open) {
+              setSelectedStudent(null);
+            }
+          }}
+          studentId={selectedStudent.id}
+        />
+      )}
+
       {/* Delete Confirmation Dialog */}
       <DeleteConfirmationDialog
         open={isDeleteDialogOpen}
@@ -524,10 +662,20 @@ export default function StudentsPage() {
         error={deleteError}
       />
 
-      {/* Success Message */}
+      {/* Success Messages */}
       {deleteSuccess && (
         <div className="fixed bottom-4 right-4 p-4 bg-green-50 border border-green-200 rounded-lg shadow-lg z-50">
           <p className="text-sm text-green-600">Student deleted successfully!</p>
+        </div>
+      )}
+      {deactivateSuccess && (
+        <div className="fixed bottom-4 right-4 p-4 bg-green-50 border border-green-200 rounded-lg shadow-lg z-50">
+          <p className="text-sm text-green-600">Student status updated successfully!</p>
+        </div>
+      )}
+      {deactivateError && (
+        <div className="fixed bottom-4 right-4 p-4 bg-red-50 border border-red-200 rounded-lg shadow-lg z-50">
+          <p className="text-sm text-red-600">{deactivateError}</p>
         </div>
       )}
     </DashboardLayout>

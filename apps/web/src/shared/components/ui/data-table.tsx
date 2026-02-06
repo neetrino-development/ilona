@@ -45,7 +45,7 @@ export function DataTable<T>({
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-      <table className="w-full">
+      <table className="w-full table-fixed">
         <thead>
           <tr className="border-b border-slate-100">
             {columns.map((column) => (

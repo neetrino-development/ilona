@@ -340,11 +340,13 @@ export default function TeachersPage() {
           aria-label={`Select ${teacher.user?.firstName} ${teacher.user?.lastName}`}
         />
       ),
+      className: '!pl-4 !pr-2 w-12',
     },
     {
       key: 'teacher',
       header: t('title'),
       sortable: true,
+      className: '!pl-0 !pr-4',
       render: (teacher: Teacher) => {
         const firstName = teacher.user?.firstName || '';
         const lastName = teacher.user?.lastName || '';
@@ -435,7 +437,7 @@ export default function TeachersPage() {
       key: 'students',
       header: t('students'),
       sortable: true,
-      className: 'text-right',
+      className: 'text-left',
       render: (teacher: Teacher) => {
         const studentCount = teacher._count?.students || 0;
         return (
@@ -448,7 +450,7 @@ export default function TeachersPage() {
     {
       key: 'hourlyRate',
       header: t('rate'),
-      className: 'text-right',
+      className: 'text-left',
       render: (teacher: Teacher) => {
         const rate = typeof teacher.hourlyRate === 'string' ? parseFloat(teacher.hourlyRate) : Number(teacher.hourlyRate || 0);
         return (
@@ -466,12 +468,13 @@ export default function TeachersPage() {
     {
       key: 'actions',
       header: t('actions'),
+      className: 'text-left',
       render: (teacher: Teacher) => {
         const isActive = teacher.user?.status === 'ACTIVE';
         const isDeactivating = updateTeacher.isPending;
         
         return (
-          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center justify-start gap-2" onClick={(e) => e.stopPropagation()}>
             {/* Edit Button */}
             <button
               type="button"

@@ -13,6 +13,7 @@ export {
 
 // Components
 export { AddStudentForm } from './components/AddStudentForm';
+export { EditStudentForm } from './components/EditStudentForm';
 export { DeleteConfirmationDialog } from './components/DeleteConfirmationDialog';
 export { InlineSelect } from './components/InlineSelect';
 
