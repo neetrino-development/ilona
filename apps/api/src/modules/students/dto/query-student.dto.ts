@@ -1,5 +1,5 @@
-import { IsOptional, IsString, IsInt, Min, Max } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsOptional, IsString, IsInt, Min, Max, IsArray } from 'class-validator';
+import { Type, Transform } from 'class-transformer';
 
 export class QueryStudentDto {
   @IsOptional()
@@ -26,6 +26,34 @@ export class QueryStudentDto {
   @IsOptional()
   @IsString()
   status?: string;
+
+  @IsOptional()
+  @IsString()
+  teacherId?: string;
+
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (!value) return undefined;
+    if (Array.isArray(value)) return value;
+    return [value];
+  })
+  @IsArray()
+  @IsString({ each: true })
+  teacherIds?: string[];
+
+  @IsOptional()
+  @IsString()
+  centerId?: string;
+
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (!value) return undefined;
+    if (Array.isArray(value)) return value;
+    return [value];
+  })
+  @IsArray()
+  @IsString({ each: true })
+  centerIds?: string[];
 }
 
 

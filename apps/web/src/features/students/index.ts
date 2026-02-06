@@ -14,6 +14,7 @@ export {
 // Components
 export { AddStudentForm } from './components/AddStudentForm';
 export { DeleteConfirmationDialog } from './components/DeleteConfirmationDialog';
+export { InlineSelect } from './components/InlineSelect';
 
 // Types
 export type {

@@ -22,12 +22,20 @@ export class StudentsController {
   @Get()
   @Roles(UserRole.ADMIN, UserRole.TEACHER)
   async findAll(@Query() query: QueryStudentDto) {
+    // Handle array query params (e.g., ?teacherIds=id1&teacherIds=id2)
+    const teacherIds = query.teacherIds || (query.teacherId ? [query.teacherId] : undefined);
+    const centerIds = query.centerIds || (query.centerId ? [query.centerId] : undefined);
+
     return this.studentsService.findAll({
       skip: query.skip,
       take: query.take,
       search: query.search,
       groupId: query.groupId,
       status: query.status as UserStatus | undefined,
+      teacherId: query.teacherId,
+      teacherIds,
+      centerId: query.centerId,
+      centerIds,
     });
   }
 

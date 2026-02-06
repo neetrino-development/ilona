@@ -51,6 +51,10 @@ export interface StudentFilters {
   search?: string;
   groupId?: string;
   status?: UserStatus;
+  teacherId?: string;
+  teacherIds?: string[];
+  centerId?: string;
+  centerIds?: string[];
 }
 
 export interface CreateStudentDto {

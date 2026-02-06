@@ -22,6 +22,14 @@ export async function fetchStudents(filters?: StudentFilters): Promise<StudentsR
   if (filters?.search) params.append('search', filters.search);
   if (filters?.groupId) params.append('groupId', filters.groupId);
   if (filters?.status) params.append('status', filters.status);
+  if (filters?.teacherId) params.append('teacherId', filters.teacherId);
+  if (filters?.teacherIds && filters.teacherIds.length > 0) {
+    filters.teacherIds.forEach(id => params.append('teacherIds', id));
+  }
+  if (filters?.centerId) params.append('centerId', filters.centerId);
+  if (filters?.centerIds && filters.centerIds.length > 0) {
+    filters.centerIds.forEach(id => params.append('centerIds', id));
+  }
 
   const query = params.toString();
   const url = query ? `${STUDENTS_ENDPOINT}?${query}` : STUDENTS_ENDPOINT;

@@ -19,8 +19,12 @@ export class StudentsService {
     search?: string;
     groupId?: string;
     status?: UserStatus;
+    teacherId?: string;
+    teacherIds?: string[];
+    centerId?: string;
+    centerIds?: string[];
   }) {
-    const { skip = 0, take = 50, search, groupId, status } = params || {};
+    const { skip = 0, take = 50, search, groupId, status, teacherId, teacherIds, centerId, centerIds } = params || {};
 
     const where: Prisma.StudentWhereInput = {};
     const userWhere: Prisma.UserWhereInput = {};
@@ -43,6 +47,20 @@ export class StudentsService {
 
     if (groupId) {
       where.groupId = groupId;
+    }
+
+    // Filter by teacherId (single or multiple)
+    if (teacherIds && teacherIds.length > 0) {
+      where.teacherId = { in: teacherIds };
+    } else if (teacherId) {
+      where.teacherId = teacherId;
+    }
+
+    // Filter by centerId (via group relation)
+    if (centerIds && centerIds.length > 0) {
+      where.group = { centerId: { in: centerIds } };
+    } else if (centerId) {
+      where.group = { centerId };
     }
 
     const [items, total] = await Promise.all([
@@ -71,6 +89,20 @@ export class StudentsService {
               name: true,
               level: true,
               center: { select: { id: true, name: true } },
+            },
+          },
+          teacher: {
+            select: {
+              id: true,
+              user: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                  email: true,
+                  phone: true,
+                },
+              },
             },
           },
         },
@@ -351,7 +383,28 @@ export class StudentsService {
             status: true,
           },
         },
-        group: { select: { id: true, name: true } },
+        group: { 
+          select: { 
+            id: true, 
+            name: true,
+            level: true,
+            center: { select: { id: true, name: true } },
+          } 
+        },
+        teacher: {
+          select: {
+            id: true,
+            user: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+                phone: true,
+              },
+            },
+          },
+        },
       },
     });
   }

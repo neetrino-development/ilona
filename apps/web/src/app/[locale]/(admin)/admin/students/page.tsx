@@ -1,11 +1,22 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { DashboardLayout } from '@/shared/components/layout/DashboardLayout';
-import { StatCard, DataTable, Badge, Button } from '@/shared/components/ui';
-import { useStudents, useDeleteStudent, AddStudentForm, DeleteConfirmationDialog, type Student } from '@/features/students';
+import { StatCard, DataTable, Badge, Button, FilterDropdown } from '@/shared/components/ui';
+import { 
+  useStudents, 
+  useDeleteStudent, 
+  useUpdateStudent,
+  AddStudentForm, 
+  DeleteConfirmationDialog, 
+  InlineSelect,
+  type Student 
+} from '@/features/students';
+import { useTeachers } from '@/features/teachers';
+import { useGroups } from '@/features/groups';
+import { useCenters } from '@/features/centers';
 import { formatCurrency } from '@/shared/lib/utils';
 
 export default function StudentsPage() {
@@ -16,6 +27,8 @@ export default function StudentsPage() {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleteSuccess, setDeleteSuccess] = useState(false);
+  const [selectedTeacherIds, setSelectedTeacherIds] = useState<Set<string>>(new Set());
+  const [selectedCenterIds, setSelectedCenterIds] = useState<Set<string>>(new Set());
   const params = useParams();
   const router = useRouter();
   const locale = params.locale as string;
@@ -23,7 +36,22 @@ export default function StudentsPage() {
   const tCommon = useTranslations('common');
   const pageSize = 10;
 
-  // Fetch students with search and pagination
+  // Fetch teachers, groups, and centers for filters and dropdowns
+  const { data: teachersData } = useTeachers({ take: 100, status: 'ACTIVE' });
+  const { data: groupsData } = useGroups({ take: 100, isActive: true });
+  const { data: centersData } = useCenters({ isActive: true });
+
+  // Convert filters to arrays for API
+  const teacherIdsArray = useMemo(() => 
+    selectedTeacherIds.size > 0 ? Array.from(selectedTeacherIds) : undefined,
+    [selectedTeacherIds]
+  );
+  const centerIdsArray = useMemo(() => 
+    selectedCenterIds.size > 0 ? Array.from(selectedCenterIds) : undefined,
+    [selectedCenterIds]
+  );
+
+  // Fetch students with search, pagination, and filters
   const { 
     data: studentsData, 
     isLoading,
@@ -31,11 +59,14 @@ export default function StudentsPage() {
   } = useStudents({ 
     skip: page * pageSize,
     take: pageSize,
-    search: searchQuery || undefined 
+    search: searchQuery || undefined,
+    teacherIds: teacherIdsArray,
+    centerIds: centerIdsArray,
   });
 
-  // Delete mutation
+  // Mutations
   const deleteStudent = useDeleteStudent();
+  const updateStudent = useUpdateStudent();
 
   const students = studentsData?.items || [];
   const totalStudents = studentsData?.total || 0;
@@ -83,6 +114,85 @@ export default function StudentsPage() {
     router.push(`/${locale}/admin/students/${studentId}`);
   };
 
+  // Handle inline updates
+  const handleTeacherChange = async (studentId: string, teacherId: string | null) => {
+    await updateStudent.mutateAsync({
+      id: studentId,
+      data: { teacherId: teacherId || undefined },
+    });
+  };
+
+  const handleGroupChange = async (studentId: string, groupId: string | null) => {
+    await updateStudent.mutateAsync({
+      id: studentId,
+      data: { groupId: groupId || undefined },
+    });
+  };
+
+  const handleCenterChange = async (studentId: string, centerId: string | null) => {
+    if (!centerId) {
+      // If center is cleared, clear the group
+      await handleGroupChange(studentId, null);
+      return;
+    }
+
+    // Find a group in the selected center
+    const groupsInCenter = (groupsData?.items || []).filter(g => g.centerId === centerId);
+    if (groupsInCenter.length > 0) {
+      // Assign to the first available group in that center
+      await handleGroupChange(studentId, groupsInCenter[0].id);
+    } else {
+      // No groups in this center, clear the group
+      await handleGroupChange(studentId, null);
+    }
+  };
+
+  // Prepare options for dropdowns
+  const teacherOptions = useMemo(() => 
+    (teachersData?.items || []).map(teacher => ({
+      id: teacher.id,
+      label: `${teacher.user.firstName} ${teacher.user.lastName}`,
+    })),
+    [teachersData]
+  );
+
+  const groupOptions = useMemo(() => 
+    (groupsData?.items || []).map(group => ({
+      id: group.id,
+      label: `${group.name}${group.level ? ` (${group.level})` : ''}`,
+    })),
+    [groupsData]
+  );
+
+  const centerOptions = useMemo(() => 
+    (centersData?.items || []).map(center => ({
+      id: center.id,
+      label: center.name,
+    })),
+    [centersData]
+  );
+
+  const teacherFilterOptions = useMemo(() => 
+    (teachersData?.items || []).map(teacher => ({
+      id: teacher.id,
+      label: `${teacher.user.firstName} ${teacher.user.lastName}`,
+    })),
+    [teachersData]
+  );
+
+  const centerFilterOptions = useMemo(() => 
+    (centersData?.items || []).map(center => ({
+      id: center.id,
+      label: center.name,
+    })),
+    [centersData]
+  );
+
+  // Reset page when filters change
+  const handleFilterChange = () => {
+    setPage(0);
+  };
+
   // Stats calculation
   const activeStudents = students.filter(s => s.user?.status === 'ACTIVE').length;
   const studentsWithGroup = students.filter(s => s.group).length;
@@ -125,31 +235,52 @@ export default function StudentsPage() {
       },
     },
     {
+      key: 'teacher',
+      header: 'Teacher',
+      render: (student: Student) => (
+        <div className="min-w-[150px]">
+          <InlineSelect
+            value={student.teacherId || null}
+            options={teacherOptions}
+            onChange={(teacherId) => handleTeacherChange(student.id, teacherId)}
+            placeholder="Not assigned"
+            disabled={updateStudent.isPending}
+          />
+        </div>
+      ),
+    },
+    {
       key: 'group',
       header: 'Group',
       render: (student: Student) => (
-        student.group ? (
-          <div>
-            <Badge variant="info">{student.group.name}</Badge>
-            {student.group.level && (
-              <span className="ml-2 text-xs text-slate-500">{student.group.level}</span>
-            )}
-          </div>
-        ) : (
-          <span className="text-slate-400">Not assigned</span>
-        )
+        <div className="min-w-[150px]">
+          <InlineSelect
+            value={student.groupId || null}
+            options={groupOptions}
+            onChange={(groupId) => handleGroupChange(student.id, groupId)}
+            placeholder="Not assigned"
+            disabled={updateStudent.isPending}
+          />
+        </div>
       ),
     },
     {
       key: 'center',
       header: 'Center',
-      render: (student: Student) => (
-        student.group?.center ? (
-          <span className="text-slate-700">{student.group.center.name}</span>
-        ) : (
-          <span className="text-slate-400">—</span>
-        )
-      ),
+      render: (student: Student) => {
+        const currentCenterId = student.group?.center?.id || null;
+        return (
+          <div className="min-w-[150px]">
+            <InlineSelect
+              value={currentCenterId}
+              options={centerOptions}
+              onChange={(centerId) => handleCenterChange(student.id, centerId)}
+              placeholder="Not assigned"
+              disabled={updateStudent.isPending}
+            />
+          </div>
+        );
+      },
     },
     {
       key: 'monthlyFee',
@@ -233,31 +364,54 @@ export default function StudentsPage() {
           />
         </div>
 
-        {/* Search & Actions */}
-        <div className="flex items-center gap-4">
-          <div className="flex-1 relative">
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <input
-              type="search"
-              placeholder={t('searchPlaceholder')}
-              value={searchQuery}
-              onChange={handleSearchChange}
-              className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+        {/* Search & Filters */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-4">
+            <div className="flex-1 relative">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                type="search"
+                placeholder={t('searchPlaceholder')}
+                value={searchQuery}
+                onChange={handleSearchChange}
+                className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              />
+            </div>
+            <Button 
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium"
+              onClick={() => setIsAddStudentOpen(true)}
+            >
+              + {t('addStudent')}
+            </Button>
+          </div>
+
+          {/* Filters */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FilterDropdown
+              label="Teacher"
+              options={teacherFilterOptions}
+              selectedIds={selectedTeacherIds}
+              onSelectionChange={(ids) => {
+                setSelectedTeacherIds(ids);
+                handleFilterChange();
+              }}
+              placeholder="All Teachers"
+              isLoading={!teachersData}
+            />
+            <FilterDropdown
+              label="Center"
+              options={centerFilterOptions}
+              selectedIds={selectedCenterIds}
+              onSelectionChange={(ids) => {
+                setSelectedCenterIds(ids);
+                handleFilterChange();
+              }}
+              placeholder="All Centers"
+              isLoading={!centersData}
             />
           </div>
-          <Button 
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium"
-            onClick={() => setIsAddStudentOpen(true)}
-          >
-            + {t('addStudent')}
-          </Button>
-          <button className="p-3 bg-white border border-slate-200 rounded-xl hover:bg-slate-50">
-            <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-            </svg>
-          </button>
         </div>
 
         {/* Students Table */}
