@@ -1,6 +1,7 @@
 'use client';
 
 import { cn } from '@/shared/lib/utils';
+import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 
 interface Column<T> {
   key: string;
@@ -48,40 +49,61 @@ export function DataTable<T>({
       <table className="w-full table-fixed">
         <thead>
           <tr className="border-b border-slate-100">
-            {columns.map((column) => (
-              <th
-                key={column.key}
-                className={cn(
-                  'px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider',
-                  column.className,
-                  column.sortable && onSort && 'cursor-pointer hover:bg-slate-50'
-                )}
-                onClick={() => column.sortable && onSort && onSort(column.key)}
-              >
-                <div className="flex items-center gap-1">
-                  {column.header}
-                  {column.sortable && (
-                    <div className="flex flex-col">
-                      {sortBy === column.key ? (
-                        sortOrder === 'asc' ? (
-                          <svg className="w-3 h-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                          </svg>
-                        ) : (
-                          <svg className="w-3 h-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                          </svg>
-                        )
-                      ) : (
-                        <svg className="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-                        </svg>
+            {columns.map((column) => {
+              const isSorted = sortBy === column.key;
+              const isAscending = isSorted && sortOrder === 'asc';
+              const isDescending = isSorted && sortOrder === 'desc';
+              
+              // Extract header text for aria-label (handle both string and ReactNode)
+              const headerText = typeof column.header === 'string' 
+                ? column.header 
+                : column.key.charAt(0).toUpperCase() + column.key.slice(1).replace(/([A-Z])/g, ' $1');
+              
+              return (
+                <th
+                  key={column.key}
+                  className={cn(
+                    'px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider',
+                    column.className
+                  )}
+                >
+                  {column.sortable && onSort ? (
+                    <button
+                      type="button"
+                      onClick={() => onSort(column.key)}
+                      className={cn(
+                        'flex items-center gap-1.5 w-full text-left text-xs font-semibold uppercase hover:bg-slate-50 rounded-md px-1 -mx-1 py-0.5 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-1',
+                        isSorted && 'text-slate-700'
                       )}
+                      aria-label={
+                        !isSorted
+                          ? `Sort by ${headerText}`
+                          : isAscending
+                          ? `Sorted by ${headerText} ascending. Click to sort descending.`
+                          : `Sorted by ${headerText} descending. Click to sort ascending.`
+                      }
+                    >
+                      <span>{column.header}</span>
+                      <span className="flex-shrink-0">
+                        {isSorted ? (
+                          isAscending ? (
+                            <ArrowUp className="w-3.5 h-3.5 text-slate-600" aria-hidden="true" />
+                          ) : (
+                            <ArrowDown className="w-3.5 h-3.5 text-slate-600" aria-hidden="true" />
+                          )
+                        ) : (
+                          <ArrowUpDown className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
+                        )}
+                      </span>
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-1.5 text-xs font-semibold uppercase">
+                      {column.header}
                     </div>
                   )}
-                </div>
-              </th>
-            ))}
+                </th>
+              );
+            })}
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">

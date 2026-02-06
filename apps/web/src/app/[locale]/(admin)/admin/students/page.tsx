@@ -33,6 +33,8 @@ export default function StudentsPage() {
   const [deactivateSuccess, setDeactivateSuccess] = useState(false);
   const [selectedTeacherIds, setSelectedTeacherIds] = useState<Set<string>>(new Set());
   const [selectedCenterIds, setSelectedCenterIds] = useState<Set<string>>(new Set());
+  const [sortBy, setSortBy] = useState<string | undefined>(undefined);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const params = useParams();
   const router = useRouter();
   const locale = params.locale as string;
@@ -76,6 +78,34 @@ export default function StudentsPage() {
   const students = studentsData?.items || [];
   const totalStudents = studentsData?.total || 0;
   const totalPages = studentsData?.totalPages || 1;
+
+  // Handle sorting
+  const handleSort = (key: string) => {
+    if (sortBy === key) {
+      // Toggle sort order if clicking the same column
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      // Set new sort column and default to ascending
+      setSortBy(key);
+      setSortOrder('asc');
+    }
+  };
+
+  // Sort students based on current sort state
+  const sortedStudents = useMemo(() => {
+    if (!sortBy) return students;
+
+    return [...students].sort((a, b) => {
+      if (sortBy === 'monthlyFee') {
+        // Numeric sorting for Monthly Fee
+        const feeA = typeof a.monthlyFee === 'string' ? parseFloat(a.monthlyFee) || 0 : Number(a.monthlyFee || 0);
+        const feeB = typeof b.monthlyFee === 'string' ? parseFloat(b.monthlyFee) || 0 : Number(b.monthlyFee || 0);
+        return sortOrder === 'asc' ? feeA - feeB : feeB - feeA;
+      }
+      // Default: no sorting for other columns (can be extended later)
+      return 0;
+    });
+  }, [students, sortBy, sortOrder]);
 
   // Handle search
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -249,7 +279,7 @@ export default function StudentsPage() {
     },
     {
       key: 'student',
-      header: 'Student',
+      header: 'STUDENT',
       sortable: true,
       className: '!pl-0 !pr-4',
       render: (student: Student) => {
@@ -275,7 +305,7 @@ export default function StudentsPage() {
     },
     {
       key: 'teacher',
-      header: 'Teacher',
+      header: 'TEACHER',
       render: (student: Student) => (
         <div className="min-w-[150px]">
           <InlineSelect
@@ -290,7 +320,7 @@ export default function StudentsPage() {
     },
     {
       key: 'group',
-      header: 'Group',
+      header: 'GROUP',
       render: (student: Student) => (
         <div className="min-w-[150px]">
           <InlineSelect
@@ -305,7 +335,7 @@ export default function StudentsPage() {
     },
     {
       key: 'center',
-      header: 'Center',
+      header: 'CENTER',
       render: (student: Student) => {
         const currentCenterId = student.group?.center?.id || null;
         return (
@@ -323,7 +353,8 @@ export default function StudentsPage() {
     },
     {
       key: 'monthlyFee',
-      header: 'Monthly Fee',
+      header: 'MONTHLY FEE',
+      sortable: true,
       className: 'text-left',
       render: (student: Student) => {
         const fee = typeof student.monthlyFee === 'string' ? parseFloat(student.monthlyFee) : Number(student.monthlyFee || 0);
@@ -336,7 +367,7 @@ export default function StudentsPage() {
     },
     {
       key: 'actions',
-      header: 'Actions',
+      header: 'ACTIONS',
       className: '!w-[160px] !min-w-[160px] !max-w-[160px] !px-3 !py-4 text-left',
       render: (student: Student) => {
         const isActive = student.user?.status === 'ACTIVE';
@@ -543,10 +574,13 @@ export default function StudentsPage() {
         {/* Students Table */}
         <DataTable
           columns={studentColumns}
-          data={students}
+          data={sortedStudents}
           keyExtractor={(student) => student.id}
           isLoading={isLoading}
           emptyMessage={searchQuery ? "No students match your search" : "No students found"}
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          onSort={handleSort}
         />
 
         {/* Pagination */}
