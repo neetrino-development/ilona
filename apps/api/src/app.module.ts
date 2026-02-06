@@ -23,6 +23,7 @@ import { FinanceModule } from './modules/finance/finance.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { StorageModule } from './modules/storage/storage.module';
+import { FeedbackModule } from './modules/feedback/feedback.module';
 
 // Guards
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
@@ -56,6 +57,7 @@ import { AppController } from './app.controller';
     AnalyticsModule,
     NotificationsModule,
     StorageModule,
+    FeedbackModule,
   ],
   providers: [
     // Global JWT guard (can be overridden with @Public())
