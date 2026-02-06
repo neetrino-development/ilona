@@ -72,7 +72,7 @@ export function DataTable<T>({
                       type="button"
                       onClick={() => onSort(column.key)}
                       className={cn(
-                        'flex items-center gap-1.5 w-full text-left text-xs font-semibold uppercase hover:bg-slate-50 rounded-md px-1 -mx-1 py-0.5 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-1',
+                        'flex items-center gap-1.5 w-full text-left text-xs font-semibold uppercase hover:bg-slate-50 rounded-md px-0 py-0.5 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-1',
                         isSorted && 'text-slate-700'
                       )}
                       aria-label={

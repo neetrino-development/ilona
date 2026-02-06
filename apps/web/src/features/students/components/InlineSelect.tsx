@@ -82,7 +82,7 @@ export function InlineSelect({
         onClick={() => !disabled && !isLoading && setIsOpen(!isOpen)}
         disabled={disabled || isLoading}
         className={cn(
-          'w-full px-3 py-1.5 text-left text-sm rounded-md',
+          'w-full pl-0 pr-3 py-1.5 text-left text-sm rounded-md',
           'border border-transparent hover:border-slate-300',
           'focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500',
           'disabled:opacity-50 disabled:cursor-not-allowed',

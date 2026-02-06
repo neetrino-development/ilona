@@ -68,7 +68,7 @@ export class StudentsService {
     }
 
     // Build orderBy based on sortBy parameter
-    // For 'student' sorting, we'll sort by full name in JavaScript after fetching
+    // For 'student' and 'absence' sorting, we'll sort in JavaScript after fetching
     let orderBy: Prisma.StudentOrderByWithRelationInput | Prisma.StudentOrderByWithRelationInput[];
     if (sortBy === 'student') {
       // For student name sorting, we'll sort by full name in JavaScript
@@ -80,6 +80,13 @@ export class StudentsService {
     } else if (sortBy === 'monthlyFee') {
       // Sort by monthly fee
       orderBy = { monthlyFee: sortOrder };
+    } else if (sortBy === 'absence') {
+      // For absence sorting, we'll sort by absences count in JavaScript after calculating attendance
+      // So we fetch with default order first
+      orderBy = [
+        { user: { firstName: 'asc' } },
+        { user: { lastName: 'asc' } },
+      ];
     } else {
       // Default sorting by firstName, then lastName
       orderBy = [
@@ -88,9 +95,9 @@ export class StudentsService {
       ];
     }
 
-    // For student name sorting, we need to fetch all matching records, sort them, then paginate
+    // For student name and absence sorting, we need to fetch all matching records, sort them, then paginate
     // For other sorts, we can use database-level sorting with pagination
-    const shouldSortInMemory = sortBy === 'student';
+    const shouldSortInMemory = sortBy === 'student' || sortBy === 'absence';
     
     const fetchSkip = shouldSortInMemory ? 0 : skip;
     const fetchTake = shouldSortInMemory ? undefined : take;
@@ -263,7 +270,7 @@ export class StudentsService {
     }
 
     // Add attendance data to each student item
-    const itemsWithAttendance = sortedItems.map(student => {
+    let itemsWithAttendance = sortedItems.map(student => {
       const attendance = attendanceDataMap.get(student.id) || { totalClasses: 0, absences: 0 };
       return {
         ...student,
@@ -273,6 +280,25 @@ export class StudentsService {
         },
       };
     });
+
+    // Apply in-memory sorting for absence if needed (after attendance data is calculated)
+    if (shouldSortInMemory && sortBy === 'absence') {
+      itemsWithAttendance = [...itemsWithAttendance].sort((a, b) => {
+        // Get absences count, treating null/0 totalClasses as 0 absences for sorting stability
+        const aAbsences = (a.attendanceSummary?.totalClasses === 0 || !a.attendanceSummary?.totalClasses) 
+          ? 0 
+          : (a.attendanceSummary?.absences || 0);
+        const bAbsences = (b.attendanceSummary?.totalClasses === 0 || !b.attendanceSummary?.totalClasses) 
+          ? 0 
+          : (b.attendanceSummary?.absences || 0);
+        
+        const comparison = aAbsences - bAbsences;
+        return sortOrder === 'asc' ? comparison : -comparison;
+      });
+      
+      // Apply pagination after sorting
+      itemsWithAttendance = itemsWithAttendance.slice(skip, skip + take);
+    }
 
     return {
       items: itemsWithAttendance,

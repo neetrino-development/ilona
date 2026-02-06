@@ -356,35 +356,30 @@ export default function StudentsPage() {
     {
       key: 'absence',
       header: 'ABSENCE',
-      className: '!text-center',
+      sortable: true,
+      className: 'text-left',
       render: (student: Student) => {
         const attendance = student.attendanceSummary;
         
         // If student has no group, show "—"
         if (!student.groupId) {
           return (
-            <div className="flex justify-center">
-              <span className="text-slate-400">—</span>
-            </div>
+            <span className="text-slate-400 pl-4">—</span>
           );
         }
         
         // If no attendance data, show "0/0"
         if (!attendance) {
           return (
-            <div className="flex justify-center">
-              <span className="text-slate-600">0/0</span>
-            </div>
+            <span className="text-slate-600 pl-4">0/0</span>
           );
         }
         
         const { totalClasses, absences } = attendance;
         return (
-          <div className="flex justify-center">
-            <span className="text-slate-700 font-medium">
-              {totalClasses}/{absences}
-            </span>
-          </div>
+          <span className="text-slate-700 font-medium pl-4">
+            {totalClasses}/{absences}
+          </span>
         );
       },
     },
