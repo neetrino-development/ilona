@@ -27,8 +27,10 @@ import { StorageModule } from './modules/storage/storage.module';
 // Guards
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
+import { AppController } from './app.controller';
 
 @Module({
+  controllers: [AppController],
   imports: [
     // Configuration
     ConfigModule.forRoot({
