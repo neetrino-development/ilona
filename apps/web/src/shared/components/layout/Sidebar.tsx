@@ -117,7 +117,6 @@ function getNavItems(role: string, t: (key: string) => string): NavItem[] {
         { label: t('attendanceRegister'), href: '/admin/attendance-register', icon: icons.attendanceRegister },
         { label: t('analytics'), href: '/admin/analytics', icon: icons.analytics },
         { label: t('reports'), href: '/admin/reports', icon: icons.reports },
-        { label: t('chat'), href: '/admin/chat', icon: icons.chat },
         { label: t('settings'), href: '/admin/settings', icon: icons.settings },
       ];
     case 'TEACHER':
@@ -129,7 +128,6 @@ function getNavItems(role: string, t: (key: string) => string): NavItem[] {
         { label: t('calendar'), href: '/teacher/calendar', icon: icons.calendar },
         { label: t('analytics'), href: '/teacher/analytics', icon: icons.analytics },
         { label: t('salary'), href: '/teacher/salary', icon: icons.salary },
-        { label: t('chat'), href: '/teacher/chat', icon: icons.chat },
         { label: t('settings'), href: '/teacher/settings', icon: icons.settings },
       ];
     case 'STUDENT':
@@ -139,7 +137,6 @@ function getNavItems(role: string, t: (key: string) => string): NavItem[] {
         { label: t('payments'), href: '/student/payments', icon: icons.payments },
         { label: t('analytics'), href: '/student/analytics', icon: icons.analytics },
         { label: t('absence'), href: '/student/absence', icon: icons.absence },
-        { label: t('chat'), href: '/student/chat', icon: icons.chat },
         { label: t('settings'), href: '/student/settings', icon: icons.settings },
       ];
     default:

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
+import { FloatingChatWidget } from '@/features/chat';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -22,6 +23,7 @@ export function DashboardLayout({ children, title, subtitle }: DashboardLayoutPr
           {children}
         </div>
       </main>
+      <FloatingChatWidget />
     </div>
   );
 }

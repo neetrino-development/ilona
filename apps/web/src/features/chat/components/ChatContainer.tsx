@@ -11,9 +11,10 @@ import { cn } from '@/shared/lib/utils';
 interface ChatContainerProps {
   emptyTitle?: string;
   emptyDescription?: string;
+  className?: string;
 }
 
-function ChatContent({ emptyTitle, emptyDescription }: ChatContainerProps) {
+function ChatContent({ emptyTitle, emptyDescription, className }: ChatContainerProps) {
   const { activeChat, setActiveChat, isMobileListVisible, setMobileListVisible } = useChatStore();
 
   // Initialize socket connection
@@ -30,7 +31,7 @@ function ChatContent({ emptyTitle, emptyDescription }: ChatContainerProps) {
   };
 
   return (
-    <div className="h-[calc(100vh-200px)] bg-white rounded-2xl border border-slate-200 overflow-hidden">
+    <div className={cn("h-[calc(100vh-200px)] bg-white rounded-2xl border border-slate-200 overflow-hidden", className)}>
       <div className="flex h-full">
         {/* Chat List */}
         <div
@@ -93,7 +94,7 @@ export function ChatContainer(props: ChatContainerProps) {
 
   if (!mounted) {
     return (
-      <div className="h-[calc(100vh-200px)] bg-white rounded-2xl border border-slate-200 overflow-hidden">
+      <div className={cn("h-[calc(100vh-200px)] bg-white rounded-2xl border border-slate-200 overflow-hidden", props.className)}>
         <div className="flex items-center justify-center h-full">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
         </div>
