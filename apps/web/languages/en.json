@@ -88,6 +88,7 @@
     "good": "Good",
     "needsImprovement": "Needs improvement",
     "attendedCount": "{count} attended",
+    "totalLessons": "Total Lessons",
     "upcoming": "Upcoming",
     "lessonsScheduled": "lessons scheduled",
     "nextPayment": "Next Payment",
