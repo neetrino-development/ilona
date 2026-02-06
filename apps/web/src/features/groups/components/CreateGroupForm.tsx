@@ -12,7 +12,6 @@ import { useState, useEffect } from 'react';
 const createGroupSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(100, 'Name must be at most 100 characters'),
   level: z.string().max(50, 'Level must be at most 50 characters').optional().or(z.literal('')),
-  description: z.string().max(500, 'Description must be at most 500 characters').optional().or(z.literal('')),
   maxStudents: z.number().int('Max students must be a whole number').min(1, 'Max students must be at least 1').max(50, 'Max students must be at most 50').optional(),
   centerId: z.string().min(1, 'Please select a center'),
   teacherId: z.string().optional().or(z.literal('')),
@@ -51,7 +50,6 @@ export function CreateGroupForm({ open, onOpenChange, defaultCenterId }: CreateG
     defaultValues: {
       name: '',
       level: '',
-      description: '',
       maxStudents: undefined,
       centerId: defaultCenterId || '',
       teacherId: '',
@@ -75,7 +73,6 @@ export function CreateGroupForm({ open, onOpenChange, defaultCenterId }: CreateG
       reset({
         name: '',
         level: '',
-        description: '',
         maxStudents: undefined,
         centerId: defaultCenterId || '',
         teacherId: '',
@@ -93,7 +90,6 @@ export function CreateGroupForm({ open, onOpenChange, defaultCenterId }: CreateG
       const payload: CreateGroupDto = {
         name: data.name,
         level: data.level || undefined,
-        description: data.description || undefined,
         maxStudents: data.maxStudents,
         centerId: data.centerId,
         teacherId: data.teacherId || undefined,
@@ -110,7 +106,6 @@ export function CreateGroupForm({ open, onOpenChange, defaultCenterId }: CreateG
       reset({
         name: '',
         level: '',
-        description: '',
         maxStudents: undefined,
         centerId: defaultCenterId || '',
         teacherId: '',
@@ -249,23 +244,6 @@ export function CreateGroupForm({ open, onOpenChange, defaultCenterId }: CreateG
             )}
             {isLoadingTeachers && (
               <p className="text-sm text-slate-500">Loading teachers...</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <textarea
-              id="description"
-              {...register('description')}
-              rows={4}
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm ${
-                errors.description ? 'border-red-300' : 'border-slate-300'
-              } ${isSubmitting ? 'bg-slate-100 cursor-not-allowed' : 'bg-white'}`}
-              placeholder="Additional information about this group..."
-              disabled={isSubmitting}
-            />
-            {errors.description && (
-              <p className="text-sm text-red-600">{errors.description.message}</p>
             )}
           </div>
 
