@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCenterDto, UpdateCenterDto } from './dto';
 import { Prisma } from '@prisma/client';
@@ -90,6 +90,20 @@ export class CentersService {
   }
 
   async create(dto: CreateCenterDto) {
+    // Check for duplicate name (case-insensitive)
+    const existingCenter = await this.prisma.center.findFirst({
+      where: {
+        name: {
+          equals: dto.name,
+          mode: 'insensitive',
+        },
+      },
+    });
+
+    if (existingCenter) {
+      throw new ConflictException(`A center with the name "${dto.name}" already exists`);
+    }
+
     return this.prisma.center.create({
       data: {
         name: dto.name,
@@ -105,6 +119,25 @@ export class CentersService {
   async update(id: string, dto: UpdateCenterDto) {
     await this.findById(id); // Check if exists
 
+    // Check for duplicate name if name is being updated
+    if (dto.name) {
+      const existingCenter = await this.prisma.center.findFirst({
+        where: {
+          name: {
+            equals: dto.name,
+            mode: 'insensitive',
+          },
+          id: {
+            not: id, // Exclude current center
+          },
+        },
+      });
+
+      if (existingCenter) {
+        throw new ConflictException(`A center with the name "${dto.name}" already exists`);
+      }
+    }
+
     return this.prisma.center.update({
       where: { id },
       data: dto,
@@ -112,7 +145,33 @@ export class CentersService {
   }
 
   async delete(id: string) {
-    await this.findById(id); // Check if exists
+    const center = await this.findById(id); // Check if exists
+
+    // Check if center has groups
+    const groupsCount = await this.prisma.group.count({
+      where: { centerId: id },
+    });
+
+    if (groupsCount > 0) {
+      throw new BadRequestException(
+        `Cannot delete center "${center.name}" because it has ${groupsCount} group(s) associated with it. Please remove or reassign all groups first.`
+      );
+    }
+
+    // Check if center has students (via groups)
+    const studentsCount = await this.prisma.student.count({
+      where: {
+        group: {
+          centerId: id,
+        },
+      },
+    });
+
+    if (studentsCount > 0) {
+      throw new BadRequestException(
+        `Cannot delete center "${center.name}" because it has ${studentsCount} student(s) associated with it through groups. Please remove or reassign all students first.`
+      );
+    }
 
     return this.prisma.center.delete({
       where: { id },

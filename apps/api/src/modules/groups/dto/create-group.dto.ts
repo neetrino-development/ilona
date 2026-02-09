@@ -3,6 +3,7 @@ import {
   IsOptional,
   IsBoolean,
   IsInt,
+  IsNotEmpty,
   Min,
   Max,
   MaxLength,
@@ -32,6 +33,7 @@ export class CreateGroupDto {
   maxStudents?: number;
 
   @IsString()
+  @IsNotEmpty({ message: 'Center ID is required' })
   centerId!: string;
 
   @IsString()

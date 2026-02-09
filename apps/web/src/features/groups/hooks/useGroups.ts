@@ -83,7 +83,7 @@ export function useUpdateGroup() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateGroupDto }) =>
       updateGroup(id, data),
-    onSuccess: (group, { id }) => {
+    onSuccess: (group, { id, data }) => {
       queryClient.invalidateQueries({ queryKey: groupKeys.detail(id) });
       queryClient.invalidateQueries({ queryKey: groupKeys.lists() });
       // If teacher assignment changed, invalidate my-groups cache

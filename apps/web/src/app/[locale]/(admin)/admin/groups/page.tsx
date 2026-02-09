@@ -1,9 +1,11 @@
 'use client';
 
-import { useState } from 'react';
-import { Pencil, Trash2, Ban } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { Pencil, Trash2, Ban, List, LayoutGrid } from 'lucide-react';
 import { DashboardLayout } from '@/shared/components/layout/DashboardLayout';
 import { StatCard, DataTable, Badge, Button } from '@/shared/components/ui';
+import { cn } from '@/shared/lib/utils';
 import { 
   useGroups, 
   useDeleteGroup, 
@@ -23,8 +25,108 @@ import {
 } from '@/features/centers';
 
 type TabType = 'groups' | 'centers';
+type ViewMode = 'list' | 'board';
+
+interface GroupCardProps {
+  group: Group;
+  onEdit: () => void;
+  onDelete: () => void;
+  onToggleActive: () => void;
+}
+
+function GroupCard({ group, onEdit, onDelete, onToggleActive }: GroupCardProps) {
+  const teacherName = group.teacher
+    ? `${group.teacher.user.firstName} ${group.teacher.user.lastName}`
+    : null;
+  const studentCount = group._count?.students || 0;
+
+  return (
+    <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-sm hover:shadow-md transition-shadow">
+      {/* Group Header */}
+      <div className="mb-3">
+        <div className="flex items-start justify-between gap-2 mb-1">
+          <h4 className="font-semibold text-slate-800 text-sm leading-tight flex-1">
+            {group.name}
+          </h4>
+          <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={onEdit}
+              className="p-1.5 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+              aria-label="Edit group"
+              title="Edit group"
+            >
+              <Pencil className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={onToggleActive}
+              className="p-1.5 text-slate-600 hover:text-amber-600 hover:bg-amber-50 rounded transition-colors"
+              aria-label={group.isActive ? 'Deactivate group' : 'Activate group'}
+              title={group.isActive ? 'Deactivate group' : 'Activate group'}
+            >
+              <Ban className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={onDelete}
+              className="p-1.5 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+              aria-label="Delete group"
+              title="Delete group"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+        {group.description && (
+          <p className="text-xs text-slate-500 line-clamp-2 mt-1" title={group.description}>
+            {group.description}
+          </p>
+        )}
+      </div>
+
+      {/* Group Details */}
+      <div className="space-y-2 text-xs">
+        {group.level && (
+          <div className="flex items-center gap-2">
+            <Badge variant="info" className="text-xs py-0.5 px-2">
+              {group.level}
+            </Badge>
+          </div>
+        )}
+
+        {teacherName && (
+          <div className="flex items-center gap-2 text-slate-600">
+            <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            <span className="truncate" title={teacherName}>{teacherName}</span>
+          </div>
+        )}
+
+        <div className="flex items-center gap-2 text-slate-600">
+          <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          <span>
+            {studentCount}/{group.maxStudents} students
+          </span>
+        </div>
+
+        {!group.isActive && (
+          <div className="pt-1">
+            <Badge variant="warning" className="text-xs py-0.5 px-2">
+              Inactive
+            </Badge>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function GroupsPage() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  
   const [activeTab, setActiveTab] = useState<TabType>('groups');
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(0);
@@ -34,14 +136,53 @@ export default function GroupsPage() {
   const [deleteGroupError, setDeleteGroupError] = useState<string | null>(null);
   const pageSize = 10;
 
-  // Fetch groups
+  // View mode state with URL persistence
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    const modeFromUrl = searchParams.get('view');
+    if (modeFromUrl === 'list' || modeFromUrl === 'board') {
+      return modeFromUrl;
+    }
+    return 'list'; // Default to list view
+  });
+
+  // Update URL when view mode changes
+  const updateViewModeInUrl = (mode: ViewMode) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (mode !== 'list') {
+      params.set('view', mode);
+    } else {
+      params.delete('view');
+    }
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
+  // Sync view mode from URL
+  useEffect(() => {
+    const modeFromUrl = searchParams.get('view');
+    if (modeFromUrl === 'list' || modeFromUrl === 'board') {
+      setViewMode(modeFromUrl);
+    } else if (!modeFromUrl) {
+      setViewMode('list');
+    }
+  }, [searchParams]);
+
+  // Fetch groups - for board view, fetch max allowed (100); for list view, use pagination
+  const shouldFetchAll = viewMode === 'board';
   const { 
     data: groupsData, 
     isLoading 
   } = useGroups({ 
-    skip: page * pageSize,
-    take: pageSize,
+    skip: shouldFetchAll ? 0 : page * pageSize,
+    take: shouldFetchAll ? 100 : pageSize, // API max is 100
     search: searchQuery || undefined,
+  });
+
+  // Fetch all centers for board view (only when in board mode)
+  const { 
+    data: allCentersData 
+  } = useCenters({ 
+    isActive: undefined, // Get all centers
+    take: viewMode === 'board' ? 100 : undefined, // API max is 100
   });
 
   // Mutations
@@ -51,6 +192,29 @@ export default function GroupsPage() {
   const groups = groupsData?.items || [];
   const totalGroups = groupsData?.total || 0;
   const totalPages = groupsData?.totalPages || 1;
+  const allCenters = allCentersData?.items || [];
+
+  // Group groups by center for board view
+  const groupsByCenter = useMemo(() => {
+    if (viewMode !== 'board') return {};
+    
+    const grouped: Record<string, Group[]> = {};
+    
+    // Initialize all centers
+    allCenters.forEach(center => {
+      grouped[center.id] = [];
+    });
+    
+    // Assign groups to their centers
+    groups.forEach(group => {
+      if (!grouped[group.centerId]) {
+        grouped[group.centerId] = [];
+      }
+      grouped[group.centerId].push(group);
+    });
+    
+    return grouped;
+  }, [groups, allCenters, viewMode]);
 
   // Handle search
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -470,6 +634,46 @@ export default function GroupsPage() {
             />
           </div>
 
+          {/* View Mode Toggle */}
+          <div className="inline-flex rounded-lg border-2 border-slate-300 bg-white p-1 shadow-sm">
+            <button
+              onClick={() => {
+                setViewMode('list');
+                updateViewModeInUrl('list');
+                setPage(0); // Reset pagination when switching views
+              }}
+              className={cn(
+                'px-4 py-2 text-sm font-semibold rounded-md transition-all flex items-center gap-2',
+                'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
+                viewMode === 'list'
+                  ? 'bg-blue-600 text-white shadow-md'
+                  : 'text-slate-700 hover:bg-slate-100'
+              )}
+              aria-pressed={viewMode === 'list'}
+            >
+              <List className="w-4 h-4" />
+              List
+            </button>
+            <button
+              onClick={() => {
+                setViewMode('board');
+                updateViewModeInUrl('board');
+                setPage(0); // Reset pagination when switching views
+              }}
+              className={cn(
+                'px-4 py-2 text-sm font-semibold rounded-md transition-all flex items-center gap-2',
+                'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
+                viewMode === 'board'
+                  ? 'bg-blue-600 text-white shadow-md'
+                  : 'text-slate-700 hover:bg-slate-100'
+              )}
+              aria-pressed={viewMode === 'board'}
+            >
+              <LayoutGrid className="w-4 h-4" />
+              Board
+            </button>
+          </div>
+
           <Button 
             className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium"
             onClick={() => setCreateGroupOpen(true)}
@@ -478,42 +682,116 @@ export default function GroupsPage() {
           </Button>
         </div>
 
-        {/* Groups Table */}
-        <DataTable
-          columns={groupColumns}
-          data={groups}
-          keyExtractor={(group) => group.id}
-          isLoading={isLoading}
-          emptyMessage={searchQuery ? "No groups match your search" : "No groups found"}
-        />
+        {/* Groups View */}
+        {viewMode === 'list' ? (
+          <>
+            {/* Groups Table */}
+            <DataTable
+              columns={groupColumns}
+              data={groups}
+              keyExtractor={(group) => group.id}
+              isLoading={isLoading}
+              emptyMessage={searchQuery ? "No groups match your search" : "No groups found"}
+            />
 
-        {/* Pagination */}
-        <div className="flex items-center justify-between text-sm text-slate-500">
-          <span>
-            Showing {Math.min(page * pageSize + 1, totalGroups)}-{Math.min((page + 1) * pageSize, totalGroups)} of {totalGroups} groups
-          </span>
-          <div className="flex items-center gap-2">
-            <button 
-              className="p-2 rounded-lg hover:bg-slate-100 disabled:opacity-50" 
-              disabled={page === 0}
-              onClick={() => setPage(p => Math.max(0, p - 1))}
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <span>Page {page + 1} of {totalPages || 1}</span>
-            <button 
-              className="p-2 rounded-lg hover:bg-slate-100 disabled:opacity-50"
-              disabled={page >= totalPages - 1}
-              onClick={() => setPage(p => p + 1)}
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
+            {/* Pagination */}
+            <div className="flex items-center justify-between text-sm text-slate-500">
+              <span>
+                Showing {Math.min(page * pageSize + 1, totalGroups)}-{Math.min((page + 1) * pageSize, totalGroups)} of {totalGroups} groups
+              </span>
+              <div className="flex items-center gap-2">
+                <button 
+                  className="p-2 rounded-lg hover:bg-slate-100 disabled:opacity-50" 
+                  disabled={page === 0}
+                  onClick={() => setPage(p => Math.max(0, p - 1))}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <span>Page {page + 1} of {totalPages || 1}</span>
+                <button 
+                  className="p-2 rounded-lg hover:bg-slate-100 disabled:opacity-50"
+                  disabled={page >= totalPages - 1}
+                  onClick={() => setPage(p => p + 1)}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </>
+        ) : (
+          /* Board View */
+          <div className="w-full overflow-x-auto">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-slate-500">Loading groups...</div>
+              </div>
+            ) : allCenters.length === 0 ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-slate-500">No centers found. Please create a center first.</div>
+              </div>
+            ) : (
+              <div className="flex gap-4 pb-4 min-w-max">
+                {allCenters
+                  .filter((center) => {
+                    // When searching, only show centers with matching groups
+                    if (searchQuery) {
+                      const centerGroups = groupsByCenter[center.id] || [];
+                      return centerGroups.length > 0;
+                    }
+                    return true; // Show all centers when not searching
+                  })
+                  .map((center) => {
+                    const centerGroups = groupsByCenter[center.id] || [];
+                    return (
+                      <div
+                        key={center.id}
+                        className="flex-shrink-0 w-80 bg-slate-50 rounded-xl border border-slate-200 flex flex-col"
+                      >
+                        {/* Column Header */}
+                        <div className="p-4 border-b border-slate-200 bg-white rounded-t-xl">
+                          <h3 className="font-semibold text-slate-800">{center.name}</h3>
+                          <p className="text-sm text-slate-500 mt-1">
+                            {centerGroups.length} {centerGroups.length === 1 ? 'group' : 'groups'}
+                          </p>
+                        </div>
+
+                        {/* Column Content */}
+                        <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-[400px] max-h-[calc(100vh-400px)]">
+                          {centerGroups.length === 0 ? (
+                            <div className="text-center py-8 text-slate-400 text-sm">
+                              No groups
+                            </div>
+                          ) : (
+                            centerGroups.map((group) => (
+                              <GroupCard
+                                key={group.id}
+                                group={group}
+                                onEdit={() => setEditGroupId(group.id)}
+                                onDelete={() => handleDeleteClick(group.id)}
+                                onToggleActive={() => handleToggleActive(group.id)}
+                              />
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                {searchQuery && allCenters.filter((center) => {
+                  const centerGroups = groupsByCenter[center.id] || [];
+                  return centerGroups.length > 0;
+                }).length === 0 && (
+                  <div className="flex items-center justify-center py-12 w-full">
+                    <div className="text-slate-500">No groups match your search</div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
-        </div>
+        )}
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

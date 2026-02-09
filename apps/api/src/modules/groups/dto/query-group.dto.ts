@@ -1,15 +1,23 @@
 import { IsOptional, IsString, IsBoolean, IsInt, Min, Max } from 'class-validator';
-import { Transform, Type } from 'class-transformer';
+import { Transform } from 'class-transformer';
 
 export class QueryGroupDto {
   @IsOptional()
-  @Type(() => Number)
+  @Transform(({ value }) => {
+    if (value === undefined || value === null || value === '') return undefined;
+    const num = Number(value);
+    return isNaN(num) ? undefined : num;
+  })
   @IsInt()
   @Min(0)
   skip?: number;
 
   @IsOptional()
-  @Type(() => Number)
+  @Transform(({ value }) => {
+    if (value === undefined || value === null || value === '') return undefined;
+    const num = Number(value);
+    return isNaN(num) ? undefined : num;
+  })
   @IsInt()
   @Min(1)
   @Max(100)
@@ -38,7 +46,7 @@ export class QueryGroupDto {
     if (value === 'false' || value === false) return false;
     return undefined;
   })
-  @IsBoolean()
+  @IsBoolean({ message: 'isActive must be a boolean value' })
   isActive?: boolean;
 }
 

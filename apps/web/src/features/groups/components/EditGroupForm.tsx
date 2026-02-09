@@ -14,7 +14,7 @@ const updateGroupSchema = z.object({
   level: z.string().max(50, 'Level must be at most 50 characters').optional().or(z.literal('')),
   description: z.string().max(500, 'Description must be at most 500 characters').optional().or(z.literal('')),
   maxStudents: z.number().int('Max students must be a whole number').min(1, 'Max students must be at least 1').max(50, 'Max students must be at most 50').optional(),
-  centerId: z.string().optional().or(z.literal('')),
+  centerId: z.string().min(1, 'Center is required').optional().or(z.literal('')),
   teacherId: z.string().optional().or(z.literal('')),
   isActive: z.boolean().optional(),
 });
@@ -91,7 +91,8 @@ export function EditGroupForm({ open, onOpenChange, groupId }: EditGroupFormProp
         level: data.level || undefined,
         description: data.description || undefined,
         maxStudents: data.maxStudents,
-        centerId: data.centerId,
+        // Only include centerId if it's not empty (centerId is required in DB, so we must provide it if changing)
+        centerId: data.centerId && data.centerId.trim() !== '' ? data.centerId : undefined,
         teacherId: data.teacherId || undefined,
         isActive: data.isActive,
       };

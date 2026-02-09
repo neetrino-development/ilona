@@ -210,8 +210,12 @@ export class GroupsService {
   async update(id: string, dto: UpdateGroupDto) {
     await this.findById(id);
 
-    // Validate center if changing
-    if (dto.centerId) {
+    // Validate center if changing (centerId is required in DB, so if provided it must be valid)
+    if (dto.centerId !== undefined) {
+      if (!dto.centerId || dto.centerId.trim() === '') {
+        throw new BadRequestException('Center ID cannot be empty. A group must belong to a center.');
+      }
+
       const center = await this.prisma.center.findUnique({
         where: { id: dto.centerId },
       });
