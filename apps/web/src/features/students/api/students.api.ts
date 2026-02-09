@@ -117,3 +117,23 @@ export async function fetchMyAssignedStudents(filters?: StudentFilters): Promise
   
   return api.get<StudentsResponse>(url);
 }
+
+/**
+ * Teacher info for student chat
+ */
+export interface AssignedTeacher {
+  id: string;
+  userId: string;
+  name: string;
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  avatarUrl?: string;
+}
+
+/**
+ * Fetch teachers assigned to the currently logged-in student
+ */
+export async function fetchMyTeachers(): Promise<AssignedTeacher[]> {
+  return api.get<AssignedTeacher[]>(`${STUDENTS_ENDPOINT}/me/teachers`);
+}

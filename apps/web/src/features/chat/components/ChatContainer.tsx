@@ -4,9 +4,11 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useAuthStore, getDashboardPath } from '@/features/auth/store/auth.store';
 import { ChatList } from './ChatList';
+import { StudentChatList } from './StudentChatList';
 import { ChatWindow } from './ChatWindow';
 import { useChatStore } from '../store/chat.store';
-import { useSocket, useChats } from '../hooks';
+import { useSocket, useChats, useCreateDirectChat } from '../hooks';
+import { useMyTeachers } from '@/features/students/hooks/useStudents';
 import type { Chat } from '../types';
 import { cn } from '@/shared/lib/utils';
 
@@ -23,7 +25,10 @@ function ChatContent({ emptyTitle, emptyDescription, className }: ChatContainerP
   const { user } = useAuthStore();
   const { activeChat, setActiveChat, isMobileListVisible, setMobileListVisible } = useChatStore();
   const { data: chats = [], isLoading: isLoadingChats } = useChats();
+  const createDirectChat = useCreateDirectChat();
+  const { data: teachers = [], isLoading: isLoadingTeachers } = useMyTeachers(user?.role === 'STUDENT');
   const isInitialMount = useRef(true);
+  const isStudent = user?.role === 'STUDENT';
 
   // Get returnTo from query params
   const returnToParam = searchParams.get('returnTo');
@@ -69,7 +74,53 @@ function ChatContent({ emptyTitle, emptyDescription, className }: ChatContainerP
   useEffect(() => {
     if (isLoadingChats || !isInitialMount.current) return;
     
+    // For students, also wait for teachers to load if we need to handle teacherId param
+    const typeFromUrl = searchParams.get('type');
+    const teacherIdFromUrl = searchParams.get('teacherId');
+    if (isStudent && typeFromUrl === 'dm' && teacherIdFromUrl && isLoadingTeachers) {
+      return;
+    }
+    
     const chatIdFromUrl = searchParams.get('chatId');
+    
+    // Handle teacherId param for student DM
+    if (isStudent && typeFromUrl === 'dm' && teacherIdFromUrl && teachers.length > 0) {
+      const teacher = teachers.find((t) => t.userId === teacherIdFromUrl);
+      if (teacher) {
+        // Check if chat already exists
+        const existingChat = chats.find((chat) => {
+          if (chat.type !== 'DIRECT') return false;
+          return chat.participants.some((p) => p.userId === teacher.userId);
+        });
+
+        if (existingChat) {
+          setActiveChat(existingChat);
+          setMobileListVisible(false);
+          // Update URL to use chatId
+          const params = new URLSearchParams(searchParams.toString());
+          params.delete('type');
+          params.delete('teacherId');
+          params.set('chatId', existingChat.id);
+          router.replace(`${pathname}?${params.toString()}`);
+        } else {
+          // Create new chat
+          createDirectChat.mutate(teacher.userId, {
+            onSuccess: (newChat) => {
+              setActiveChat(newChat);
+              setMobileListVisible(false);
+              // Update URL to use chatId
+              const params = new URLSearchParams(searchParams.toString());
+              params.delete('type');
+              params.delete('teacherId');
+              params.set('chatId', newChat.id);
+              router.replace(`${pathname}?${params.toString()}`);
+            },
+          });
+        }
+        isInitialMount.current = false;
+        return;
+      }
+    }
     
     if (chatIdFromUrl && chats.length > 0) {
       const chatFromList = chats.find((chat) => chat.id === chatIdFromUrl);
@@ -83,10 +134,10 @@ function ChatContent({ emptyTitle, emptyDescription, className }: ChatContainerP
         router.replace(`${pathname}?${params.toString()}`);
       }
       isInitialMount.current = false;
-    } else if (!chatIdFromUrl) {
+    } else if (!chatIdFromUrl && !teacherIdFromUrl) {
       isInitialMount.current = false;
     }
-  }, [chats, isLoadingChats, searchParams, setActiveChat, setMobileListVisible, router, pathname]);
+  }, [chats, isLoadingChats, isLoadingTeachers, teachers, searchParams, setActiveChat, setMobileListVisible, router, pathname, isStudent, createDirectChat]);
 
   // Sync URL when activeChat changes (but skip on initial mount)
   useEffect(() => {
@@ -110,8 +161,10 @@ function ChatContent({ emptyTitle, emptyDescription, className }: ChatContainerP
   const handleSelectChat = (chat: Chat) => {
     setActiveChat(chat);
     setMobileListVisible(false);
-    // Update URL immediately
+    // Update URL immediately - remove type and teacherId params if present
     const params = new URLSearchParams(searchParams.toString());
+    params.delete('type');
+    params.delete('teacherId');
     params.set('chatId', chat.id);
     router.replace(`${pathname}?${params.toString()}`);
   };
@@ -172,7 +225,11 @@ function ChatContent({ emptyTitle, emptyDescription, className }: ChatContainerP
             !isMobileListVisible && 'hidden lg:block'
           )}
         >
-          <ChatList onSelectChat={handleSelectChat} />
+          {isStudent ? (
+            <StudentChatList onSelectChat={handleSelectChat} />
+          ) : (
+            <ChatList onSelectChat={handleSelectChat} />
+          )}
         </div>
 
         {/* Chat Window */}

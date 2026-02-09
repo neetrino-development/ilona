@@ -917,4 +917,65 @@ export class StudentsService {
 
     return this.findAssignedToTeacher(teacher.id, params);
   }
+
+  /**
+   * Get teachers assigned to a student
+   * Returns teachers from:
+   * 1. Direct teacherId assignment
+   * 2. Group's teacher (if student is in a group)
+   */
+  async getMyTeachers(userId: string) {
+    const student = await this.findByUserId(userId);
+
+    const teacherIds = new Set<string>();
+
+    // Add direct teacher assignment
+    if (student.teacherId) {
+      teacherIds.add(student.teacherId);
+    }
+
+    // Add group's teacher if student is in a group
+    if (student.groupId) {
+      const group = await this.prisma.group.findUnique({
+        where: { id: student.groupId },
+        select: { teacherId: true },
+      });
+
+      if (group?.teacherId) {
+        teacherIds.add(group.teacherId);
+      }
+    }
+
+    if (teacherIds.size === 0) {
+      return [];
+    }
+
+    // Fetch all assigned teachers
+    const teachers = await this.prisma.teacher.findMany({
+      where: {
+        id: { in: Array.from(teacherIds) },
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            phone: true,
+            avatarUrl: true,
+          },
+        },
+      },
+    });
+
+    return teachers.map((teacher) => ({
+      id: teacher.id,
+      userId: teacher.userId,
+      name: `${teacher.user.firstName} ${teacher.user.lastName}`,
+      firstName: teacher.user.firstName,
+      lastName: teacher.user.lastName,
+      phone: teacher.user.phone,
+      avatarUrl: teacher.user.avatarUrl,
+    }));
+  }
 }

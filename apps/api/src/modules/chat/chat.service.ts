@@ -5,7 +5,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Prisma, ChatType, MessageType } from '@prisma/client';
+import { Prisma, ChatType, MessageType, UserRole } from '@prisma/client';
 import { CreateChatDto, SendMessageDto, UpdateMessageDto } from './dto';
 
 @Injectable()
@@ -250,11 +250,94 @@ export class ChatService {
   }
 
   /**
+   * Validate if a student can DM a teacher
+   */
+  private async validateStudentTeacherDM(studentUserId: string, teacherUserId: string): Promise<boolean> {
+    // Get student profile
+    const student = await this.prisma.student.findUnique({
+      where: { userId: studentUserId },
+      select: { id: true, teacherId: true, groupId: true },
+    });
+
+    if (!student) {
+      return false;
+    }
+
+    // Get teacher profile
+    const teacher = await this.prisma.teacher.findUnique({
+      where: { userId: teacherUserId },
+      select: { id: true },
+    });
+
+    if (!teacher) {
+      return false;
+    }
+
+    // Check direct assignment
+    if (student.teacherId === teacher.id) {
+      return true;
+    }
+
+    // Check group assignment
+    if (student.groupId) {
+      const group = await this.prisma.group.findUnique({
+        where: { id: student.groupId },
+        select: { teacherId: true },
+      });
+
+      if (group?.teacherId === teacher.id) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
    * Create a new direct chat
    */
   async createDirectChat(dto: CreateChatDto, creatorId: string) {
     if (!dto.participantIds?.length) {
       throw new BadRequestException('At least one participant is required');
+    }
+
+    // Get creator's role
+    const creator = await this.prisma.user.findUnique({
+      where: { id: creatorId },
+      select: { role: true },
+    });
+
+    if (!creator) {
+      throw new NotFoundException('User not found');
+    }
+
+    // For direct chats with one participant, validate student-teacher relationship
+    if (dto.participantIds.length === 1) {
+      const participantId = dto.participantIds[0];
+      const participant = await this.prisma.user.findUnique({
+        where: { id: participantId },
+        select: { role: true },
+      });
+
+      if (!participant) {
+        throw new NotFoundException('Participant not found');
+      }
+
+      // If student is trying to DM a teacher, validate assignment
+      if (creator.role === UserRole.STUDENT && participant.role === UserRole.TEACHER) {
+        const canDM = await this.validateStudentTeacherDM(creatorId, participantId);
+        if (!canDM) {
+          throw new ForbiddenException('You can only message teachers assigned to you');
+        }
+      }
+
+      // If teacher is trying to DM a student, validate assignment (reverse check)
+      if (creator.role === UserRole.TEACHER && participant.role === UserRole.STUDENT) {
+        const canDM = await this.validateStudentTeacherDM(participantId, creatorId);
+        if (!canDM) {
+          throw new ForbiddenException('You can only message students assigned to you');
+        }
+      }
     }
 
     // Check if direct chat already exists between these users
@@ -327,7 +410,42 @@ export class ChatService {
    */
   async sendMessage(dto: SendMessageDto, senderId: string, senderRole?: string) {
     // Verify user is participant (or admin for group chats)
-    await this.getChatById(dto.chatId, senderId, senderRole);
+    const chat = await this.getChatById(dto.chatId, senderId, senderRole);
+
+    // Additional permission check for direct chats: validate student-teacher relationship
+    if (chat.type === ChatType.DIRECT) {
+      const sender = await this.prisma.user.findUnique({
+        where: { id: senderId },
+        select: { role: true },
+      });
+
+      if (sender) {
+        // Find the other participant
+        const otherParticipant = chat.participants.find((p) => p.userId !== senderId);
+        if (otherParticipant) {
+          const otherUser = await this.prisma.user.findUnique({
+            where: { id: otherParticipant.userId },
+            select: { role: true },
+          });
+
+          // If student is sending to teacher, validate assignment
+          if (sender.role === UserRole.STUDENT && otherUser?.role === UserRole.TEACHER) {
+            const canDM = await this.validateStudentTeacherDM(senderId, otherParticipant.userId);
+            if (!canDM) {
+              throw new ForbiddenException('You can only message teachers assigned to you');
+            }
+          }
+
+          // If teacher is sending to student, validate assignment
+          if (sender.role === UserRole.TEACHER && otherUser?.role === UserRole.STUDENT) {
+            const canDM = await this.validateStudentTeacherDM(otherParticipant.userId, senderId);
+            if (!canDM) {
+              throw new ForbiddenException('You can only message students assigned to you');
+            }
+          }
+        }
+      }
+    }
 
     const message = await this.prisma.message.create({
       data: {

@@ -72,6 +72,12 @@ export class StudentsController {
     });
   }
 
+  @Get('me/teachers')
+  @Roles(UserRole.STUDENT)
+  async getMyTeachers(@CurrentUser() user: JwtPayload) {
+    return this.studentsService.getMyTeachers(user.sub);
+  }
+
   @Get(':id')
   @Roles(UserRole.ADMIN, UserRole.TEACHER)
   async findById(@Param('id') id: string) {

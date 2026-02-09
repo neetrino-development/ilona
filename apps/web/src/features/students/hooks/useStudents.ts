@@ -12,6 +12,7 @@ import {
   fetchMyProfile,
   fetchMyDashboard,
   fetchMyAssignedStudents,
+  fetchMyTeachers,
 } from '../api/students.api';
 import type {
   StudentFilters,
@@ -30,6 +31,7 @@ export const studentKeys = {
   myProfile: () => [...studentKeys.all, 'my-profile'] as const,
   myDashboard: () => [...studentKeys.all, 'my-dashboard'] as const,
   myAssigned: (filters?: StudentFilters) => [...studentKeys.all, 'my-assigned', filters] as const,
+  myTeachers: () => [...studentKeys.all, 'my-teachers'] as const,
 };
 
 /**
@@ -156,5 +158,17 @@ export function useMyAssignedStudents(filters?: StudentFilters) {
   return useQuery({
     queryKey: studentKeys.myAssigned(filters),
     queryFn: () => fetchMyAssignedStudents(filters),
+  });
+}
+
+/**
+ * Hook to fetch teachers assigned to the currently logged-in student
+ */
+export function useMyTeachers(enabled = true) {
+  return useQuery({
+    queryKey: studentKeys.myTeachers(),
+    queryFn: () => fetchMyTeachers(),
+    enabled,
+    staleTime: 60 * 1000, // Cache for 1 minute
   });
 }
