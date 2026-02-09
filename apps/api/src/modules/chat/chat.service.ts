@@ -96,7 +96,45 @@ export class ChatService {
   /**
    * Get chat by ID with messages
    */
-  async getChatById(chatId: string, userId: string) {
+  async getChatById(
+    chatId: string,
+    userId: string,
+    userRole?: string,
+  ): Promise<{
+    id: string;
+    type: ChatType;
+    name: string | null;
+    groupId: string | null;
+    isActive: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+    group: {
+      id: string;
+      name: string;
+      level: string | null;
+      center: {
+        id: string;
+        name: string;
+      } | null;
+    } | null;
+    participants: Array<{
+      id: string;
+      chatId: string;
+      userId: string;
+      isAdmin: boolean;
+      joinedAt: Date;
+      leftAt: Date | null;
+      lastReadAt: Date | null;
+      user: {
+        id: string;
+        firstName: string;
+        lastName: string;
+        avatarUrl: string | null;
+        role: string;
+        status: string | null;
+      };
+    }>;
+  }> {
     const chat = await this.prisma.chat.findUnique({
       where: { id: chatId },
       include: {
@@ -132,8 +170,35 @@ export class ChatService {
 
     // Check if user is a participant
     const isParticipant = chat.participants.some(p => p.userId === userId);
-    if (!isParticipant) {
+    
+    // Allow admin to access group chats even if not a participant
+    const isAdminAccessingGroup = userRole === 'ADMIN' && chat.type === ChatType.GROUP;
+    
+    if (!isParticipant && !isAdminAccessingGroup) {
       throw new ForbiddenException('You are not a participant of this chat');
+    }
+
+    // If admin is accessing a group chat and not a participant, add them
+    if (isAdminAccessingGroup && !isParticipant) {
+      await this.prisma.chatParticipant.upsert({
+        where: {
+          chatId_userId: {
+            chatId: chat.id,
+            userId,
+          },
+        },
+        update: {
+          leftAt: null, // Rejoin if they left
+        },
+        create: {
+          chatId: chat.id,
+          userId,
+          isAdmin: true,
+        },
+      });
+
+      // Refetch chat with updated participants
+      return this.getChatById(chatId, userId, userRole);
     }
 
     return chat;
@@ -146,9 +211,10 @@ export class ChatService {
     chatId: string,
     userId: string,
     params?: { cursor?: string; take?: number },
+    userRole?: string,
   ) {
     // Verify user is participant
-    await this.getChatById(chatId, userId);
+    await this.getChatById(chatId, userId, userRole);
 
     const { cursor, take = 50 } = params || {};
 
@@ -259,9 +325,9 @@ export class ChatService {
   /**
    * Send a message
    */
-  async sendMessage(dto: SendMessageDto, senderId: string) {
-    // Verify user is participant
-    await this.getChatById(dto.chatId, senderId);
+  async sendMessage(dto: SendMessageDto, senderId: string, senderRole?: string) {
+    // Verify user is participant (or admin for group chats)
+    await this.getChatById(dto.chatId, senderId, senderRole);
 
     const message = await this.prisma.message.create({
       data: {
@@ -387,7 +453,7 @@ export class ChatService {
   async sendVocabularyMessage(chatId: string, teacherId: string, vocabularyWords: string[]) {
     // Verify teacher is participant and is admin
     const chat = await this.getChatById(chatId, teacherId);
-    const participant = chat.participants.find(p => p.userId === teacherId);
+    const participant = chat.participants.find((p) => p.userId === teacherId);
     
     if (!participant?.isAdmin) {
       throw new ForbiddenException('Only chat admins can send vocabulary');
@@ -423,10 +489,55 @@ export class ChatService {
   /**
    * Get chat for a group
    */
-  async getGroupChat(groupId: string) {
-    return this.prisma.chat.findUnique({
+  async getGroupChat(
+    groupId: string,
+    userId?: string,
+    userRole?: string,
+  ): Promise<{
+    id: string;
+    type: ChatType;
+    name: string | null;
+    groupId: string | null;
+    isActive: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+    group: {
+      id: string;
+      name: string;
+      level: string | null;
+      center: {
+        id: string;
+        name: string;
+      } | null;
+    } | null;
+    participants: Array<{
+      id: string;
+      chatId: string;
+      userId: string;
+      isAdmin: boolean;
+      joinedAt: Date;
+      leftAt: Date | null;
+      lastReadAt: Date | null;
+      user: {
+        id: string;
+        firstName: string;
+        lastName: string;
+        avatarUrl: string | null;
+        role: string;
+      };
+    }>;
+  }> {
+    const chat = await this.prisma.chat.findUnique({
       where: { groupId },
       include: {
+        group: {
+          select: {
+            id: true,
+            name: true,
+            level: true,
+            center: { select: { id: true, name: true } },
+          },
+        },
         participants: {
           where: { leftAt: null },
           include: {
@@ -443,6 +554,38 @@ export class ChatService {
         },
       },
     });
+
+    if (!chat) {
+      throw new NotFoundException('Group chat not found');
+    }
+
+    // If admin is accessing and not a participant, add them
+    if (userId && userRole === 'ADMIN') {
+      const isParticipant = chat.participants.some(p => p.userId === userId);
+      if (!isParticipant) {
+        await this.prisma.chatParticipant.upsert({
+          where: {
+            chatId_userId: {
+              chatId: chat.id,
+              userId,
+            },
+          },
+          update: {
+            leftAt: null, // Rejoin if they left
+          },
+          create: {
+            chatId: chat.id,
+            userId,
+            isAdmin: true,
+          },
+        });
+
+        // Refetch with updated participants
+        return this.getGroupChat(groupId, userId, userRole);
+      }
+    }
+
+    return chat;
   }
 
   /**
@@ -450,6 +593,139 @@ export class ChatService {
    */
   getOnlineUsers(_chatId: string, onlineUserIds: Set<string>): string[] {
     return Array.from(onlineUserIds);
+  }
+
+  /**
+   * Get students list for admin chat
+   */
+  async getAdminStudents(_adminId: string, search?: string) {
+    const where: Prisma.StudentWhereInput = {
+      user: {
+        role: 'STUDENT',
+        status: 'ACTIVE',
+        ...(search && {
+          OR: [
+            { firstName: { contains: search, mode: 'insensitive' } },
+            { lastName: { contains: search, mode: 'insensitive' } },
+            { email: { contains: search, mode: 'insensitive' } },
+            { phone: { contains: search, mode: 'insensitive' } },
+          ],
+        }),
+      },
+    };
+
+    const students = await this.prisma.student.findMany({
+      where,
+      take: 100, // Limit to 100 for performance
+      orderBy: {
+        user: {
+          firstName: 'asc',
+        },
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            phone: true,
+            avatarUrl: true,
+          },
+        },
+      },
+    });
+
+    return students.map((student) => ({
+      id: student.user.id,
+      name: `${student.user.firstName} ${student.user.lastName}`,
+      phone: student.user.phone,
+      avatarUrl: student.user.avatarUrl,
+    }));
+  }
+
+  /**
+   * Get teachers list for admin chat
+   */
+  async getAdminTeachers(_adminId: string, search?: string) {
+    const where: Prisma.TeacherWhereInput = {
+      user: {
+        role: 'TEACHER',
+        status: 'ACTIVE',
+        ...(search && {
+          OR: [
+            { firstName: { contains: search, mode: 'insensitive' } },
+            { lastName: { contains: search, mode: 'insensitive' } },
+            { email: { contains: search, mode: 'insensitive' } },
+            { phone: { contains: search, mode: 'insensitive' } },
+          ],
+        }),
+      },
+    };
+
+    const teachers = await this.prisma.teacher.findMany({
+      where,
+      take: 100, // Limit to 100 for performance
+      orderBy: {
+        user: {
+          firstName: 'asc',
+        },
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            phone: true,
+            avatarUrl: true,
+          },
+        },
+      },
+    });
+
+    return teachers.map((teacher) => ({
+      id: teacher.user.id,
+      name: `${teacher.user.firstName} ${teacher.user.lastName}`,
+      phone: teacher.user.phone,
+      avatarUrl: teacher.user.avatarUrl,
+    }));
+  }
+
+  /**
+   * Get groups list for admin chat
+   */
+  async getAdminGroups(_adminId: string, search?: string) {
+    const where: Prisma.GroupWhereInput = {
+      isActive: true,
+      ...(search && {
+        OR: [
+          { name: { contains: search, mode: 'insensitive' } },
+          { description: { contains: search, mode: 'insensitive' } },
+        ],
+      }),
+    };
+
+    const groups = await this.prisma.group.findMany({
+      where,
+      take: 100, // Limit to 100 for performance
+      orderBy: {
+        name: 'asc',
+      },
+      include: {
+        center: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
+
+    return groups.map((group) => ({
+      id: group.id,
+      name: group.name,
+      center: group.center ? { id: group.center.id, name: group.center.name } : null,
+    }));
   }
 }
 

@@ -34,7 +34,7 @@ export class ChatController {
     @Param('chatId') chatId: string,
     @CurrentUser() user: JwtPayload,
   ) {
-    return this.chatService.getChatById(chatId, user.sub);
+    return this.chatService.getChatById(chatId, user.sub, user.role);
   }
 
   /**
@@ -50,7 +50,7 @@ export class ChatController {
     return this.chatService.getMessages(chatId, user.sub, {
       cursor,
       take: take ? parseInt(take, 10) : undefined,
-    });
+    }, user.role);
   }
 
   /**
@@ -72,7 +72,7 @@ export class ChatController {
     @Body() dto: SendMessageDto,
     @CurrentUser() user: JwtPayload,
   ) {
-    return this.chatService.sendMessage(dto, user.sub);
+    return this.chatService.sendMessage(dto, user.sub, user.role);
   }
 
   /**
@@ -126,8 +126,47 @@ export class ChatController {
    * Get chat for a group
    */
   @Get('group/:groupId')
-  async getGroupChat(@Param('groupId') groupId: string) {
-    return this.chatService.getGroupChat(groupId);
+  async getGroupChat(
+    @Param('groupId') groupId: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.chatService.getGroupChat(groupId, user.sub, user.role);
+  }
+
+  /**
+   * Get students list for admin chat (Admin only)
+   */
+  @Get('admin/students')
+  @Roles(UserRole.ADMIN)
+  async getAdminStudents(
+    @CurrentUser() user: JwtPayload,
+    @Query('search') search?: string,
+  ) {
+    return this.chatService.getAdminStudents(user.sub, search);
+  }
+
+  /**
+   * Get teachers list for admin chat (Admin only)
+   */
+  @Get('admin/teachers')
+  @Roles(UserRole.ADMIN)
+  async getAdminTeachers(
+    @CurrentUser() user: JwtPayload,
+    @Query('search') search?: string,
+  ) {
+    return this.chatService.getAdminTeachers(user.sub, search);
+  }
+
+  /**
+   * Get groups list for admin chat (Admin only)
+   */
+  @Get('admin/groups')
+  @Roles(UserRole.ADMIN)
+  async getAdminGroups(
+    @CurrentUser() user: JwtPayload,
+    @Query('search') search?: string,
+  ) {
+    return this.chatService.getAdminGroups(user.sub, search);
   }
 }
 

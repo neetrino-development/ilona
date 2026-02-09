@@ -60,10 +60,52 @@ export async function sendMessageHttp(
 /**
  * Get group chat
  */
-export async function fetchGroupChat(groupId: string): Promise<Chat | null> {
-  try {
-    return await api.get<Chat>(`${CHAT_ENDPOINT}/group/${groupId}`);
-  } catch {
-    return null;
-  }
+export async function fetchGroupChat(groupId: string): Promise<Chat> {
+  return api.get<Chat>(`${CHAT_ENDPOINT}/group/${groupId}`);
+}
+
+/**
+ * Admin-only: Fetch students list for chat
+ */
+export interface AdminChatUser {
+  id: string;
+  name: string;
+  phone?: string;
+  avatarUrl?: string;
+}
+
+/**
+ * Admin-only: Fetch groups list for chat
+ */
+export interface AdminChatGroup {
+  id: string;
+  name: string;
+  center?: {
+    id: string;
+    name: string;
+  } | null;
+}
+
+export async function fetchAdminStudents(search?: string): Promise<AdminChatUser[]> {
+  const params = new URLSearchParams();
+  if (search) params.append('search', search);
+  const query = params.toString();
+  const url = query ? `${CHAT_ENDPOINT}/admin/students?${query}` : `${CHAT_ENDPOINT}/admin/students`;
+  return api.get<AdminChatUser[]>(url);
+}
+
+export async function fetchAdminTeachers(search?: string): Promise<AdminChatUser[]> {
+  const params = new URLSearchParams();
+  if (search) params.append('search', search);
+  const query = params.toString();
+  const url = query ? `${CHAT_ENDPOINT}/admin/teachers?${query}` : `${CHAT_ENDPOINT}/admin/teachers`;
+  return api.get<AdminChatUser[]>(url);
+}
+
+export async function fetchAdminGroups(search?: string): Promise<AdminChatGroup[]> {
+  const params = new URLSearchParams();
+  if (search) params.append('search', search);
+  const query = params.toString();
+  const url = query ? `${CHAT_ENDPOINT}/admin/groups?${query}` : `${CHAT_ENDPOINT}/admin/groups`;
+  return api.get<AdminChatGroup[]>(url);
 }

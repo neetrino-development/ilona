@@ -6,7 +6,12 @@ import {
   fetchChat,
   fetchMessages,
   createDirectChat,
+  fetchAdminStudents,
+  fetchAdminTeachers,
+  fetchAdminGroups,
+  fetchGroupChat,
 } from '../api/chat.api';
+import type { AdminChatUser, AdminChatGroup } from '../api/chat.api';
 
 // Query keys
 export const chatKeys = {
@@ -16,6 +21,10 @@ export const chatKeys = {
   details: () => [...chatKeys.all, 'detail'] as const,
   detail: (id: string) => [...chatKeys.details(), id] as const,
   messages: (chatId: string) => [...chatKeys.all, 'messages', chatId] as const,
+  // Admin chat lists
+  adminStudents: (search?: string) => [...chatKeys.all, 'admin', 'students', search] as const,
+  adminTeachers: (search?: string) => [...chatKeys.all, 'admin', 'teachers', search] as const,
+  adminGroups: (search?: string) => [...chatKeys.all, 'admin', 'groups', search] as const,
 };
 
 /**
@@ -146,4 +155,37 @@ export function useRemoveMessageFromCache() {
       }
     );
   };
+}
+
+/**
+ * Admin-only: Hook to fetch students list for chat
+ */
+export function useAdminStudents(search?: string) {
+  return useQuery({
+    queryKey: chatKeys.adminStudents(search),
+    queryFn: () => fetchAdminStudents(search),
+    staleTime: 60 * 1000, // Cache for 1 minute
+  });
+}
+
+/**
+ * Admin-only: Hook to fetch teachers list for chat
+ */
+export function useAdminTeachers(search?: string) {
+  return useQuery({
+    queryKey: chatKeys.adminTeachers(search),
+    queryFn: () => fetchAdminTeachers(search),
+    staleTime: 60 * 1000, // Cache for 1 minute
+  });
+}
+
+/**
+ * Admin-only: Hook to fetch groups list for chat
+ */
+export function useAdminGroups(search?: string) {
+  return useQuery({
+    queryKey: chatKeys.adminGroups(search),
+    queryFn: () => fetchAdminGroups(search),
+    staleTime: 60 * 1000, // Cache for 1 minute
+  });
 }
