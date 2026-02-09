@@ -1,15 +1,15 @@
 'use client';
 
-import { DashboardLayout } from '@/shared/components/layout/DashboardLayout';
 import { ChatContainer } from '@/features/chat';
 
 export default function AdminChatPage() {
   return (
-    <DashboardLayout title="Chat" subtitle="Communicate with teachers and students.">
+    <div className="h-screen w-screen bg-slate-50">
       <ChatContainer
         emptyTitle="Select a chat"
         emptyDescription="Choose a conversation from the list to start messaging"
+        className="h-full rounded-none border-0"
       />
-    </DashboardLayout>
+    </div>
   );
 }

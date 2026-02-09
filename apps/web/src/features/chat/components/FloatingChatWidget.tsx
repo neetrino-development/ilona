@@ -1,40 +1,42 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { ChatContainer } from './ChatContainer';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useLocale } from 'next-intl';
+import { useAuthStore, getDashboardPath } from '@/features/auth/store/auth.store';
 import { cn } from '@/shared/lib/utils';
 
 export function FloatingChatWidget() {
-  const [isOpen, setIsOpen] = useState(false);
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const locale = useLocale();
+  const { user } = useAuthStore();
 
-  // Prevent body scroll when drawer is open on mobile
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [isOpen]);
+  // Check if we're on a chat route - hide the button if so
+  const isOnChatRoute = pathname.includes('/chat');
+  if (isOnChatRoute) {
+    return null;
+  }
 
-  // Close drawer on escape key
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        setIsOpen(false);
-      }
-    };
-    window.addEventListener('keydown', handleEscape);
-    return () => window.removeEventListener('keydown', handleEscape);
-  }, [isOpen]);
+  const handleChatClick = () => {
+    if (!user?.role) return;
+
+    // Get current pathname with search params as returnTo (includes locale)
+    const currentPath = searchParams.toString() 
+      ? `${pathname}?${searchParams.toString()}`
+      : pathname;
+    const returnTo = encodeURIComponent(currentPath);
+    
+    // Navigate to chat route with returnTo parameter
+    const chatPath = `/${locale}/${user.role.toLowerCase()}/chat?returnTo=${returnTo}`;
+    router.push(chatPath);
+  };
 
   return (
     <>
       {/* Floating Chat Button */}
       <button
-        onClick={() => setIsOpen(true)}
+        onClick={handleChatClick}
         className={cn(
           'fixed z-40',
           'bottom-4 right-4 sm:bottom-6 sm:right-6',
@@ -65,72 +67,6 @@ export function FloatingChatWidget() {
           />
         </svg>
       </button>
-
-      {/* Chat Drawer Panel */}
-      {isOpen && (
-        <>
-          {/* Overlay */}
-          <div
-            className="fixed inset-0 bg-black/50 z-[60] transition-opacity animate-in fade-in-0"
-            onClick={() => setIsOpen(false)}
-            aria-hidden="true"
-          />
-
-          {/* Drawer */}
-          <div
-            className={cn(
-              'fixed right-0 top-0 bottom-0 z-[70]',
-              'w-full sm:w-[480px] lg:w-[600px]',
-              'bg-white shadow-2xl',
-              'flex flex-col',
-              'transform transition-transform duration-300 ease-out',
-              'animate-in slide-in-from-right'
-            )}
-            role="dialog"
-            aria-modal="true"
-            aria-label="Chat panel"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-gradient-to-r from-blue-500 to-indigo-600 flex-shrink-0">
-              <h2 className="text-lg font-semibold text-white">Chat</h2>
-              <button
-                onClick={() => setIsOpen(false)}
-                className={cn(
-                  'p-2 rounded-lg',
-                  'text-white/80 hover:text-white hover:bg-white/20',
-                  'transition-colors',
-                  'focus:outline-none focus:ring-2 focus:ring-white/50'
-                )}
-                aria-label="Close chat"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-
-            {/* Chat Content */}
-            <div className="flex-1 overflow-hidden p-4 sm:p-6 min-h-0">
-              <ChatContainer
-                emptyTitle="Select a chat"
-                emptyDescription="Choose a conversation from the list to start messaging"
-                className="h-full rounded-xl"
-              />
-            </div>
-          </div>
-        </>
-      )}
     </>
   );
 }

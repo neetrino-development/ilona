@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import { useAuthStore, getDashboardPath } from '@/features/auth/store/auth.store';
 import { ChatList } from './ChatList';
 import { ChatWindow } from './ChatWindow';
 import { useChatStore } from '../store/chat.store';
@@ -19,9 +20,47 @@ function ChatContent({ emptyTitle, emptyDescription, className }: ChatContainerP
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { user } = useAuthStore();
   const { activeChat, setActiveChat, isMobileListVisible, setMobileListVisible } = useChatStore();
   const { data: chats = [], isLoading: isLoadingChats } = useChats();
   const isInitialMount = useRef(true);
+
+  // Get returnTo from query params
+  const returnToParam = searchParams.get('returnTo');
+  const returnTo = returnToParam ? decodeURIComponent(returnToParam) : null;
+
+  // Handle back to previous page
+  const handleBackToPrevious = () => {
+    if (returnTo) {
+      // Validate returnTo is a valid path (basic security check)
+      // returnTo should be a pathname starting with / (relative to origin)
+      if (returnTo.startsWith('/') && !returnTo.startsWith('//')) {
+        // Basic validation: ensure it's not trying to navigate to external sites
+        try {
+          // Try to construct a URL to validate
+          const testUrl = new URL(returnTo, window.location.origin);
+          // Only allow same-origin navigation
+          if (testUrl.origin === window.location.origin) {
+            router.push(returnTo);
+            return;
+          }
+        } catch {
+          // If URL construction fails, it might be a relative path, try it anyway
+          // but only if it starts with / (same-origin relative path)
+          router.push(returnTo);
+          return;
+        }
+      }
+    }
+    
+    // Fallback to dashboard if no returnTo or invalid returnTo
+    if (user?.role) {
+      const dashboardPath = getDashboardPath(user.role);
+      router.push(dashboardPath);
+    } else {
+      router.push('/');
+    }
+  };
 
   // Initialize socket connection
   useSocket();
@@ -86,9 +125,46 @@ function ChatContent({ emptyTitle, emptyDescription, className }: ChatContainerP
     router.replace(`${pathname}?${params.toString()}`);
   };
 
+  // Check if we're in full-screen mode (when className includes rounded-none)
+  const isFullScreen = className?.includes('rounded-none');
+  const containerHeight = isFullScreen ? 'h-screen' : 'h-[calc(100vh-200px)]';
+  const contentHeight = isFullScreen ? 'h-[calc(100vh-73px)]' : 'h-[calc(100%-73px)]';
+
   return (
-    <div className={cn("h-[calc(100vh-200px)] bg-white rounded-2xl border border-slate-200 overflow-hidden", className)}>
-      <div className="flex h-full">
+    <div className={cn(containerHeight, "bg-white rounded-2xl border border-slate-200 overflow-hidden flex flex-col", className)}>
+      {/* Back Button Header */}
+      <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-white flex-shrink-0">
+        <button
+          onClick={handleBackToPrevious}
+          className={cn(
+            'flex items-center gap-2 px-4 py-2',
+            'text-slate-700 hover:text-slate-900',
+            'hover:bg-slate-100 rounded-lg',
+            'transition-colors',
+            'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
+          )}
+          aria-label="Back to previous page"
+        >
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M10 19l-7-7m0 0l7-7m-7 7h18"
+            />
+          </svg>
+          <span className="font-medium">Back</span>
+        </button>
+        <h2 className="text-lg font-semibold text-slate-800">Chat</h2>
+        <div className="w-20" /> {/* Spacer for centering */}
+      </div>
+
+      <div className={cn("flex flex-1 overflow-hidden", contentHeight)}>
         {/* Chat List */}
         <div
           className={cn(
