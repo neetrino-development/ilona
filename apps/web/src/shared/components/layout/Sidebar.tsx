@@ -103,7 +103,6 @@ const icons = {
   ),
 };
 
-// Get nav items based on role
 function getNavItems(role: string, t: (key: string) => string): NavItem[] {
   switch (role) {
     case 'ADMIN':
