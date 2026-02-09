@@ -39,6 +39,9 @@ export interface TeacherGroup {
     id: string;
     name: string;
   };
+  _count?: {
+    students: number;
+  };
 }
 
 export interface TeachersResponse {

@@ -163,7 +163,17 @@
     "specializationPlaceholder": "Անգլերեն գրականություն, Բիզնես անգլերեն և այլն:",
     "bioPlaceholder": "Համառոտ նկարագրություն ուսուցչի մասին...",
     "confirmDelete": "Հաստատե՞լ եք այս ուսուցչին ջնջելը",
-    "noPhoneNumber": "Հեռախոսահամար չկա"
+    "noPhoneNumber": "Հեռախոսահամար չկա",
+    "teacherDetails": "Ուսուցչի մանրամասներ",
+    "basicInformation": "Հիմնական տեղեկատվություն",
+    "phoneNumber": "Հեռախոսահամար",
+    "bio": "Կենսագրություն",
+    "specialization": "Մասնագիտացում",
+    "centers": "Կենտրոններ",
+    "statistics": "Վիճակագրություն",
+    "totalGroups": "Ընդամենը խմբեր",
+    "totalStudents": "Ընդամենը աշակերտներ",
+    "teacherNotFound": "Ուսուցիչը չի գտնվել"
   },
   "students": {
     "title": "Աշակերտներ",

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { cn } from '@/shared/lib/utils';
 import { DashboardLayout } from '@/shared/components/layout/DashboardLayout';
@@ -48,6 +48,7 @@ import {
   AddTeacherForm, 
   EditTeacherForm,
   DeleteConfirmationDialog,
+  TeacherDetailsDrawer,
   type Teacher 
 } from '@/features/teachers';
 import { useCenters } from '@/features/centers';
@@ -75,11 +76,17 @@ export default function TeachersPage() {
   const [selectedBranchIds, setSelectedBranchIds] = useState<Set<string>>(new Set());
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const locale = params.locale as string;
   const t = useTranslations('teachers');
   const tCommon = useTranslations('common');
   const tStatus = useTranslations('status');
   const pageSize = 10;
+
+  // Initialize drawer state from URL params
+  const teacherIdFromUrl = searchParams.get('teacherId');
+  const [selectedTeacherIdForDetails, setSelectedTeacherIdForDetails] = useState<string | null>(teacherIdFromUrl);
+  const [isDetailsDrawerOpen, setIsDetailsDrawerOpen] = useState(!!teacherIdFromUrl);
 
   // Fetch teachers (for client-side filtering)
   // Note: Backend limits take to max 100, so filtering works on first 100 teachers
@@ -318,7 +325,35 @@ export default function TeachersPage() {
     }
   };
 
-  // Row clicks are disabled - only Edit button opens edit form
+  // Sync state with URL params when URL changes (e.g., browser back/forward, refresh)
+  useEffect(() => {
+    const teacherIdFromUrl = searchParams.get('teacherId');
+    if (teacherIdFromUrl !== selectedTeacherIdForDetails) {
+      setSelectedTeacherIdForDetails(teacherIdFromUrl);
+      setIsDetailsDrawerOpen(!!teacherIdFromUrl);
+    }
+  }, [searchParams]);
+
+  // Handle row click to open details drawer
+  const handleRowClick = (teacher: Teacher) => {
+    // Update URL with teacherId
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('teacherId', teacher.id);
+    router.push(`/${locale}/admin/teachers?${params.toString()}`, { scroll: false });
+    setSelectedTeacherIdForDetails(teacher.id);
+    setIsDetailsDrawerOpen(true);
+  };
+
+  // Handle details drawer close
+  const handleDetailsDrawerClose = () => {
+    // Remove teacherId from URL
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('teacherId');
+    const newUrl = params.toString() ? `/${locale}/admin/teachers?${params.toString()}` : `/${locale}/admin/teachers`;
+    router.push(newUrl, { scroll: false });
+    setIsDetailsDrawerOpen(false);
+    setSelectedTeacherIdForDetails(null);
+  };
 
   // Stats calculation - use filtered teachers for accurate stats
   const activeTeachers = filteredTeachers.filter(t => t.user?.status === 'ACTIVE').length;
@@ -702,6 +737,7 @@ export default function TeachersPage() {
           sortBy={sortBy}
           sortOrder={sortOrder}
           onSort={handleSort}
+          onRowClick={handleRowClick}
         />
 
         {/* Pagination */}
@@ -880,6 +916,13 @@ export default function TeachersPage() {
         isLoading={deleteTeachers.isPending}
         error={bulkDeleteError}
         title="Delete Teachers"
+      />
+
+      {/* Teacher Details Drawer */}
+      <TeacherDetailsDrawer
+        teacherId={selectedTeacherIdForDetails}
+        open={isDetailsDrawerOpen}
+        onClose={handleDetailsDrawerClose}
       />
     </DashboardLayout>
   );

@@ -163,7 +163,17 @@
     "specializationPlaceholder": "English Literature, Business English, etc.",
     "bioPlaceholder": "Brief description about the teacher...",
     "confirmDelete": "Are you sure you want to delete this teacher?",
-    "noPhoneNumber": "No phone number"
+    "noPhoneNumber": "No phone number",
+    "teacherDetails": "Teacher Details",
+    "basicInformation": "Basic Information",
+    "phoneNumber": "Phone Number",
+    "bio": "Bio",
+    "specialization": "Specialization",
+    "centers": "Centers",
+    "statistics": "Statistics",
+    "totalGroups": "Total Groups",
+    "totalStudents": "Total Students",
+    "teacherNotFound": "Teacher not found"
   },
   "students": {
     "title": "Students",
