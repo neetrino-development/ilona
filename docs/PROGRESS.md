@@ -158,7 +158,7 @@ apps/web/src/app/[locale]/
 
 ## 📝 Git
 
-**URL:** https://github.com/neetrino-development/ilona-english-center.git
+**URL:** https://github.com/ginosyan00/ilona-english-center-gugo.git
 
 ### Recent Commits
 - feat: Complete remaining requirements from specification
