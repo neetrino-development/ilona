@@ -54,7 +54,10 @@ function isTransientConnectionError(error: unknown): boolean {
       message.includes('connection closed') ||
       message.includes('socket hang up') ||
       message.includes('io(connectionreset') ||
-      message.includes('os code 10054')
+      message.includes('os code 10054') ||
+      message.includes('code: 10054') ||
+      message.includes('forcibly closed by the remote host') ||
+      message.includes('error in postgresql connection')
     );
   }
 
@@ -70,6 +73,9 @@ function isTransientConnectionError(error: unknown): boolean {
       message.includes('socket hang up') ||
       message.includes('io(connectionreset') ||
       message.includes('os code 10054') ||
+      message.includes('code: 10054') ||
+      message.includes('forcibly closed by the remote host') ||
+      message.includes('error in postgresql connection') ||
       error.name === 'ConnectionReset'
     );
   }
@@ -82,6 +88,9 @@ function isTransientConnectionError(error: unknown): boolean {
     message.includes('socket hang up') ||
     message.includes('io(connectionreset') ||
     message.includes('os code 10054') ||
+    message.includes('code: 10054') ||
+    message.includes('forcibly closed by the remote host') ||
+    message.includes('error in postgresql connection') ||
     error.name === 'ConnectionReset' ||
     error.code === 'ECONNRESET' ||
     error.code === 10054 || // Windows connection reset code
@@ -96,6 +105,7 @@ function isTransientConnectionError(error: unknown): boolean {
  */
 async function withRetry<T>(
   fn: () => Promise<T>,
+  onRetry?: (error: unknown, attempt: number) => Promise<void>,
   maxRetries: number = 2,
   baseDelay: number = 100,
 ): Promise<T> {
@@ -117,7 +127,12 @@ async function withRetry<T>(
         throw error;
       }
 
-      // Exponential backoff: 100ms, 200ms
+      // Call onRetry callback if provided (for disconnect/reconnect logic)
+      if (onRetry) {
+        await onRetry(error, attempt);
+      }
+
+      // Exponential backoff: 100ms, 200ms, 400ms
       const delay = baseDelay * Math.pow(2, attempt);
       await new Promise((resolve) => setTimeout(resolve, delay));
     }
@@ -158,13 +173,47 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
             }
             return await next(params);
           },
-          3, // max 3 retries (increased from 2)
-          150, // base delay 150ms (increased from 100ms)
+          async (_error, attempt) => {
+            // On connection errors, force disconnect before retrying
+            // This callback is only called for transient connection errors that will be retried
+            this.logger.warn(
+              `Connection error detected (attempt ${attempt + 1}/3), forcing disconnect and reconnect`,
+            );
+            this.isConnected = false;
+            
+            // Force disconnect to clear stale connections
+            try {
+              await this.$disconnect();
+            } catch (disconnectError) {
+              // Ignore disconnect errors
+            }
+            
+            // Wait a bit before reconnecting (progressive delay)
+            await new Promise((resolve) => setTimeout(resolve, 100 * (attempt + 1)));
+            
+            // Reconnect
+            try {
+              await this.$connect();
+              this.isConnected = true;
+              this.logger.log('Reconnected after connection error');
+            } catch (reconnectError) {
+              this.logger.warn('Failed to reconnect, will retry');
+            }
+          },
+          3, // max 3 retries
+          150, // base delay 150ms
         );
       } catch (error) {
         // If connection error, mark as disconnected and try to reconnect
         if (isTransientConnectionError(error)) {
           this.isConnected = false;
+          
+          // Force disconnect to clear stale connections
+          try {
+            await this.$disconnect();
+          } catch (disconnectError) {
+            // Ignore disconnect errors
+          }
           
           // Try to reconnect for next operation
           try {
