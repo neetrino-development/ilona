@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { ChatList } from './ChatList';
 import { ChatWindow } from './ChatWindow';
 import { useChatStore } from '../store/chat.store';
-import { useSocket } from '../hooks';
+import { useSocket, useChats } from '../hooks';
 import type { Chat } from '../types';
 import { cn } from '@/shared/lib/utils';
 
@@ -15,19 +16,74 @@ interface ChatContainerProps {
 }
 
 function ChatContent({ emptyTitle, emptyDescription, className }: ChatContainerProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { activeChat, setActiveChat, isMobileListVisible, setMobileListVisible } = useChatStore();
+  const { data: chats = [], isLoading: isLoadingChats } = useChats();
+  const isInitialMount = useRef(true);
 
   // Initialize socket connection
   useSocket();
 
+  // Restore chat from URL on initial mount when chats are loaded
+  useEffect(() => {
+    if (isLoadingChats || !isInitialMount.current) return;
+    
+    const chatIdFromUrl = searchParams.get('chatId');
+    
+    if (chatIdFromUrl && chats.length > 0) {
+      const chatFromList = chats.find((chat) => chat.id === chatIdFromUrl);
+      if (chatFromList) {
+        setActiveChat(chatFromList);
+        setMobileListVisible(false);
+      } else {
+        // Chat not found in list, remove from URL
+        const params = new URLSearchParams(searchParams.toString());
+        params.delete('chatId');
+        router.replace(`${pathname}?${params.toString()}`);
+      }
+      isInitialMount.current = false;
+    } else if (!chatIdFromUrl) {
+      isInitialMount.current = false;
+    }
+  }, [chats, isLoadingChats, searchParams, setActiveChat, setMobileListVisible, router, pathname]);
+
+  // Sync URL when activeChat changes (but skip on initial mount)
+  useEffect(() => {
+    if (isInitialMount.current) return;
+    
+    const chatIdFromUrl = searchParams.get('chatId');
+    if (activeChat) {
+      if (activeChat.id !== chatIdFromUrl) {
+        const params = new URLSearchParams(searchParams.toString());
+        params.set('chatId', activeChat.id);
+        router.replace(`${pathname}?${params.toString()}`);
+      }
+    } else if (chatIdFromUrl) {
+      // activeChat is null but URL has chatId - remove it
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete('chatId');
+      router.replace(`${pathname}?${params.toString()}`);
+    }
+  }, [activeChat, searchParams, router, pathname]);
+
   const handleSelectChat = (chat: Chat) => {
     setActiveChat(chat);
     setMobileListVisible(false);
+    // Update URL immediately
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('chatId', chat.id);
+    router.replace(`${pathname}?${params.toString()}`);
   };
 
   const handleBack = () => {
     setMobileListVisible(true);
     setActiveChat(null);
+    // Update URL
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('chatId');
+    router.replace(`${pathname}?${params.toString()}`);
   };
 
   return (
