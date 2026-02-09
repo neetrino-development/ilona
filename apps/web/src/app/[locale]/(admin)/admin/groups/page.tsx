@@ -1,11 +1,45 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Pencil, Trash2, Ban, List, LayoutGrid } from 'lucide-react';
 import { DashboardLayout } from '@/shared/components/layout/DashboardLayout';
 import { StatCard, DataTable, Badge, Button } from '@/shared/components/ui';
 import { cn } from '@/shared/lib/utils';
+
+// Component for select all checkbox with indeterminate state
+function SelectAllCheckbox({
+  checked,
+  indeterminate,
+  onChange,
+  disabled,
+}: {
+  checked: boolean;
+  indeterminate: boolean;
+  onChange: () => void;
+  disabled?: boolean;
+}) {
+  const checkboxRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (checkboxRef.current) {
+      checkboxRef.current.indeterminate = indeterminate;
+    }
+  }, [indeterminate]);
+
+  return (
+    <input
+      ref={checkboxRef}
+      type="checkbox"
+      className="w-4 h-4 rounded border-slate-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+      checked={checked}
+      onChange={onChange}
+      onClick={(e) => e.stopPropagation()}
+      disabled={disabled}
+      aria-label="Select all"
+    />
+  );
+}
 import { 
   useGroups, 
   useDeleteGroup, 
@@ -134,6 +168,7 @@ export default function GroupsPage() {
   const [editGroupId, setEditGroupId] = useState<string | null>(null);
   const [deleteGroupId, setDeleteGroupId] = useState<string | null>(null);
   const [deleteGroupError, setDeleteGroupError] = useState<string | null>(null);
+  const [selectedGroupIds, setSelectedGroupIds] = useState<Set<string>>(new Set());
   const pageSize = 10;
 
   // View mode state with URL persistence
@@ -220,6 +255,8 @@ export default function GroupsPage() {
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
     setPage(0);
+    // Clear selection on search change
+    setSelectedGroupIds(new Set());
   };
 
   // Handle delete
@@ -250,6 +287,35 @@ export default function GroupsPage() {
     }
   };
 
+  // Handle individual checkbox toggle for groups
+  const handleToggleSelectGroup = (groupId: string) => {
+    setSelectedGroupIds((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(groupId)) {
+        newSet.delete(groupId);
+      } else {
+        newSet.add(groupId);
+      }
+      return newSet;
+    });
+  };
+
+  // Handle select all toggle for groups
+  const handleSelectAllGroups = () => {
+    if (selectedGroupIds.size === groups.length) {
+      // Deselect all
+      setSelectedGroupIds(new Set());
+    } else {
+      // Select all visible groups
+      setSelectedGroupIds(new Set(groups.map((g) => g.id)));
+    }
+  };
+
+  // Check if all visible groups are selected
+  const allGroupsSelected = groups.length > 0 && selectedGroupIds.size === groups.length;
+  // Check if some (but not all) are selected (indeterminate state)
+  const someGroupsSelected = selectedGroupIds.size > 0 && selectedGroupIds.size < groups.length;
+
   // Stats
   const activeGroups = groups.filter(g => g.isActive).length;
   const totalStudentsInGroups = groups.reduce((sum, g) => sum + (g._count?.students || 0), 0);
@@ -258,6 +324,29 @@ export default function GroupsPage() {
     : 0;
 
   const groupColumns = [
+    {
+      key: 'checkbox',
+      header: (
+        <SelectAllCheckbox
+          checked={allGroupsSelected}
+          indeterminate={someGroupsSelected}
+          onChange={handleSelectAllGroups}
+          disabled={deleteGroup.isPending || isLoading}
+        />
+      ),
+      render: (group: Group) => (
+        <input
+          type="checkbox"
+          className="w-4 h-4 rounded border-slate-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          checked={selectedGroupIds.has(group.id)}
+          onChange={() => handleToggleSelectGroup(group.id)}
+          onClick={(e) => e.stopPropagation()}
+          disabled={deleteGroup.isPending || isLoading}
+          aria-label={`Select ${group.name}`}
+        />
+      ),
+      className: '!pl-4 !pr-2 w-12',
+    },
     {
       key: 'center',
       header: 'Center',
@@ -358,6 +447,7 @@ export default function GroupsPage() {
   const [editCenterId, setEditCenterId] = useState<string | null>(null);
   const [deleteCenterId, setDeleteCenterId] = useState<string | null>(null);
   const [deleteCenterError, setDeleteCenterError] = useState<string | null>(null);
+  const [selectedCenterIds, setSelectedCenterIds] = useState<Set<string>>(new Set());
 
   const { 
     data: centersData, 
@@ -378,7 +468,38 @@ export default function GroupsPage() {
   const handleCenterSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setCenterSearchQuery(e.target.value);
     setCenterPage(0);
+    // Clear selection on search change
+    setSelectedCenterIds(new Set());
   };
+
+  // Handle individual checkbox toggle for centers
+  const handleToggleSelectCenter = (centerId: string) => {
+    setSelectedCenterIds((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(centerId)) {
+        newSet.delete(centerId);
+      } else {
+        newSet.add(centerId);
+      }
+      return newSet;
+    });
+  };
+
+  // Handle select all toggle for centers
+  const handleSelectAllCenters = () => {
+    if (selectedCenterIds.size === centers.length) {
+      // Deselect all
+      setSelectedCenterIds(new Set());
+    } else {
+      // Select all visible centers
+      setSelectedCenterIds(new Set(centers.map((c) => c.id)));
+    }
+  };
+
+  // Check if all visible centers are selected
+  const allCentersSelected = centers.length > 0 && selectedCenterIds.size === centers.length;
+  // Check if some (but not all) are selected (indeterminate state)
+  const someCentersSelected = selectedCenterIds.size > 0 && selectedCenterIds.size < centers.length;
 
   const handleDeleteCenterClick = (id: string) => {
     setDeleteCenterId(id);
@@ -407,6 +528,29 @@ export default function GroupsPage() {
   };
 
   const centerColumns = [
+    {
+      key: 'checkbox',
+      header: (
+        <SelectAllCheckbox
+          checked={allCentersSelected}
+          indeterminate={someCentersSelected}
+          onChange={handleSelectAllCenters}
+          disabled={deleteCenter.isPending || isLoadingCenters}
+        />
+      ),
+      render: (center: CenterWithCount) => (
+        <input
+          type="checkbox"
+          className="w-4 h-4 rounded border-slate-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          checked={selectedCenterIds.has(center.id)}
+          onChange={() => handleToggleSelectCenter(center.id)}
+          onClick={(e) => e.stopPropagation()}
+          disabled={deleteCenter.isPending || isLoadingCenters}
+          aria-label={`Select ${center.name}`}
+        />
+      ),
+      className: '!pl-4 !pr-2 w-12',
+    },
     {
       key: 'name',
       header: 'Center Name',
@@ -574,7 +718,11 @@ export default function GroupsPage() {
                 <button 
                   className="p-2 rounded-lg hover:bg-slate-100 disabled:opacity-50" 
                   disabled={centerPage === 0}
-                  onClick={() => setCenterPage(p => Math.max(0, p - 1))}
+                  onClick={() => {
+                    setCenterPage(p => Math.max(0, p - 1));
+                    // Clear selection on page change
+                    setSelectedCenterIds(new Set());
+                  }}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -584,7 +732,11 @@ export default function GroupsPage() {
                 <button 
                   className="p-2 rounded-lg hover:bg-slate-100 disabled:opacity-50"
                   disabled={centerPage >= totalCenterPages - 1}
-                  onClick={() => setCenterPage(p => p + 1)}
+                  onClick={() => {
+                    setCenterPage(p => p + 1);
+                    // Clear selection on page change
+                    setSelectedCenterIds(new Set());
+                  }}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -641,6 +793,8 @@ export default function GroupsPage() {
                 setViewMode('list');
                 updateViewModeInUrl('list');
                 setPage(0); // Reset pagination when switching views
+                // Clear selection when switching views
+                setSelectedGroupIds(new Set());
               }}
               className={cn(
                 'px-4 py-2 text-sm font-semibold rounded-md transition-all flex items-center gap-2',
@@ -659,6 +813,8 @@ export default function GroupsPage() {
                 setViewMode('board');
                 updateViewModeInUrl('board');
                 setPage(0); // Reset pagination when switching views
+                // Clear selection when switching views
+                setSelectedGroupIds(new Set());
               }}
               className={cn(
                 'px-4 py-2 text-sm font-semibold rounded-md transition-all flex items-center gap-2',
@@ -703,7 +859,11 @@ export default function GroupsPage() {
                 <button 
                   className="p-2 rounded-lg hover:bg-slate-100 disabled:opacity-50" 
                   disabled={page === 0}
-                  onClick={() => setPage(p => Math.max(0, p - 1))}
+                  onClick={() => {
+                    setPage(p => Math.max(0, p - 1));
+                    // Clear selection on page change
+                    setSelectedGroupIds(new Set());
+                  }}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -713,7 +873,11 @@ export default function GroupsPage() {
                 <button 
                   className="p-2 rounded-lg hover:bg-slate-100 disabled:opacity-50"
                   disabled={page >= totalPages - 1}
-                  onClick={() => setPage(p => p + 1)}
+                  onClick={() => {
+                    setPage(p => p + 1);
+                    // Clear selection on page change
+                    setSelectedGroupIds(new Set());
+                  }}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
