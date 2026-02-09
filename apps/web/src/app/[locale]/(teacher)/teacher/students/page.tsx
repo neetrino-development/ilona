@@ -18,35 +18,65 @@ export default function TeacherStudentsPage() {
   const locale = params.locale as string;
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Get selected group from URL query params
-  const selectedGroupId = searchParams.get('groupId');
-
   // Fetch teacher's groups
   const { data: groups, isLoading: isLoadingGroups } = useMyGroups();
   const groupsList = groups || [];
 
-  // Auto-select first group if none selected and groups are loaded
+  // Get selected group from URL query params
+  const urlGroupId = searchParams.get('groupId');
+
+  // Validate and determine the actual selected group ID
+  // Only use URL groupId if it exists in the teacher's groups
+  const validSelectedGroupId = useMemo(() => {
+    if (!urlGroupId || isLoadingGroups) return null;
+    const groupExists = groupsList.some((g) => g.id === urlGroupId);
+    return groupExists ? urlGroupId : null;
+  }, [urlGroupId, groupsList, isLoadingGroups]);
+
+  // Handle invalid groupId in URL: remove it and select first group if available
+  // Also auto-select first group if none is selected
   useEffect(() => {
-    if (!isLoadingGroups && groupsList.length > 0 && !selectedGroupId) {
+    // Wait for groups to finish loading
+    if (isLoadingGroups) return;
+
+    // If teacher has no groups, remove any groupId from URL
+    if (groupsList.length === 0) {
+      if (urlGroupId) {
+        const params = new URLSearchParams(searchParams.toString());
+        params.delete('groupId');
+        const newUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+        router.replace(newUrl);
+      }
+      return;
+    }
+
+    // Teacher has groups - handle selection
+    const needsUpdate = 
+      // Case 1: URL has groupId but it's invalid (doesn't belong to teacher)
+      (urlGroupId && !validSelectedGroupId) ||
+      // Case 2: No groupId in URL and we have groups available
+      (!urlGroupId);
+
+    if (needsUpdate) {
       const params = new URLSearchParams(searchParams.toString());
       params.set('groupId', groupsList[0].id);
       router.replace(`${pathname}?${params.toString()}`);
     }
-  }, [isLoadingGroups, groupsList, selectedGroupId, pathname, router, searchParams]);
+  }, [isLoadingGroups, groupsList, urlGroupId, validSelectedGroupId, pathname, router, searchParams]);
 
   // Fetch students assigned to the teacher, filtered by selected group
-  // Show all students if no group is selected yet
+  // Only fetch if we have a valid selected group ID
   const { data: studentsData, isLoading: isLoadingStudents } = useMyAssignedStudents({
     take: 100,
-    groupId: selectedGroupId || undefined,
+    groupId: validSelectedGroupId || undefined,
   });
   const students = (studentsData?.items || []) as Student[];
 
   // Get selected group details
   const selectedGroup = useMemo(() => {
-    if (!selectedGroupId) return null;
-    return groupsList.find((g) => g.id === selectedGroupId) || null;
-  }, [selectedGroupId, groupsList]);
+    if (!validSelectedGroupId) return null;
+    return groupsList.find((g) => g.id === validSelectedGroupId) || null;
+  }, [validSelectedGroupId, groupsList]);
 
   // Filter students by search
   const filteredStudents = students.filter((student) => {
@@ -129,7 +159,7 @@ export default function TeacherStudentsPage() {
                 </div>
               ) : (
                 groupsList.map((group) => {
-                  const isSelected = selectedGroupId === group.id;
+                  const isSelected = validSelectedGroupId === group.id;
                   const studentCount = group._count?.students || 0;
 
                   return (
