@@ -42,9 +42,6 @@ export function Header({ title, subtitle }: HeaderProps) {
       </div>
 
       <div className="flex items-center gap-4">
-        {/* Language Switcher */}
-        <LanguageSwitcher />
-
         {/* Search */}
         <div className="relative">
           <svg
@@ -68,6 +65,9 @@ export function Header({ title, subtitle }: HeaderProps) {
             className="pl-10 w-64 bg-slate-50 border-slate-200 focus:bg-white"
           />
         </div>
+
+        {/* Language Switcher */}
+        <LanguageSwitcher />
 
         {/* Notifications */}
         <button className="relative p-2 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors">
