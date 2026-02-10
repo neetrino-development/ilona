@@ -105,7 +105,6 @@ export function Header({ title, subtitle }: HeaderProps) {
               </div>
             </div>
             <div className="flex-1 min-w-0 text-left">
-              <p className="text-sm text-slate-500">{tAuth('welcomeBack')}</p>
               <p className="font-semibold text-slate-800 truncate">
                 {user?.role === 'ADMIN' ? 'Admin' : user?.role === 'TEACHER' ? 'Teacher' : user?.role === 'STUDENT' ? 'Student' : user?.firstName || tNav('user')}
               </p>
