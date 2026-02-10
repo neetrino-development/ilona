@@ -75,7 +75,7 @@ export interface ActionButtonsProps {
 
 /**
  * Standardized action buttons component matching the reference design.
- * Enforces consistent order: Edit, Disable, Delete
+ * Enforces consistent order: Edit, Delete, Disable
  * Uses monochromatic dark grey icons on white background with clean minimalist styling.
  */
 export function ActionButtons({
@@ -127,26 +127,7 @@ export function ActionButtons({
         </button>
       )}
 
-      {/* Disable/Deactivate Button - Always second */}
-      {onDisable && (
-        <button
-          type="button"
-          aria-label={ariaLabels?.disable || (isActive ? 'Deactivate' : 'Activate')}
-          title={titles?.disable || (isActive ? 'Deactivate' : 'Activate')}
-          onClick={(e) => handleClick(e, onDisable)}
-          disabled={disabled || disableDisabled}
-          className={cn(
-            padding,
-            'text-slate-900 hover:text-slate-700 hover:bg-slate-50 rounded-lg transition-colors',
-            'disabled:opacity-50 disabled:cursor-not-allowed',
-            'focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-1'
-          )}
-        >
-          <Ban className={iconSize} aria-hidden="true" />
-        </button>
-      )}
-
-      {/* Delete Button - Always third */}
+      {/* Delete Button - Always second */}
       {onDelete && (
         <button
           type="button"
@@ -162,6 +143,25 @@ export function ActionButtons({
           )}
         >
           <Trash2 className={iconSize} aria-hidden="true" />
+        </button>
+      )}
+
+      {/* Disable/Deactivate Button - Always third */}
+      {onDisable && (
+        <button
+          type="button"
+          aria-label={ariaLabels?.disable || (isActive ? 'Deactivate' : 'Activate')}
+          title={titles?.disable || (isActive ? 'Deactivate' : 'Activate')}
+          onClick={(e) => handleClick(e, onDisable)}
+          disabled={disabled || disableDisabled}
+          className={cn(
+            padding,
+            'text-slate-900 hover:text-slate-700 hover:bg-slate-50 rounded-lg transition-colors',
+            'disabled:opacity-50 disabled:cursor-not-allowed',
+            'focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-1'
+          )}
+        >
+          <Ban className={iconSize} aria-hidden="true" />
         </button>
       )}
     </div>
