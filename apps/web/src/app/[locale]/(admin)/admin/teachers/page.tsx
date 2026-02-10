@@ -56,6 +56,7 @@ import { FilterDropdown } from '@/shared/components/ui/filter-dropdown';
 
 export default function TeachersPage() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [page, setPage] = useState(0);
   const [sortBy, setSortBy] = useState<string | undefined>(undefined);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
@@ -88,6 +89,16 @@ export default function TeachersPage() {
   const [selectedTeacherIdForDetails, setSelectedTeacherIdForDetails] = useState<string | null>(teacherIdFromUrl);
   const [isDetailsDrawerOpen, setIsDetailsDrawerOpen] = useState(!!teacherIdFromUrl);
 
+  // Debounce search query (300ms delay)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+      setPage(0); // Reset to first page on search
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   // Fetch teachers (for client-side filtering)
   // Note: Backend limits take to max 100, so filtering works on first 100 teachers
   // For better scalability, server-side filtering should be implemented
@@ -98,7 +109,7 @@ export default function TeachersPage() {
   } = useTeachers({ 
     skip: 0,
     take: 100, // Max allowed by backend
-    search: searchQuery || undefined,
+    search: debouncedSearchQuery || undefined,
     sortBy: sortBy,
     sortOrder: sortOrder,
   });
@@ -151,10 +162,9 @@ export default function TeachersPage() {
   const totalTeachers = filteredTeachers.length;
   const totalPages = Math.ceil(totalTeachers / pageSize);
 
-  // Handle search with debounce effect
+  // Handle search input change
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
-    setPage(0); // Reset to first page on search
     // Clear selection on search/filter change
     setSelectedTeacherIds(new Set());
   };
@@ -666,9 +676,39 @@ export default function TeachersPage() {
           />
         </div>
 
-        {/* Filters - Always Visible */}
-        <div className="flex items-start gap-4">
+        {/* Search, Filter & Actions Bar */}
+        <div className="flex items-end gap-4">
+          {/* Search by Keywords */}
           <div className="flex-1">
+            <label className="block text-sm font-medium text-slate-500 mb-1.5">
+              Search by Keywords
+            </label>
+            <div className="relative">
+              <svg
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+              <input
+                type="search"
+                placeholder="Search teachers by name, email or group..."
+                value={searchQuery}
+                onChange={handleSearchChange}
+                className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              />
+            </div>
+          </div>
+
+          {/* Center Filter */}
+          <div className="flex-shrink-0">
             <FilterDropdown
               label={t('center')}
               options={(centersData?.items || []).map(center => ({
@@ -680,52 +720,47 @@ export default function TeachersPage() {
               placeholder={tCommon('all')}
               isLoading={isLoadingCenters}
               error={centersError ? 'Failed to load centers' : null}
-              className="w-full"
+              className="w-[200px]"
             />
+          </div>
+
+          {/* Add Teacher Button */}
+          <div className="flex-shrink-0">
+            <Button 
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium flex items-center gap-2"
+              onClick={() => setIsAddTeacherOpen(true)}
+              disabled={deleteTeachers.isPending || deleteTeacher.isPending}
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4v16m8-8H4"
+                />
+              </svg>
+              {t('addTeacher')}
+            </Button>
           </div>
         </div>
 
-        {/* Search & Actions Bar */}
-        <div className="flex items-center gap-4">
-          <div className="flex-1 relative">
-            <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
-            <input
-              type="search"
-              placeholder={t('searchPlaceholder')}
-              value={searchQuery}
-              onChange={handleSearchChange}
-              className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-            />
-          </div>
-          {selectedTeacherIds.size > 0 && (
+        {/* Bulk Delete Button (shown when teachers are selected) */}
+        {selectedTeacherIds.size > 0 && (
+          <div className="flex justify-end">
             <Button
-              className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-medium"
+              className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-medium"
               onClick={handleBulkDeleteClick}
               disabled={deleteTeachers.isPending || deleteTeacher.isPending}
             >
               Delete All ({selectedTeacherIds.size})
             </Button>
-          )}
-          <Button 
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium"
-            onClick={() => setIsAddTeacherOpen(true)}
-            disabled={deleteTeachers.isPending || deleteTeacher.isPending}
-          >
-            + {t('addTeacher')}
-          </Button>
-        </div>
+          </div>
+        )}
 
         {/* Teachers Table */}
         <DataTable
@@ -733,7 +768,7 @@ export default function TeachersPage() {
           data={teachers}
           keyExtractor={(teacher) => teacher.id}
           isLoading={isLoading}
-          emptyMessage={searchQuery ? t('noTeachersMatch') : t('noTeachersFound')}
+          emptyMessage={debouncedSearchQuery ? t('noTeachersMatch') : t('noTeachersFound')}
           sortBy={sortBy}
           sortOrder={sortOrder}
           onSort={handleSort}
