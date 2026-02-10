@@ -62,7 +62,7 @@ export default function TeacherProfilePage() {
                 type="text"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-                className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
               />
             </div>
             <div>
@@ -73,7 +73,7 @@ export default function TeacherProfilePage() {
                 type="text"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
               />
             </div>
           </div>
@@ -99,7 +99,7 @@ export default function TeacherProfilePage() {
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="+380 XX XXX XXXX"
-              className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             />
           </div>
 
@@ -112,14 +112,14 @@ export default function TeacherProfilePage() {
               onChange={(e) => setBio(e.target.value)}
               placeholder={t('bioPlaceholder')}
               rows={3}
-              className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none"
+              className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none"
             />
           </div>
 
           <div className="pt-4 flex justify-end">
             <Button 
               type="submit" 
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground px-6"
               disabled={isSaving}
             >
               {isSaving ? t('saving') : t('saveChanges')}

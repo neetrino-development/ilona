@@ -79,7 +79,7 @@ export function FilterDropdown({
           disabled={isLoading}
           className={cn(
             'w-full px-4 py-3 text-left bg-white border border-slate-200 rounded-lg',
-            'focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500',
+            'focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary',
             'disabled:opacity-50 disabled:cursor-not-allowed',
             'hover:border-slate-300 transition-colors'
           )}
@@ -125,14 +125,14 @@ export function FilterDropdown({
                       key={option.id}
                       className={cn(
                         'flex items-center px-4 py-2 cursor-pointer hover:bg-slate-50 transition-colors',
-                        isSelected && 'bg-blue-50'
+                        isSelected && 'bg-primary/10'
                       )}
                     >
                       <input
                         type="checkbox"
                         checked={isSelected}
                         onChange={() => handleToggle(option.id)}
-                        className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 focus:ring-offset-0 cursor-pointer"
+                        className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary focus:ring-offset-0 cursor-pointer"
                         onClick={(e) => e.stopPropagation()}
                       />
                       <span className="ml-3 text-sm text-slate-700">{option.label}</span>

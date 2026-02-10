@@ -396,7 +396,7 @@ export function AddStudentForm({ open, onOpenChange }: AddStudentFormProps) {
               type="checkbox"
               id="receiveReports"
               {...register('receiveReports')}
-              className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+              className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary"
             />
             <Label htmlFor="receiveReports" className="text-sm font-normal cursor-pointer">
               Receive progress reports via email

@@ -268,7 +268,7 @@ export default function TeacherProfilePage() {
         subtitle={t('loadingTeacherInfo')}
       >
         <div className="flex items-center justify-center min-h-[400px]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </div>
       </DashboardLayout>
     );
@@ -337,7 +337,7 @@ export default function TeacherProfilePage() {
             <Button 
               type="button"
               onClick={() => setIsEditMode(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -362,7 +362,7 @@ export default function TeacherProfilePage() {
         {/* Profile Header */}
         <div className="bg-white rounded-xl border border-slate-200 p-6">
           <div className="flex items-start gap-6">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-2xl font-bold">
+            <div className="w-20 h-20 rounded-full bg-primary flex items-center justify-center text-white text-2xl font-bold">
               {initials}
             </div>
             <div className="flex-1">
@@ -446,7 +446,7 @@ export default function TeacherProfilePage() {
           <div className="bg-white rounded-xl border border-slate-200 p-6">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-slate-500">Total Groups</span>
-              <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
             </div>
@@ -571,7 +571,7 @@ export default function TeacherProfilePage() {
                             }}
                             className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
                               isSelected
-                                ? 'bg-blue-600 text-white'
+                                ? 'bg-primary text-primary-foreground'
                                 : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                             }`}
                           >
@@ -653,7 +653,7 @@ export default function TeacherProfilePage() {
             <h3 className="text-lg font-semibold text-slate-800 mb-4">Assigned Groups</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {teacher.groups.map((group) => (
-                <div key={group.id} className="border border-slate-200 rounded-lg p-4 hover:border-blue-300 transition-colors">
+                <div key={group.id} className="border border-slate-200 rounded-lg p-4 hover:border-primary/30 transition-colors">
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="font-semibold text-slate-800">{group.name}</h4>
                     {group.level && (
@@ -687,7 +687,7 @@ export default function TeacherProfilePage() {
             </Button>
             <Button
               type="submit"
-              className="bg-blue-600 hover:bg-blue-700 text-white"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
               disabled={updateTeacher.isPending || !isDirty}
               isLoading={updateTeacher.isPending}
             >

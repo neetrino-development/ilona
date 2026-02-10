@@ -631,7 +631,7 @@ export default function StudentsPage() {
                 placeholder={t('searchPlaceholder')}
                 value={searchQuery}
                 onChange={handleSearchChange}
-                className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
               />
             </div>
             {/* Status Filter */}
@@ -648,7 +648,7 @@ export default function StudentsPage() {
                   setPage(0);
                   setSelectedStudentIds(new Set());
                 }}
-                className="pl-4 pr-10 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none cursor-pointer min-w-[160px]"
+                className="pl-4 pr-10 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary appearance-none cursor-pointer min-w-[160px]"
               >
                 <option value="">All statuses</option>
                 <option value="ACTIVE">{tStatus('active')}</option>
@@ -674,7 +674,7 @@ export default function StudentsPage() {
               </Button>
             )}
             <Button 
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 rounded-xl font-medium"
               onClick={() => setIsAddStudentOpen(true)}
             >
               + {t('addStudent')}
@@ -724,7 +724,7 @@ export default function StudentsPage() {
                   setSelectedMonth(Number(e.target.value));
                   handleFilterChange();
                 }}
-                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
               >
                 <option value={1}>January</option>
                 <option value={2}>February</option>
@@ -749,7 +749,7 @@ export default function StudentsPage() {
                   setSelectedYear(Number(e.target.value));
                   handleFilterChange();
                 }}
-                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
               >
                 {Array.from({ length: 5 }, (_, i) => {
                   const year = now.getFullYear() - 2 + i;
@@ -820,7 +820,7 @@ export default function StudentsPage() {
                     ? `${totalStudents - studentsWithGroup} students are not assigned to any group. Assign them to start their learning journey.`
                     : 'All students are assigned to groups. Great work!'}
                 </p>
-                <button className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700">
+                <button className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/90">
                   Manage Groups
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
@@ -843,7 +843,7 @@ export default function StudentsPage() {
                   Total monthly fees: {formatCurrency(totalFees)}. 
                   Monitor payment status in the Finance section.
                 </p>
-                <button className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700">
+                <button className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/90">
                   View Finance
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />

@@ -25,9 +25,9 @@ export function ViewModeSelector({ value, onChange, disabled }: ViewModeSelector
           disabled={disabled}
           className={cn(
             'px-4 py-2 text-sm font-semibold rounded-md transition-all',
-            'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
+            'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
             value === mode.id
-              ? 'bg-blue-600 text-white shadow-md'
+              ? 'bg-primary text-primary-foreground shadow-md'
               : 'text-slate-700 hover:bg-slate-100',
             disabled && 'opacity-50 cursor-not-allowed'
           )}

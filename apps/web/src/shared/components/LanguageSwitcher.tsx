@@ -66,7 +66,7 @@ export function LanguageSwitcher() {
         aria-pressed={locale === 'hy'}
         className={`
           relative px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200
-          focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2
+          focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2
           flex items-center gap-2
           ${
             locale === 'hy'
@@ -97,7 +97,7 @@ export function LanguageSwitcher() {
         aria-pressed={locale === 'en'}
         className={`
           relative px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200
-          focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2
+          focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2
           flex items-center gap-2
           ${
             locale === 'en'

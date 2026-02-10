@@ -206,7 +206,7 @@ export function EditGroupForm({ open, onOpenChange, groupId }: EditGroupFormProp
               rows={3}
               placeholder="Group description..."
               disabled={isSubmitting}
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm resize-none ${
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm resize-none ${
                 errors.description ? 'border-red-300' : 'border-slate-300'
               } ${isSubmitting ? 'bg-slate-100 cursor-not-allowed' : 'bg-white'}`}
             />
@@ -223,7 +223,7 @@ export function EditGroupForm({ open, onOpenChange, groupId }: EditGroupFormProp
               id="centerId"
               {...register('centerId')}
               disabled={isSubmitting || isLoadingCenters || centers.length === 0}
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm ${
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm ${
                 errors.centerId ? 'border-red-300' : 'border-slate-300'
               } ${isSubmitting || isLoadingCenters || centers.length === 0 ? 'bg-slate-100 cursor-not-allowed' : 'bg-white'}`}
             >
@@ -245,7 +245,7 @@ export function EditGroupForm({ open, onOpenChange, groupId }: EditGroupFormProp
               id="teacherId"
               {...register('teacherId')}
               disabled={isSubmitting || isLoadingTeachers}
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm ${
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm ${
                 errors.teacherId ? 'border-red-300' : 'border-slate-300'
               } ${isSubmitting || isLoadingTeachers ? 'bg-slate-100 cursor-not-allowed' : 'bg-white'}`}
             >
@@ -266,7 +266,7 @@ export function EditGroupForm({ open, onOpenChange, groupId }: EditGroupFormProp
               type="checkbox"
               id="isActive"
               {...register('isActive')}
-              className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+              className="w-4 h-4 text-primary border-slate-300 rounded focus:ring-primary"
               disabled={isSubmitting}
             />
             <Label htmlFor="isActive" className="font-normal cursor-pointer">
@@ -286,7 +286,7 @@ export function EditGroupForm({ open, onOpenChange, groupId }: EditGroupFormProp
             <Button
               type="submit"
               disabled={isSubmitting || isLoadingCenters || isLoadingTeachers || centers.length === 0}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               {isSubmitting ? 'Saving...' : 'Save Changes'}
             </Button>

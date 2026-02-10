@@ -38,7 +38,7 @@ export function DataTable<T>({
     return (
       <div className="bg-white rounded-2xl border border-slate-200 p-12">
         <div className="flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
       </div>
     );

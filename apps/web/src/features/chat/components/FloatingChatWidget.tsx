@@ -42,13 +42,13 @@ export function FloatingChatWidget() {
           'bottom-4 right-4 sm:bottom-6 sm:right-6',
           'w-14 h-14 sm:w-16 sm:h-16',
           'rounded-full',
-          'bg-gradient-to-br from-blue-500 to-indigo-600',
-          'text-white shadow-lg shadow-blue-500/30',
+          'bg-primary',
+          'text-white shadow-lg shadow-primary/30',
           'flex items-center justify-center',
-          'hover:shadow-xl hover:shadow-blue-500/40',
+          'hover:shadow-xl hover:shadow-primary/40',
           'transition-all duration-200',
           'hover:scale-110 active:scale-95',
-          'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
+          'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
           'md:hover:scale-105'
         )}
         aria-label="Open chat"

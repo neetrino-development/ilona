@@ -220,9 +220,9 @@ export default function TeacherAnalyticsPage() {
       )}
 
       {/* Tips */}
-      <div className="mt-6 bg-blue-50 border border-blue-200 rounded-xl p-4">
-        <h4 className="font-medium text-blue-800 mb-2">Tips to Improve</h4>
-        <ul className="text-sm text-blue-700 space-y-1">
+      <div className="mt-6 bg-primary/10 border border-primary/30 rounded-xl p-4">
+        <h4 className="font-medium text-primary mb-2">Tips to Improve</h4>
+        <ul className="text-sm text-primary space-y-1">
           {vocabularyRate < 100 && (
             <li>• Send vocabulary after every lesson to maintain 100% compliance</li>
           )}

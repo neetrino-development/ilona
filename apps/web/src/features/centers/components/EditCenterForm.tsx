@@ -200,7 +200,7 @@ export function EditCenterForm({ open, onOpenChange, centerId }: EditCenterFormP
               id="description"
               {...register('description')}
               rows={4}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
               placeholder="Additional information about this center..."
             />
             {errors.description && (
@@ -214,7 +214,7 @@ export function EditCenterForm({ open, onOpenChange, centerId }: EditCenterFormP
                 type="checkbox"
                 id="isActive"
                 {...register('isActive')}
-                className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+                className="w-4 h-4 text-primary border-slate-300 rounded focus:ring-primary"
               />
               <Label htmlFor="isActive" className="cursor-pointer">
                 Active Center
@@ -237,7 +237,7 @@ export function EditCenterForm({ open, onOpenChange, centerId }: EditCenterFormP
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               {isSubmitting ? 'Saving...' : 'Save Changes'}
             </Button>

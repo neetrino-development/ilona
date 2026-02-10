@@ -336,7 +336,7 @@ export function ChatWindow({ chat, onBack }: ChatWindowProps) {
             'w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold',
             chat.type === 'GROUP'
               ? 'bg-gradient-to-br from-purple-500 to-purple-600'
-              : 'bg-gradient-to-br from-blue-500 to-blue-600'
+              : 'bg-primary'
           )}
         >
           {getChatTitle()[0]}
@@ -346,7 +346,7 @@ export function ChatWindow({ chat, onBack }: ChatWindowProps) {
         <div className="flex-1">
           <h2 className="font-semibold text-slate-800">{getChatTitle()}</h2>
           {typingNames.length > 0 ? (
-            <p className="text-xs text-blue-600">
+            <p className="text-xs text-primary">
               {typingNames.join(', ')} {typingNames.length === 1 ? 'is' : 'are'} typing...
             </p>
           ) : onlineStatus !== null ? (
@@ -396,7 +396,7 @@ export function ChatWindow({ chat, onBack }: ChatWindowProps) {
             <button
               onClick={() => fetchNextPage()}
               disabled={isFetchingNextPage}
-              className="text-sm text-blue-600 hover:text-blue-700"
+              className="text-sm text-primary hover:text-primary/90"
             >
               {isFetchingNextPage ? 'Loading...' : 'Load earlier messages'}
             </button>
@@ -405,7 +405,7 @@ export function ChatWindow({ chat, onBack }: ChatWindowProps) {
 
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
-            <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
           </div>
         ) : messages.length === 0 ? (
           <div className="text-center py-8">
@@ -460,7 +460,7 @@ export function ChatWindow({ chat, onBack }: ChatWindowProps) {
                         isVocabulary
                           ? 'bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-lg border-2 border-purple-300'
                           : isOwn
-                            ? 'bg-blue-600 text-white rounded-br-md'
+                            ? 'bg-primary text-primary-foreground rounded-br-md'
                             : 'bg-white text-slate-800 rounded-bl-md shadow-sm',
                         isDeleted && 'opacity-60 italic'
                       )}
@@ -526,7 +526,7 @@ export function ChatWindow({ chat, onBack }: ChatWindowProps) {
             onKeyDown={handleKeyDown}
             placeholder="Type a message..."
             rows={1}
-            className="flex-1 px-4 py-2 bg-slate-100 rounded-xl resize-none text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 max-h-32"
+            className="flex-1 px-4 py-2 bg-slate-100 rounded-xl resize-none text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 max-h-32"
             style={{ minHeight: '40px' }}
           />
 
@@ -537,7 +537,7 @@ export function ChatWindow({ chat, onBack }: ChatWindowProps) {
             className={cn(
               'p-2 rounded-lg flex-shrink-0 transition-colors',
               inputValue.trim() && isConnected
-                ? 'bg-blue-600 text-white hover:bg-blue-700'
+                ? 'bg-primary text-primary-foreground hover:bg-primary/90'
                 : 'bg-slate-100 text-slate-400'
             )}
           >

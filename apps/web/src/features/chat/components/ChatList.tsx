@@ -130,7 +130,7 @@ export function ChatList({ onSelectChat }: ChatListProps) {
             placeholder="Search chats..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            className="w-full pl-9 pr-4 py-2 bg-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
         </div>
       </div>
@@ -180,7 +180,7 @@ export function ChatList({ onSelectChat }: ChatListProps) {
                 onClick={() => onSelectChat(chat)}
                 className={cn(
                   'w-full p-4 flex items-start gap-3 hover:bg-slate-50 transition-colors text-left',
-                  isActive && 'bg-blue-50 hover:bg-blue-50'
+                  isActive && 'bg-primary/10 hover:bg-primary/10'
                 )}
               >
                 {/* Avatar */}
@@ -190,7 +190,7 @@ export function ChatList({ onSelectChat }: ChatListProps) {
                       'w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold',
                       info.isGroup
                         ? 'bg-gradient-to-br from-purple-500 to-purple-600'
-                        : 'bg-gradient-to-br from-blue-500 to-blue-600'
+                        : 'bg-primary'
                     )}
                   >
                     {info.avatar}
@@ -225,7 +225,7 @@ export function ChatList({ onSelectChat }: ChatListProps) {
                       {chat.lastMessage?.content || 'No messages yet'}
                     </p>
                     {hasUnread && (
-                      <span className="ml-2 px-2 py-0.5 bg-blue-600 text-white text-xs rounded-full flex-shrink-0">
+                      <span className="ml-2 px-2 py-0.5 bg-primary text-primary-foreground text-xs rounded-full flex-shrink-0">
                         {chat.unreadCount}
                       </span>
                     )}

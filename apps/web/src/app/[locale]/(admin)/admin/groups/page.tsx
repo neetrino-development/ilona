@@ -714,7 +714,7 @@ export default function GroupsPage() {
         <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
           <button
             onClick={() => setEditCenterId(center.id)}
-            className="p-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+            className="p-2 text-slate-600 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
             aria-label="Edit center"
             title="Edit center"
           >
@@ -757,7 +757,7 @@ export default function GroupsPage() {
               onClick={() => setActiveTab('centers')}
               className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
                 activeTab === 'centers'
-                  ? 'border-blue-600 text-blue-600'
+                  ? 'border-primary text-primary'
                   : 'border-transparent text-slate-600 hover:text-slate-800'
               }`}
             >
@@ -767,7 +767,7 @@ export default function GroupsPage() {
               onClick={() => setActiveTab('groups')}
               className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
                 activeTab === 'groups'
-                  ? 'border-blue-600 text-blue-600'
+                  ? 'border-primary text-primary'
                   : 'border-transparent text-slate-600 hover:text-slate-800'
               }`}
             >
@@ -807,7 +807,7 @@ export default function GroupsPage() {
                   placeholder="Search centers by name or address..."
                   value={centerSearchQuery}
                   onChange={handleCenterSearchChange}
-                  className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 />
               </div>
               {selectedCenterIds.size > 0 && (
@@ -820,7 +820,7 @@ export default function GroupsPage() {
                 </Button>
               )}
               <Button 
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 rounded-xl font-medium"
                 onClick={() => setCreateCenterOpen(true)}
               >
                 + Add Center
@@ -909,7 +909,7 @@ export default function GroupsPage() {
               placeholder="Search groups by name..."
               value={searchQuery}
               onChange={handleSearchChange}
-              className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             />
           </div>
           {selectedGroupIds.size > 0 && (
@@ -933,9 +933,9 @@ export default function GroupsPage() {
               }}
               className={cn(
                 'px-4 py-2 text-sm font-semibold rounded-md transition-all flex items-center gap-2',
-                'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
+                'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
                 viewMode === 'list'
-                  ? 'bg-blue-600 text-white shadow-md'
+                  ? 'bg-primary text-primary-foreground shadow-md'
                   : 'text-slate-700 hover:bg-slate-100'
               )}
               aria-pressed={viewMode === 'list'}
@@ -953,9 +953,9 @@ export default function GroupsPage() {
               }}
               className={cn(
                 'px-4 py-2 text-sm font-semibold rounded-md transition-all flex items-center gap-2',
-                'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
+                'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
                 viewMode === 'board'
-                  ? 'bg-blue-600 text-white shadow-md'
+                  ? 'bg-primary text-primary-foreground shadow-md'
                   : 'text-slate-700 hover:bg-slate-100'
               )}
               aria-pressed={viewMode === 'board'}
@@ -966,7 +966,7 @@ export default function GroupsPage() {
           </div>
 
           <Button 
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 rounded-xl font-medium"
             onClick={() => setCreateGroupOpen(true)}
           >
             + Add Group
@@ -1096,8 +1096,8 @@ export default function GroupsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-white rounded-2xl border border-slate-200 p-6">
             <div className="flex items-start gap-4">
-              <div className="p-3 bg-blue-50 rounded-xl">
-                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="p-3 bg-primary/10 rounded-xl">
+                <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                 </svg>
               </div>
@@ -1106,7 +1106,7 @@ export default function GroupsPage() {
                 <p className="text-sm text-slate-500 leading-relaxed">
                   Quickly assign multiple students to groups using our batch assignment tool.
                 </p>
-                <button className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700">
+                <button className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/90">
                   Open Assignment Tool
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
@@ -1128,7 +1128,7 @@ export default function GroupsPage() {
                 <p className="text-sm text-slate-500 leading-relaxed">
                   Create recurring lesson schedules for groups automatically.
                 </p>
-                <button className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700">
+                <button className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/90">
                   Manage Schedules
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />

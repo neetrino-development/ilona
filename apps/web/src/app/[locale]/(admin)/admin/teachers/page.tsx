@@ -627,7 +627,7 @@ export default function TeachersPage() {
                 placeholder="Search teachers by name, email or group..."
                 value={searchQuery}
                 onChange={handleSearchChange}
-                className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
               />
             </div>
           </div>
@@ -641,7 +641,7 @@ export default function TeachersPage() {
               <select
                 value={selectedStatus}
                 onChange={(e) => handleStatusChange(e.target.value as 'ACTIVE' | 'INACTIVE' | 'SUSPENDED' | '')}
-                className="pl-4 pr-10 py-3 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none cursor-pointer min-w-[160px]"
+                className="pl-4 pr-10 py-3 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary appearance-none cursor-pointer min-w-[160px]"
               >
                 <option value="">All statuses</option>
                 <option value="ACTIVE">{tStatus('active')}</option>
@@ -679,7 +679,7 @@ export default function TeachersPage() {
           {/* Add Teacher Button */}
           <div className="flex-shrink-0">
             <Button 
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium flex items-center gap-2"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 rounded-lg font-medium flex items-center gap-2"
               onClick={() => setIsAddTeacherOpen(true)}
               disabled={deleteTeachers.isPending || deleteTeacher.isPending}
             >
@@ -774,7 +774,7 @@ export default function TeachersPage() {
                   {t('salaryDescription')}
                 </p>
                 <button 
-                  className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700"
+                  className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/90"
                   onClick={() => router.push(`/${locale}/admin/finance`)}
                 >
                   {t('viewSalaries')}
@@ -788,8 +788,8 @@ export default function TeachersPage() {
 
           <div className="bg-white rounded-2xl border border-slate-200 p-6">
             <div className="flex items-start gap-4">
-              <div className="p-3 bg-blue-50 rounded-xl">
-                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="p-3 bg-primary/10 rounded-xl">
+                <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
               </div>
@@ -801,7 +801,7 @@ export default function TeachersPage() {
                     : t('workloadNoTeachers')}
                 </p>
                 <button 
-                  className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700"
+                  className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/90"
                   onClick={() => router.push(`/${locale}/admin/analytics`)}
                 >
                   {t('viewAnalytics')}

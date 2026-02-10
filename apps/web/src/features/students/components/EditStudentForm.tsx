@@ -148,7 +148,7 @@ export function EditStudentForm({ open, onOpenChange, studentId }: EditStudentFo
 
         {isLoadingStudent ? (
           <div className="flex items-center justify-center py-8">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
           </div>
         ) : (
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -336,7 +336,7 @@ export function EditStudentForm({ open, onOpenChange, studentId }: EditStudentFo
                 type="checkbox"
                 id="receiveReports"
                 {...register('receiveReports')}
-                className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary"
               />
               <Label htmlFor="receiveReports" className="text-sm font-normal cursor-pointer">
                 Receive progress reports via email

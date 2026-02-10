@@ -257,14 +257,14 @@ export default function FinancePage() {
         payment.status !== 'PAID' && payment.status !== 'CANCELLED' ? (
           <Button 
             size="sm" 
-            className="bg-blue-600 hover:bg-blue-700 text-white text-sm"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground text-sm"
             onClick={() => handleProcessPayment(payment.id)}
             disabled={processPayment.isPending}
           >
             {t('markPaid')}
           </Button>
         ) : (
-          <Button variant="ghost" size="sm" className="text-blue-600 text-sm">
+          <Button variant="ghost" size="sm" className="text-primary text-sm">
             {t('view')}
           </Button>
         )
@@ -388,14 +388,14 @@ export default function FinancePage() {
         salary.status === 'PENDING' ? (
           <Button 
             size="sm" 
-            className="bg-blue-600 hover:bg-blue-700 text-white text-sm"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground text-sm"
             onClick={() => handleProcessSalary(salary.id)}
             disabled={processSalary.isPending}
           >
             Process
           </Button>
         ) : (
-          <Button variant="ghost" size="sm" className="text-blue-600 text-sm">
+          <Button variant="ghost" size="sm" className="text-primary text-sm">
             Details
           </Button>
         )
@@ -462,7 +462,7 @@ export default function FinancePage() {
             onClick={() => handleTabChange('payments')}
             className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
               activeTab === 'payments'
-                ? 'border-blue-600 text-blue-600'
+                ? 'border-primary text-primary'
                 : 'border-transparent text-slate-500 hover:text-slate-700'
             }`}
           >
@@ -472,7 +472,7 @@ export default function FinancePage() {
             onClick={() => handleTabChange('salaries')}
             className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
               activeTab === 'salaries'
-                ? 'border-blue-600 text-blue-600'
+                ? 'border-primary text-primary'
                 : 'border-transparent text-slate-500 hover:text-slate-700'
             }`}
           >
@@ -491,7 +491,7 @@ export default function FinancePage() {
               value={searchQuery}
               onChange={(e) => handleSearchChange(e.target.value)}
               placeholder={`Search ${activeTab === 'payments' ? 'payments' : 'salaries'}...`}
-              className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             />
           </div>
           {/* Status Filter */}
@@ -505,7 +505,7 @@ export default function FinancePage() {
                   handleSalaryStatusChange(e.target.value as SalaryStatus | '');
                 }
               }}
-              className="pl-4 pr-10 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none cursor-pointer min-w-[160px]"
+              className="pl-4 pr-10 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary appearance-none cursor-pointer min-w-[160px]"
             >
               <option value="">All statuses</option>
               {activeTab === 'payments' ? (
@@ -533,11 +533,11 @@ export default function FinancePage() {
             </svg>
           </div>
           {activeTab === 'payments' ? (
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium">
+            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 rounded-xl font-medium">
               + Record Payment
             </Button>
           ) : (
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium">
+            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 rounded-xl font-medium">
               Generate Monthly
             </Button>
           )}
@@ -640,7 +640,7 @@ export default function FinancePage() {
                   {dashboard?.pendingPayments?.overdueCount || 0} payments are overdue. 
                   Send automated reminders to improve collection rates.
                 </p>
-                <button className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700">
+                <button className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/90">
                   Send Reminders
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
@@ -652,8 +652,8 @@ export default function FinancePage() {
 
           <div className="bg-white rounded-2xl border border-slate-200 p-6">
             <div className="flex items-start gap-4">
-              <div className="p-3 bg-blue-50 rounded-xl">
-                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="p-3 bg-primary/10 rounded-xl">
+                <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
@@ -662,7 +662,7 @@ export default function FinancePage() {
                 <p className="text-sm text-slate-500 leading-relaxed">
                   Generate comprehensive financial reports for accounting and business analysis.
                 </p>
-                <button className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700">
+                <button className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/90">
                   Generate Report
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />

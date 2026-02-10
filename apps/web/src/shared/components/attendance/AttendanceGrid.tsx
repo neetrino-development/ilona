@@ -434,7 +434,7 @@ export function AttendanceGrid({
     return (
       <div className="flex items-center justify-center p-12">
         <div className="text-center">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent"></div>
           <p className="mt-4 text-sm text-slate-500">Loading attendance data...</p>
         </div>
       </div>
@@ -455,7 +455,7 @@ export function AttendanceGrid({
         totalPendingChanges > 0 
           ? "bg-amber-50 border-amber-300" 
           : hasAnySaving
-          ? "bg-blue-50 border-blue-300"
+          ? "bg-primary/10 border-primary/30"
           : Object.keys(saveSuccess).length > 0
           ? "bg-green-50 border-green-300"
           : "bg-slate-50 border-slate-200"
@@ -463,8 +463,8 @@ export function AttendanceGrid({
         <div className="flex items-center gap-4 flex-1">
           {hasAnySaving ? (
             <>
-              <div className="h-5 w-5 animate-spin rounded-full border-[3px] border-blue-600 border-t-transparent"></div>
-              <span className="text-blue-800 font-semibold text-base">Saving changes...</span>
+              <div className="h-5 w-5 animate-spin rounded-full border-[3px] border-primary border-t-transparent"></div>
+              <span className="text-primary font-semibold text-base">Saving changes...</span>
             </>
           ) : totalPendingChanges > 0 ? (
             <>
@@ -497,7 +497,7 @@ export function AttendanceGrid({
             <Button
               onClick={handleSaveAll}
               disabled={lessonsWithChanges.length === 0 || hasAnySaving}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2.5 text-base shadow-md hover:shadow-lg transition-all"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-6 py-2.5 text-base shadow-md hover:shadow-lg transition-all"
               size="lg"
             >
               Save All Changes
@@ -546,7 +546,7 @@ export function AttendanceGrid({
                     {/* Student name cell (frozen) */}
                     <td className="sticky left-0 z-20 bg-white border-r-2 border-b-2 border-slate-400 px-4 md:px-5 py-4 whitespace-nowrap shadow-sm">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-sm font-bold flex-shrink-0 shadow-md">
+                        <div className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-primary flex items-center justify-center text-white text-sm font-bold flex-shrink-0 shadow-md">
                           {initials}
                         </div>
                         <div className="min-w-0">
@@ -574,7 +574,7 @@ export function AttendanceGrid({
                           className={cn(
                             'border-r-2 border-b-2 border-slate-300 px-2 md:px-3 py-3 text-center cursor-pointer transition-all relative min-h-[60px]',
                             getStatusStyles(status),
-                            isFocused && 'ring-4 ring-blue-500 ring-offset-2 shadow-lg',
+                            isFocused && 'ring-4 ring-primary ring-offset-2 shadow-lg',
                             hasPendingChange && 'ring-2 ring-amber-500',
                             isLessonSaving && 'opacity-60 cursor-wait'
                           )}

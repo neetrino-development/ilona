@@ -194,7 +194,7 @@ function ChatContent({ emptyTitle, emptyDescription, className }: ChatContainerP
             'text-slate-700 hover:text-slate-900',
             'hover:bg-slate-100 rounded-lg',
             'transition-colors',
-            'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
+            'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2'
           )}
           aria-label="Back to previous page"
         >
@@ -285,7 +285,7 @@ export function ChatContainer(props: ChatContainerProps) {
     return (
       <div className={cn("h-[calc(100vh-200px)] bg-white rounded-2xl border border-slate-200 overflow-hidden", props.className)}>
         <div className="flex items-center justify-center h-full">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
         </div>
       </div>
     );

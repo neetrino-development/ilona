@@ -117,10 +117,10 @@ export function AdminChatList({ activeTab, onTabChange, onSelectChat }: AdminCha
             onClick={() => handleSelectUser(student.id)}
             className={cn(
               'w-full p-4 flex items-center gap-3 hover:bg-slate-50 transition-colors text-left',
-              activeChat?.type === 'DIRECT' && activeChat?.participants.some(p => p.userId === student.id) && 'bg-blue-50 hover:bg-blue-50'
+              activeChat?.type === 'DIRECT' && activeChat?.participants.some(p => p.userId === student.id) && 'bg-primary/10 hover:bg-primary/10'
             )}
           >
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold flex-shrink-0">
+            <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white font-semibold flex-shrink-0">
               {student.avatarUrl ? (
                 <img src={student.avatarUrl} alt={student.name} className="w-full h-full rounded-full object-cover" />
               ) : (
@@ -182,7 +182,7 @@ export function AdminChatList({ activeTab, onTabChange, onSelectChat }: AdminCha
             onClick={() => handleSelectUser(teacher.id)}
             className={cn(
               'w-full p-4 flex items-center gap-3 hover:bg-slate-50 transition-colors text-left',
-              activeChat?.type === 'DIRECT' && activeChat?.participants.some(p => p.userId === teacher.id) && 'bg-blue-50 hover:bg-blue-50'
+              activeChat?.type === 'DIRECT' && activeChat?.participants.some(p => p.userId === teacher.id) && 'bg-primary/10 hover:bg-primary/10'
             )}
           >
             <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white font-semibold flex-shrink-0">
@@ -247,7 +247,7 @@ export function AdminChatList({ activeTab, onTabChange, onSelectChat }: AdminCha
             onClick={() => handleSelectGroup(group.id)}
             className={cn(
               'w-full p-4 flex items-center gap-3 hover:bg-slate-50 transition-colors text-left',
-              activeChat?.type === 'GROUP' && activeChat?.groupId === group.id && 'bg-blue-50 hover:bg-blue-50'
+              activeChat?.type === 'GROUP' && activeChat?.groupId === group.id && 'bg-primary/10 hover:bg-primary/10'
             )}
           >
             <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white font-semibold flex-shrink-0">
@@ -318,7 +318,7 @@ export function AdminChatList({ activeTab, onTabChange, onSelectChat }: AdminCha
               placeholder={`Search ${activeTab}...`}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              className="w-full pl-9 pr-4 py-2 bg-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
         </div>

@@ -36,7 +36,7 @@ export default function StudentProfilePage() {
         
         {/* Avatar */}
         <div className="flex items-center gap-6 mb-8 pb-8 border-b border-slate-200">
-          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-2xl font-bold">
+          <div className="w-20 h-20 rounded-full bg-primary flex items-center justify-center text-white text-2xl font-bold">
             {initials}
           </div>
           <div>
@@ -59,7 +59,7 @@ export default function StudentProfilePage() {
                 type="text"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-                className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
               />
             </div>
             <div>
@@ -70,7 +70,7 @@ export default function StudentProfilePage() {
                 type="text"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
               />
             </div>
           </div>
@@ -97,14 +97,14 @@ export default function StudentProfilePage() {
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="+380 XX XXX XXXX"
-              className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             />
           </div>
 
           <div className="pt-4 flex justify-end">
             <Button 
               type="submit" 
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground px-6"
               disabled={isSaving}
             >
               {isSaving ? 'Saving...' : 'Save Changes'}

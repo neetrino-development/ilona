@@ -18,7 +18,7 @@ type LessonStatus = 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'M
 // Status badge component
 function StatusBadge({ status }: { status: LessonStatus }) {
   const styles: Record<LessonStatus, { bg: string; text: string; label: string }> = {
-    SCHEDULED: { bg: 'bg-blue-100', text: 'text-blue-700', label: 'Scheduled' },
+    SCHEDULED: { bg: 'bg-primary/20', text: 'text-primary', label: 'Scheduled' },
     IN_PROGRESS: { bg: 'bg-yellow-100', text: 'text-yellow-700', label: 'In Progress' },
     COMPLETED: { bg: 'bg-green-100', text: 'text-green-700', label: 'Completed' },
     CANCELLED: { bg: 'bg-red-100', text: 'text-red-700', label: 'Cancelled' },
@@ -71,7 +71,7 @@ function LessonCard({
     >
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold">
+          <div className="w-12 h-12 rounded-lg bg-primary flex items-center justify-center text-white font-bold">
             {time.split(':')[0]}
           </div>
           <div>
@@ -132,7 +132,7 @@ function LessonCard({
           <button
             onClick={onStart}
             disabled={isStarting}
-            className="flex-1 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            className="flex-1 px-4 py-2 bg-primary text-primary-foreground text-sm font-medium rounded-lg hover:bg-primary/90 disabled:opacity-50"
           >
             {isStarting ? 'Starting...' : 'Start Lesson'}
           </button>
@@ -257,7 +257,7 @@ export default function TeacherDailyPlanPage() {
           {/* Quick Stats */}
           <div className="flex items-center gap-4 text-sm">
             <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full bg-blue-500" />
+              <div className="w-2 h-2 rounded-full bg-primary" />
               <span className="text-slate-600">{stats.scheduled} scheduled</span>
             </div>
             <div className="flex items-center gap-1.5">

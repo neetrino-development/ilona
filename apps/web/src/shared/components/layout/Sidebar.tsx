@@ -188,12 +188,12 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
                 if (fallback) fallback.style.display = 'flex';
               }}
             />
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20 hidden">
+            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 hidden">
               <span className="text-white text-lg font-bold">I</span>
             </div>
           </div>
         ) : (
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20 flex-shrink-0">
+          <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 flex-shrink-0">
             {isLoadingLogo ? (
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
             ) : (
@@ -231,11 +231,11 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
               className={cn(
                 'flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200',
                 active
-                  ? 'bg-blue-50 text-blue-600'
+                  ? 'bg-primary/10 text-primary'
                   : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
               )}
             >
-              <span className={cn(active && 'text-blue-600')}>{item.icon}</span>
+              <span className={cn(active && 'text-primary')}>{item.icon}</span>
               {!collapsed && (
                 <span className="font-medium text-sm">{item.label}</span>
               )}

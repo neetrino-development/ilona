@@ -568,7 +568,7 @@ export default function AdminAttendanceRegisterPage() {
                 onChange={(e) => {
                   handleGroupChange(e.target.value || null);
                 }}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                 disabled={isLoadingGroups}
               >
                 <option value="">-- Select Group --</option>
@@ -590,7 +590,7 @@ export default function AdminAttendanceRegisterPage() {
                     value={formatDateString(currentDate)}
                     onChange={(e) => handleDateChange(e.target.value)}
                     max={getTodayDate()}
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                     disabled={!selectedGroupId}
                   />
                 </>
@@ -727,16 +727,16 @@ export default function AdminAttendanceRegisterPage() {
                     className={cn(
                       'p-3 border-2 rounded-lg text-center transition-all min-h-[80px]',
                       !isInCurrentMonth && 'opacity-40',
-                      isSelected && 'border-blue-600 bg-blue-50 ring-2 ring-blue-500',
-                      !isSelected && hasLessons && 'border-slate-300 hover:border-blue-400 hover:bg-blue-50',
+                      isSelected && 'border-primary bg-primary/10 ring-2 ring-primary',
+                      !isSelected && hasLessons && 'border-slate-300 hover:border-primary/40 hover:bg-primary/10',
                       !hasLessons && 'border-slate-200 bg-slate-50 cursor-not-allowed',
-                      isTodayDate && !isSelected && 'border-blue-300 bg-blue-50/50'
+                      isTodayDate && !isSelected && 'border-primary/30 bg-primary/10'
                     )}
                   >
                     <div className="text-sm font-semibold text-slate-900 mb-1">
                       {date.getDate()}
                       {isTodayDate && (
-                        <span className="ml-1 text-xs text-blue-600 font-bold">Today</span>
+                        <span className="ml-1 text-xs text-primary font-bold">Today</span>
                       )}
                     </div>
                     {hasLessons && (
@@ -786,7 +786,7 @@ export default function AdminAttendanceRegisterPage() {
                         {formatDateDisplay(currentDate)}
                       </span>
                       {isCurrentDateToday && (
-                        <span className="px-2 py-0.5 text-xs font-semibold bg-blue-100 text-blue-700 rounded-full">Today</span>
+                        <span className="px-2 py-0.5 text-xs font-semibold bg-primary/20 text-primary rounded-full">Today</span>
                       )}
                     </div>
                   </div>
@@ -812,7 +812,7 @@ export default function AdminAttendanceRegisterPage() {
             {isLoadingLessons || isLoadingStudents || isLoadingAttendance ? (
               <div className="flex items-center justify-center p-12">
                 <div className="text-center">
-                  <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
+                  <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent"></div>
                   <p className="mt-4 text-sm text-slate-500">
                     {isLoadingAttendance ? 'Loading attendance records...' : 'Loading lessons...'}
                   </p>
@@ -916,7 +916,7 @@ export default function AdminAttendanceRegisterPage() {
             {isLoadingLessons || isLoadingStudents || isLoadingAttendance ? (
               <div className="flex items-center justify-center p-12">
                 <div className="text-center">
-                  <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
+                  <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent"></div>
                   <p className="mt-4 text-sm text-slate-500">
                     {isLoadingAttendance ? 'Loading attendance records...' : 'Loading lessons...'}
                   </p>
@@ -996,7 +996,7 @@ export default function AdminAttendanceRegisterPage() {
             {isLoadingLessons || isLoadingStudents || isLoadingAttendance ? (
               <div className="flex items-center justify-center p-12">
                 <div className="text-center">
-                  <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
+                  <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent"></div>
                   <p className="mt-4 text-sm text-slate-500">
                     {isLoadingAttendance ? 'Loading attendance records...' : 'Loading lessons...'}
                   </p>

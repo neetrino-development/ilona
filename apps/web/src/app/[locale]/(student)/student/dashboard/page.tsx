@@ -107,11 +107,11 @@ export default function StudentDashboardPage() {
       header: 'Actions',
       render: (lesson: StudentUpcomingLesson) => (
         isStartingSoon(lesson.scheduledAt) ? (
-          <Button className="bg-blue-600 hover:bg-blue-700 text-white text-sm">
+          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground text-sm">
             Join Lesson
           </Button>
         ) : (
-          <Button variant="ghost" className="text-blue-600 text-sm">
+          <Button variant="ghost" className="text-primary text-sm">
             View Details
           </Button>
         )
@@ -159,16 +159,16 @@ export default function StudentDashboardPage() {
 
         {/* Group Info */}
         {student?.group && (
-          <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl p-6 text-white">
+          <div className="bg-primary rounded-2xl p-6 text-white">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-blue-100 text-sm mb-1">{t('yourGroup')}</p>
+                <p className="text-primary-foreground/80 text-sm mb-1">{t('yourGroup')}</p>
                 <h2 className="text-2xl font-bold">{student.group.name}</h2>
                 {student.group.level && (
-                  <p className="text-blue-100 mt-1">{t('level')}: {student.group.level}</p>
+                  <p className="text-primary-foreground/80 mt-1">{t('level')}: {student.group.level}</p>
                 )}
               </div>
-              <Button className="bg-white text-blue-600 hover:bg-blue-50">
+              <Button className="bg-white text-primary hover:bg-primary/10">
                 {t('openGroupChat')}
               </Button>
             </div>
@@ -184,7 +184,7 @@ export default function StudentDashboardPage() {
             <input
               type="search"
               placeholder={t('searchPlaceholder')}
-              className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             />
           </div>
           <button className="p-3 bg-white border border-slate-200 rounded-xl hover:bg-slate-50">
@@ -238,7 +238,7 @@ export default function StudentDashboardPage() {
                 Total: {formatCurrency(pendingPaymentAmount)} • {pendingPayments.length} payment(s)
               </p>
             </div>
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
               Pay Now
             </Button>
           </div>
@@ -261,7 +261,7 @@ export default function StudentDashboardPage() {
                     <> • <span className="text-red-600">{stats.attendance.unjustifiedAbsences} unexcused absences</span></>
                   )}
                 </p>
-                <button className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700">
+                <button className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/90">
                   View Full Progress
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
@@ -273,8 +273,8 @@ export default function StudentDashboardPage() {
 
           <div className="bg-white rounded-2xl border border-slate-200 p-6">
             <div className="flex items-start gap-4">
-              <div className="p-3 bg-blue-50 rounded-xl">
-                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="p-3 bg-primary/10 rounded-xl">
+                <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                 </svg>
               </div>
@@ -283,7 +283,7 @@ export default function StudentDashboardPage() {
                 <p className="text-sm text-slate-500 leading-relaxed">
                   Review the words from your recent lessons to improve retention and build your vocabulary.
                 </p>
-                <button className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700">
+                <button className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/90">
                   Practice Vocabulary
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />

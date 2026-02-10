@@ -164,7 +164,7 @@ export function WeeklySchedule({ value, onChange, error }: WeeklyScheduleProps) 
               key={key}
               className={cn(
                 'border rounded-lg p-4 transition-colors',
-                isActive ? 'border-blue-200 bg-blue-50/30' : 'border-slate-200 bg-white',
+                isActive ? 'border-primary/30 bg-primary/10' : 'border-slate-200 bg-white',
                 dayHasErrors && 'border-red-300 bg-red-50/30'
               )}
             >
@@ -174,7 +174,7 @@ export function WeeklySchedule({ value, onChange, error }: WeeklyScheduleProps) 
                     type="checkbox"
                     checked={isActive}
                     onChange={() => toggleDay(key)}
-                    className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                    className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary"
                   />
                   <span className={cn('font-medium', isActive ? 'text-slate-800' : 'text-slate-500')}>
                     {label}

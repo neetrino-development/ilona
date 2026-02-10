@@ -474,7 +474,7 @@ export function VoiceRecorder({ onRecorded, onCancel, conversationId }: VoiceRec
                 className={cn(
                   'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
                   canSend
-                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                    ? 'bg-primary text-primary-foreground hover:bg-primary/90'
                     : 'bg-slate-300 text-slate-500 cursor-not-allowed'
                 )}
               >

@@ -84,7 +84,7 @@ export function InlineSelect({
         className={cn(
           'w-full pl-0 pr-3 py-1.5 text-left text-sm rounded-md',
           'border border-transparent hover:border-slate-300',
-          'focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500',
+          'focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary',
           'disabled:opacity-50 disabled:cursor-not-allowed',
           'transition-colors',
           !localValue && 'text-slate-400',
@@ -131,7 +131,7 @@ export function InlineSelect({
               onClick={() => handleSelect(null)}
               className={cn(
                 'w-full text-left px-3 py-2 text-sm hover:bg-slate-50 transition-colors',
-                !localValue && 'bg-blue-50 font-medium'
+                !localValue && 'bg-primary/10 font-medium'
               )}
             >
               {placeholder}
@@ -143,7 +143,7 @@ export function InlineSelect({
                 onClick={() => handleSelect(option.id)}
                 className={cn(
                   'w-full text-left px-3 py-2 text-sm hover:bg-slate-50 transition-colors',
-                  localValue === option.id && 'bg-blue-50 font-medium'
+                  localValue === option.id && 'bg-primary/10 font-medium'
                 )}
               >
                 {option.label}
