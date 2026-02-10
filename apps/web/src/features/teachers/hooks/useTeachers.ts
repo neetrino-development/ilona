@@ -105,10 +105,11 @@ export function useUpdateTeacher() {
       await queryClient.cancelQueries({ queryKey: teacherKeys.detail(id) });
       await queryClient.cancelQueries({ queryKey: teacherKeys.lists() });
 
-      // Snapshot the previous value
+      // Snapshot previous values
       const previousTeacher = queryClient.getQueryData<Teacher>(teacherKeys.detail(id));
+      const previousLists = queryClient.getQueriesData({ queryKey: teacherKeys.lists() });
 
-      // Optimistically update the cache
+      // Optimistically update the detail query
       if (previousTeacher) {
         queryClient.setQueryData<Teacher>(teacherKeys.detail(id), {
           ...previousTeacher,
@@ -123,12 +124,43 @@ export function useUpdateTeacher() {
         });
       }
 
-      return { previousTeacher };
+      // Optimistically update all list queries
+      previousLists.forEach(([queryKey, oldData]) => {
+        if (oldData && typeof oldData === 'object' && 'items' in oldData) {
+          const items = (oldData as any).items || [];
+          const updatedItems = items.map((item: any) => {
+            if (item.id === id) {
+              return {
+                ...item,
+                user: {
+                  ...item.user,
+                  ...(data.firstName && { firstName: data.firstName }),
+                  ...(data.lastName && { lastName: data.lastName }),
+                  ...(data.phone !== undefined && { phone: data.phone }),
+                  ...(data.status && { status: data.status }),
+                },
+              };
+            }
+            return item;
+          });
+          queryClient.setQueryData(queryKey, {
+            ...oldData,
+            items: updatedItems,
+          });
+        }
+      });
+
+      return { previousTeacher, previousLists };
     },
     onError: (err, { id }, context) => {
       // Rollback on error
       if (context?.previousTeacher) {
         queryClient.setQueryData(teacherKeys.detail(id), context.previousTeacher);
+      }
+      if (context?.previousLists) {
+        context.previousLists.forEach(([queryKey, oldData]) => {
+          queryClient.setQueryData(queryKey, oldData);
+        });
       }
     },
     onSuccess: (updatedTeacher, { id }) => {

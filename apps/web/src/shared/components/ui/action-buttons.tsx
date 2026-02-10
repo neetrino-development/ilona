@@ -1,6 +1,6 @@
 'use client';
 
-import { Pencil, Ban, Trash2 } from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
 import { cn } from '@/shared/lib/utils';
 
 export interface ActionButtonsProps {
@@ -146,23 +146,42 @@ export function ActionButtons({
         </button>
       )}
 
-      {/* Disable/Deactivate Button - Always third */}
+      {/* Toggle Switch - Always third */}
       {onDisable && (
-        <button
-          type="button"
-          aria-label={ariaLabels?.disable || (isActive ? 'Deactivate' : 'Activate')}
-          title={titles?.disable || (isActive ? 'Deactivate' : 'Activate')}
-          onClick={(e) => handleClick(e, onDisable)}
-          disabled={disabled || disableDisabled}
+        <label
           className={cn(
-            padding,
-            'text-slate-900 hover:text-slate-700 hover:bg-slate-50 rounded-lg transition-colors',
-            'disabled:opacity-50 disabled:cursor-not-allowed',
-            'focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-1'
+            'relative inline-flex items-center cursor-pointer',
+            (disabled || disableDisabled) && 'opacity-50 cursor-not-allowed'
           )}
+          onClick={(e) => e.stopPropagation()}
         >
-          <Ban className={iconSize} aria-hidden="true" />
-        </button>
+          <input
+            type="checkbox"
+            checked={isActive}
+            onChange={(e) => {
+              e.stopPropagation();
+              if (!disabled && !disableDisabled && onDisable) {
+                onDisable();
+              }
+            }}
+            disabled={disabled || disableDisabled}
+            className="sr-only peer"
+            aria-label={ariaLabels?.disable || (isActive ? 'Deactivate' : 'Activate')}
+            title={titles?.disable || (isActive ? 'Deactivate' : 'Activate')}
+          />
+          <div className={cn(
+            'w-11 h-6 rounded-full transition-colors duration-200',
+            'peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-slate-400 peer-focus:ring-offset-1',
+            isActive ? 'bg-green-500' : 'bg-slate-300',
+            (disabled || disableDisabled) && 'opacity-50'
+          )}>
+            <div className={cn(
+              'absolute top-[2px] left-[2px] bg-white rounded-full h-5 w-5 transition-transform duration-200',
+              'border border-slate-300',
+              isActive && 'translate-x-5'
+            )} />
+          </div>
+        </label>
       )}
     </div>
   );

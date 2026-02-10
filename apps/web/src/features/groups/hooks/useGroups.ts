@@ -116,7 +116,59 @@ export function useToggleGroupActive() {
 
   return useMutation({
     mutationFn: (id: string) => toggleGroupActive(id),
+    // Optimistic update for better UX
+    onMutate: async (id) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: groupKeys.detail(id) });
+      await queryClient.cancelQueries({ queryKey: groupKeys.lists() });
+
+      // Snapshot previous values
+      const previousGroup = queryClient.getQueryData(groupKeys.detail(id));
+      const previousLists = queryClient.getQueriesData({ queryKey: groupKeys.lists() });
+
+      // Optimistically update the detail query
+      if (previousGroup) {
+        queryClient.setQueryData(groupKeys.detail(id), {
+          ...previousGroup,
+          isActive: !(previousGroup as any).isActive,
+        });
+      }
+
+      // Optimistically update all list queries
+      previousLists.forEach(([queryKey, oldData]) => {
+        if (oldData && typeof oldData === 'object' && 'items' in oldData) {
+          const items = (oldData as any).items || [];
+          const updatedItems = items.map((item: any) => {
+            if (item.id === id) {
+              return {
+                ...item,
+                isActive: !item.isActive,
+              };
+            }
+            return item;
+          });
+          queryClient.setQueryData(queryKey, {
+            ...oldData,
+            items: updatedItems,
+          });
+        }
+      });
+
+      return { previousGroup, previousLists };
+    },
+    onError: (err, id, context) => {
+      // Rollback on error
+      if (context?.previousGroup) {
+        queryClient.setQueryData(groupKeys.detail(id), context.previousGroup);
+      }
+      if (context?.previousLists) {
+        context.previousLists.forEach(([queryKey, oldData]) => {
+          queryClient.setQueryData(queryKey, oldData);
+        });
+      }
+    },
     onSuccess: (_, id) => {
+      // Invalidate to refetch and ensure consistency
       queryClient.invalidateQueries({ queryKey: groupKeys.detail(id) });
       queryClient.invalidateQueries({ queryKey: groupKeys.lists() });
     },

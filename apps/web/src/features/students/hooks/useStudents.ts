@@ -90,7 +90,101 @@ export function useUpdateStudent() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateStudentDto }) =>
       updateStudent(id, data),
+    // Optimistic update for better UX
+    onMutate: async ({ id, data }) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: studentKeys.detail(id) });
+      await queryClient.cancelQueries({ queryKey: studentKeys.lists() });
+      await queryClient.cancelQueries({ queryKey: studentKeys.myAssigned() });
+
+      // Snapshot previous values
+      const previousStudent = queryClient.getQueryData(studentKeys.detail(id));
+      const previousLists = queryClient.getQueriesData({ queryKey: studentKeys.lists() });
+      const previousMyAssigned = queryClient.getQueriesData({ queryKey: studentKeys.myAssigned() });
+
+      // Optimistically update the detail query
+      if (previousStudent) {
+        queryClient.setQueryData(studentKeys.detail(id), {
+          ...previousStudent,
+          ...(data.status && {
+            user: {
+              ...(previousStudent as any).user,
+              status: data.status,
+            },
+          }),
+        });
+      }
+
+      // Optimistically update all list queries
+      previousLists.forEach(([queryKey, oldData]) => {
+        if (oldData && typeof oldData === 'object' && 'items' in oldData) {
+          const items = (oldData as any).items || [];
+          const updatedItems = items.map((item: any) => {
+            if (item.id === id) {
+              return {
+                ...item,
+                ...(data.status && {
+                  user: {
+                    ...item.user,
+                    status: data.status,
+                  },
+                }),
+              };
+            }
+            return item;
+          });
+          queryClient.setQueryData(queryKey, {
+            ...oldData,
+            items: updatedItems,
+          });
+        }
+      });
+
+      // Optimistically update my-assigned queries
+      previousMyAssigned.forEach(([queryKey, oldData]) => {
+        if (oldData && typeof oldData === 'object' && 'items' in oldData) {
+          const items = (oldData as any).items || [];
+          const updatedItems = items.map((item: any) => {
+            if (item.id === id) {
+              return {
+                ...item,
+                ...(data.status && {
+                  user: {
+                    ...item.user,
+                    status: data.status,
+                  },
+                }),
+              };
+            }
+            return item;
+          });
+          queryClient.setQueryData(queryKey, {
+            ...oldData,
+            items: updatedItems,
+          });
+        }
+      });
+
+      return { previousStudent, previousLists, previousMyAssigned };
+    },
+    onError: (err, { id }, context) => {
+      // Rollback on error
+      if (context?.previousStudent) {
+        queryClient.setQueryData(studentKeys.detail(id), context.previousStudent);
+      }
+      if (context?.previousLists) {
+        context.previousLists.forEach(([queryKey, oldData]) => {
+          queryClient.setQueryData(queryKey, oldData);
+        });
+      }
+      if (context?.previousMyAssigned) {
+        context.previousMyAssigned.forEach(([queryKey, oldData]) => {
+          queryClient.setQueryData(queryKey, oldData);
+        });
+      }
+    },
     onSuccess: (_, { id }) => {
+      // Invalidate to refetch and ensure consistency
       queryClient.invalidateQueries({ queryKey: studentKeys.detail(id) });
       queryClient.invalidateQueries({ queryKey: studentKeys.lists() });
       queryClient.invalidateQueries({ queryKey: studentKeys.myAssigned() });
