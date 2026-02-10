@@ -1,15 +1,18 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { ChatContainer } from '@/features/chat';
+import { DashboardLayout } from '@/shared/components/layout/DashboardLayout';
 
 export default function StudentChatPage() {
+  const t = useTranslations('nav');
+
   return (
-    <div className="h-screen w-screen bg-slate-50">
+    <DashboardLayout title={t('chat')}>
       <ChatContainer
         emptyTitle="Select a chat"
         emptyDescription="Choose a conversation to view messages and vocabulary"
-        className="h-full rounded-none border-0"
       />
-    </div>
+    </DashboardLayout>
   );
 }
