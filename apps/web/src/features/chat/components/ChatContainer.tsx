@@ -73,6 +73,9 @@ function ChatContent({ emptyTitle, emptyDescription, className }: ChatContainerP
   // Initialize socket connection
   useSocket();
 
+  // Get conversationId from URL (support both chatId and conversationId for backward compatibility)
+  const conversationIdFromUrl = searchParams.get('conversationId') || searchParams.get('chatId');
+
   // Restore chat from URL on initial mount when chats are loaded
   useEffect(() => {
     if (isLoadingChats || !isInitialMount.current) return;
@@ -84,7 +87,7 @@ function ChatContent({ emptyTitle, emptyDescription, className }: ChatContainerP
       return;
     }
     
-    const chatIdFromUrl = searchParams.get('chatId');
+    const chatIdFromUrl = conversationIdFromUrl;
     
     // Handle teacherId param for student DM
     if (isStudent && typeFromUrl === 'dm' && teacherIdFromUrl && teachers.length > 0) {
@@ -143,12 +146,14 @@ function ChatContent({ emptyTitle, emptyDescription, className }: ChatContainerP
               // Chat doesn't exist or user doesn't have access, remove from URL
               const params = new URLSearchParams(searchParams.toString());
               params.delete('chatId');
+              params.delete('conversationId');
               router.replace(`${pathname}?${params.toString()}`);
             });
         } else {
           // For students, remove chatId if not found
           const params = new URLSearchParams(searchParams.toString());
           params.delete('chatId');
+          params.delete('conversationId');
           router.replace(`${pathname}?${params.toString()}`);
         }
       }
@@ -156,26 +161,28 @@ function ChatContent({ emptyTitle, emptyDescription, className }: ChatContainerP
     } else if (!chatIdFromUrl && !teacherIdFromUrl) {
       isInitialMount.current = false;
     }
-  }, [chats, isLoadingChats, isLoadingTeachers, teachers, searchParams, setActiveChat, setMobileListVisible, router, pathname, isStudent, createDirectChat]);
+  }, [chats, isLoadingChats, isLoadingTeachers, teachers, searchParams, setActiveChat, setMobileListVisible, router, pathname, isStudent, createDirectChat, conversationIdFromUrl]);
 
   // Sync URL when activeChat changes (but skip on initial mount)
   useEffect(() => {
     if (isInitialMount.current) return;
     
-    const chatIdFromUrl = searchParams.get('chatId');
+    const chatIdFromUrl = conversationIdFromUrl;
     if (activeChat) {
       if (activeChat.id !== chatIdFromUrl) {
         const params = new URLSearchParams(searchParams.toString());
-        params.set('chatId', activeChat.id);
+        params.set('conversationId', activeChat.id);
+        params.delete('chatId'); // Remove old chatId param for consistency
         router.replace(`${pathname}?${params.toString()}`);
       }
     } else if (chatIdFromUrl) {
-      // activeChat is null but URL has chatId - remove it
+      // activeChat is null but URL has conversationId/chatId - remove it
       const params = new URLSearchParams(searchParams.toString());
       params.delete('chatId');
+      params.delete('conversationId');
       router.replace(`${pathname}?${params.toString()}`);
     }
-  }, [activeChat, searchParams, router, pathname]);
+  }, [activeChat, searchParams, router, pathname, conversationIdFromUrl]);
 
   const handleSelectChat = (chat: Chat) => {
     setActiveChat(chat);
@@ -184,7 +191,8 @@ function ChatContent({ emptyTitle, emptyDescription, className }: ChatContainerP
     const params = new URLSearchParams(searchParams.toString());
     params.delete('type');
     params.delete('teacherId');
-    params.set('chatId', chat.id);
+    params.set('conversationId', chat.id);
+    params.delete('chatId'); // Remove old chatId param for consistency
     router.replace(`${pathname}?${params.toString()}`);
   };
 
@@ -194,6 +202,7 @@ function ChatContent({ emptyTitle, emptyDescription, className }: ChatContainerP
     // Update URL
     const params = new URLSearchParams(searchParams.toString());
     params.delete('chatId');
+    params.delete('conversationId');
     router.replace(`${pathname}?${params.toString()}`);
   };
 

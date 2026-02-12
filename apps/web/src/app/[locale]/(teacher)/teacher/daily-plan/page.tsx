@@ -192,7 +192,9 @@ export default function TeacherDailyPlanPage() {
   const markVocabulary = useMarkVocabularySent();
 
   const isLoading = viewMode === 'today' ? isLoadingToday : isLoadingWeek;
-  const lessons = viewMode === 'today' ? todayLessons : (weekLessons?.items || []);
+  const lessons = viewMode === 'today' 
+    ? (Array.isArray(todayLessons) ? todayLessons : [])
+    : (Array.isArray(weekLessons?.items) ? weekLessons.items : []);
 
   // Sort lessons by time
   const sortedLessons = [...lessons].sort(

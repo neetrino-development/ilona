@@ -37,6 +37,11 @@ export interface Message {
   metadata?: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
+  navigation?: {
+    conversationId: string;
+    groupId: string;
+    messageId: string;
+  };
 }
 
 export interface Chat {

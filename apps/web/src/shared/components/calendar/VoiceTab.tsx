@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 import { useLesson } from '@/features/lessons';
 import { VoiceRecorder } from '@/features/chat/components/VoiceRecorder';
 import { fetchGroupChat, sendMessageHttp } from '@/features/chat/api/chat.api';
@@ -8,13 +9,17 @@ import { api } from '@/shared/lib/api';
 import { useQueryClient } from '@tanstack/react-query';
 import { lessonKeys } from '@/features/lessons/hooks/useLessons';
 import { Button } from '@/shared/components/ui/button';
+import { useAuthStore } from '@/features/auth/store/auth.store';
 
 interface VoiceTabProps {
   lessonId: string;
 }
 
 export function VoiceTab({ lessonId }: VoiceTabProps) {
+  const router = useRouter();
+  const pathname = usePathname();
   const queryClient = useQueryClient();
+  const { user } = useAuthStore();
   const { data: lesson, isLoading } = useLesson(lessonId);
   const [isRecording, setIsRecording] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -47,7 +52,7 @@ export function VoiceTab({ lessonId }: VoiceTabProps) {
       const { url: fileUrl, fileName, fileSize } = uploadResponse.data;
 
       // Send message to group chat with lesson metadata
-      await sendMessageHttp(chat.id, '', 'VOICE', {
+      const messageResponse = await sendMessageHttp(chat.id, '', 'VOICE', {
         fileUrl,
         fileName,
         fileSize,
@@ -61,11 +66,32 @@ export function VoiceTab({ lessonId }: VoiceTabProps) {
       // Invalidate lesson query to refresh data
       queryClient.invalidateQueries({ queryKey: lessonKeys.detail(lesson.id) });
 
-      alert('Voice message sent successfully!');
-      setIsRecording(false);
+      // Navigate to chat if navigation metadata is available
+      if (messageResponse.navigation?.conversationId) {
+        // Extract locale from pathname (e.g., /en/admin/calendar -> en)
+        const localeMatch = pathname.match(/^\/([^/]+)/);
+        const locale = localeMatch ? localeMatch[1] : 'en';
+        
+        // Determine chat route based on user role
+        const role = user?.role?.toLowerCase() || 'admin';
+        const chatRoute = `/${locale}/${role}/chat?conversationId=${messageResponse.navigation.conversationId}`;
+        
+        router.push(chatRoute);
+      } else {
+        // Fallback: show success message if navigation metadata is not available
+        alert('Voice message sent successfully!');
+        setIsRecording(false);
+      }
     } catch (error) {
       console.error('Failed to send voice message:', error);
-      alert('Failed to send voice message. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to send voice message. Please try again.';
+      
+      // Check if it's a permission error
+      if (errorMessage.includes('403') || errorMessage.includes('Forbidden') || errorMessage.includes('not authorized')) {
+        alert('Voice message sent, but we couldn\'t open chat automatically. Please open chat manually.');
+      } else {
+        alert(errorMessage);
+      }
     } finally {
       setIsUploading(false);
     }
