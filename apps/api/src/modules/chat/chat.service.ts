@@ -79,39 +79,73 @@ export class ChatService {
         orderBy: { updatedAt: 'desc' },
       });
 
-      // Get unread counts
-      const chatsWithUnread = await Promise.all(
-        chats.map(async (chat) => {
-          try {
-            const participant = chat.participants.find(p => p.userId === userId);
-            const unreadCount = participant?.lastReadAt
-              ? await this.prisma.message.count({
-                  where: {
-                    chatId: chat.id,
-                    createdAt: { gt: participant.lastReadAt },
-                    senderId: { not: userId },
-                  },
-                })
-              : chat._count.messages;
+      // If no chats, return early
+      if (chats.length === 0) {
+        return [];
+      }
 
-            return {
-              ...chat,
-              unreadCount,
-              lastMessage: chat.messages[0] || null,
-            };
-          } catch (error) {
-            // If unread count query fails, return chat with 0 unread
-            this.logger.warn(`Failed to get unread count for chat ${chat.id}:`, error);
-            return {
-              ...chat,
-              unreadCount: 0,
-              lastMessage: chat.messages[0] || null,
-            };
-          }
-        }),
+      // Batch get unread counts for all chats at once
+      const chatIds = chats.map(chat => chat.id);
+      const participants = await this.prisma.chatParticipant.findMany({
+        where: {
+          chatId: { in: chatIds },
+          userId,
+          leftAt: null,
+        },
+        select: {
+          chatId: true,
+          lastReadAt: true,
+        },
+      });
+
+      const participantMap = new Map(
+        participants.map(p => [p.chatId, p.lastReadAt])
       );
 
-      return chatsWithUnread;
+      // Batch count unread messages for all chats (only for chats with lastReadAt)
+      const chatsNeedingCount = chats.filter(chat => {
+        const lastReadAt = participantMap.get(chat.id);
+        return lastReadAt !== undefined && lastReadAt !== null;
+      });
+
+      const unreadCounts = await Promise.all(
+        chatsNeedingCount.map(async (chat) => {
+          try {
+            const lastReadAt = participantMap.get(chat.id)!;
+            const count = await this.prisma.message.count({
+              where: {
+                chatId: chat.id,
+                createdAt: { gt: lastReadAt },
+                senderId: { not: userId },
+              },
+            });
+
+            return { chatId: chat.id, count };
+          } catch (error) {
+            this.logger.warn(`Failed to get unread count for chat ${chat.id}:`, error);
+            return { chatId: chat.id, count: 0 };
+          }
+        })
+      );
+
+      const unreadCountMap = new Map(
+        unreadCounts.map(uc => [uc.chatId, uc.count])
+      );
+
+      // Map results with unread counts
+      return chats.map(chat => {
+        const lastReadAt = participantMap.get(chat.id);
+        // If no lastReadAt, all messages are unread
+        const unreadCount = lastReadAt === undefined || lastReadAt === null
+          ? chat._count.messages
+          : (unreadCountMap.get(chat.id) ?? 0);
+
+        return {
+          ...chat,
+          unreadCount,
+          lastMessage: chat.messages[0] || null,
+        };
+      });
     } catch (error) {
       this.logger.error(`Failed to get user chats for user ${userId}:`, error);
       // Re-throw to let PrismaService middleware handle retry
@@ -433,15 +467,6 @@ export class ChatService {
         hasLessons,
       },
     };
-  }
-
-  /**
-   * @deprecated Use canTeacherAccessGroupChat instead
-   * Kept for backward compatibility during migration
-   */
-  private async isTeacherAssignedToGroup(teacherUserId: string, groupId: string): Promise<boolean> {
-    const result = await this.canTeacherAccessGroupChat(teacherUserId, groupId);
-    return result.hasAccess;
   }
 
   /**
@@ -1531,45 +1556,105 @@ export class ChatService {
       },
     });
 
-    // Get unread counts for each group chat
-    const groupsWithUnread = await Promise.all(
-      groups.map(async (group) => {
-        if (!group.chat) {
-          return {
-            id: group.id,
-            name: group.name,
-            level: group.level,
-            center: group.center ? { id: group.center.id, name: group.center.name } : null,
-            chatId: null,
-            lastMessage: null,
-            unreadCount: 0,
-            updatedAt: group.updatedAt,
-          };
+    // Batch get unread counts for all group chats
+    const groupsWithChats = groups.filter(g => g.chat);
+    
+    if (groupsWithChats.length === 0) {
+      // No chats, return groups without chat info
+      return groups.map((group) => ({
+        id: group.id,
+        name: group.name,
+        level: group.level,
+        center: group.center ? { id: group.center.id, name: group.center.name } : null,
+        chatId: null,
+        lastMessage: null,
+        unreadCount: 0,
+        updatedAt: group.updatedAt,
+      }));
+    }
+
+    const chatIds = groupsWithChats.map(g => g.chat!.id);
+    
+    const participants = await this.prisma.chatParticipant.findMany({
+      where: {
+        chatId: { in: chatIds },
+        userId: teacherUserId,
+        leftAt: null,
+      },
+      select: {
+        chatId: true,
+        lastReadAt: true,
+      },
+    });
+
+    const participantMap = new Map(
+      participants.map(p => [p.chatId, p.lastReadAt])
+    );
+
+    // Only count unread for chats with lastReadAt
+    const chatsNeedingCount = groupsWithChats.filter(group => {
+      const lastReadAt = participantMap.get(group.chat!.id);
+      return lastReadAt !== undefined && lastReadAt !== null;
+    });
+
+    // Batch count unread messages for all chats
+    const unreadCounts = await Promise.all(
+      chatsNeedingCount.map(async (group) => {
+        try {
+          const chat = group.chat!;
+          const lastReadAt = participantMap.get(chat.id)!;
+          const count = await this.prisma.message.count({
+            where: {
+              chatId: chat.id,
+              createdAt: { gt: lastReadAt },
+              senderId: { not: teacherUserId },
+            },
+          });
+
+          return { chatId: chat.id, count };
+        } catch (error) {
+          this.logger.warn(`Failed to get unread count for group ${group.id}:`, error);
+          return { chatId: group.chat!.id, count: 0 };
         }
+      })
+    );
 
-        const participant = group.chat.participants[0];
-        const unreadCount = participant?.lastReadAt
-          ? await this.prisma.message.count({
-              where: {
-                chatId: group.chat.id,
-                createdAt: { gt: participant.lastReadAt },
-                senderId: { not: teacherUserId },
-              },
-            })
-          : group.chat._count.messages;
+    const unreadCountMap = new Map(
+      unreadCounts.map(uc => [uc.chatId, uc.count])
+    );
 
+    // Map results with unread counts
+    const groupsWithUnread = groups.map((group) => {
+      if (!group.chat) {
         return {
           id: group.id,
           name: group.name,
           level: group.level,
           center: group.center ? { id: group.center.id, name: group.center.name } : null,
-          chatId: group.chat.id,
-          lastMessage: group.chat.messages[0] || null,
-          unreadCount,
-          updatedAt: group.chat.updatedAt,
+          chatId: null,
+          lastMessage: null,
+          unreadCount: 0,
+          updatedAt: group.updatedAt,
         };
-      }),
-    );
+      }
+
+      const lastReadAt = participantMap.get(group.chat.id);
+      // If no lastReadAt, all messages are unread
+      const unreadCount = lastReadAt === undefined || lastReadAt === null
+        ? group.chat._count.messages
+        : (unreadCountMap.get(group.chat.id) ?? 0);
+
+      return {
+        id: group.id,
+        name: group.name,
+        level: group.level,
+        center: group.center ? { id: group.center.id, name: group.center.name } : null,
+        chatId: group.chat.id,
+        lastMessage: group.chat.messages[0] || null,
+        unreadCount,
+        updatedAt: group.chat.updatedAt,
+      };
+    });
 
     return groupsWithUnread;
   }
@@ -1623,83 +1708,160 @@ export class ChatService {
       },
     });
 
-    // Get or create direct chat for each student
-    const studentsWithChat = await Promise.all(
-      students.map(async (student) => {
-        // Find existing direct chat between teacher and student
-        const existingChat = await this.prisma.chat.findFirst({
-          where: {
-            type: ChatType.DIRECT,
-            participants: {
-              every: {
-                userId: { in: [teacherUserId, student.userId] },
-              },
-            },
+    // Batch find all existing direct chats between teacher and students
+    const studentUserIds = students.map(s => s.userId);
+    
+    // Find all direct chats where teacher is a participant
+    const allDirectChats = await this.prisma.chat.findMany({
+      where: {
+        type: ChatType.DIRECT,
+        participants: {
+          some: {
+            userId: teacherUserId,
+            leftAt: null,
           },
+        },
+      },
+      include: {
+        participants: {
+          where: { leftAt: null },
           select: {
-            id: true,
-            updatedAt: true,
-            messages: {
-              take: 1,
-              orderBy: { createdAt: 'desc' },
-              include: {
-                sender: {
-                  select: {
-                    id: true,
-                    firstName: true,
-                    lastName: true,
-                  },
-                },
-              },
-            },
-            participants: {
-              where: { userId: teacherUserId, leftAt: null },
+            userId: true,
+            lastReadAt: true,
+          },
+        },
+        messages: {
+          take: 1,
+          orderBy: { createdAt: 'desc' },
+          include: {
+            sender: {
               select: {
-                lastReadAt: true,
+                id: true,
+                firstName: true,
+                lastName: true,
               },
-            },
-            _count: {
-              select: { messages: true },
             },
           },
-        });
+        },
+        _count: {
+          select: { messages: true },
+        },
+      },
+    });
 
-        if (!existingChat) {
-          return {
-            id: student.user.id,
-            firstName: student.user.firstName,
-            lastName: student.user.lastName,
-            avatarUrl: student.user.avatarUrl,
-            chatId: null,
-            lastMessage: null,
-            unreadCount: 0,
-            updatedAt: student.updatedAt,
-          };
+    // Map chats by student userId (the other participant)
+    const chatMap = new Map<string, typeof allDirectChats[0]>();
+    for (const chat of allDirectChats) {
+      const studentParticipant = chat.participants.find(p => p.userId !== teacherUserId);
+      if (studentParticipant && studentUserIds.includes(studentParticipant.userId)) {
+        chatMap.set(studentParticipant.userId, chat);
+      }
+    }
+
+    // Batch get unread counts for all chats
+    const chatIds = Array.from(chatMap.values()).map(c => c.id);
+    
+    if (chatIds.length === 0) {
+      // No chats exist, return students without chat info
+      return students.map((student) => ({
+        id: student.user.id,
+        firstName: student.user.firstName,
+        lastName: student.user.lastName,
+        avatarUrl: student.user.avatarUrl,
+        chatId: null,
+        lastMessage: null,
+        unreadCount: 0,
+        updatedAt: student.updatedAt,
+      }));
+    }
+
+    const participants = await this.prisma.chatParticipant.findMany({
+      where: {
+        chatId: { in: chatIds },
+        userId: teacherUserId,
+        leftAt: null,
+      },
+      select: {
+        chatId: true,
+        lastReadAt: true,
+      },
+    });
+
+    const participantMap = new Map(
+      participants.map(p => [p.chatId, p.lastReadAt])
+    );
+
+    // Create a reverse map from chatId to studentUserId for easier lookup
+    const chatToStudentMap = new Map<string, string>();
+    for (const [studentUserId, chat] of chatMap.entries()) {
+      chatToStudentMap.set(chat.id, studentUserId);
+    }
+
+    // Only count unread for chats with lastReadAt
+    const chatsNeedingCount = chatIds.filter(chatId => {
+      const lastReadAt = participantMap.get(chatId);
+      return lastReadAt !== undefined && lastReadAt !== null;
+    });
+
+    // Batch count unread messages for all chats
+    const unreadCounts = await Promise.all(
+      chatsNeedingCount.map(async (chatId) => {
+        try {
+          const lastReadAt = participantMap.get(chatId)!;
+          const count = await this.prisma.message.count({
+            where: {
+              chatId,
+              createdAt: { gt: lastReadAt },
+              senderId: { not: teacherUserId },
+            },
+          });
+
+          return { chatId, count };
+        } catch (error) {
+          this.logger.warn(`Failed to get unread count for chat ${chatId}:`, error);
+          return { chatId, count: 0 };
         }
+      })
+    );
 
-        const participant = existingChat.participants[0];
-        const unreadCount = participant?.lastReadAt
-          ? await this.prisma.message.count({
-              where: {
-                chatId: existingChat.id,
-                createdAt: { gt: participant.lastReadAt },
-                senderId: { not: teacherUserId },
-              },
-            })
-          : existingChat._count.messages;
+    const unreadCountMap = new Map(
+      unreadCounts.map(uc => [uc.chatId, uc.count])
+    );
 
+    // Map students with their chats
+    const studentsWithChat = students.map((student) => {
+      const existingChat = chatMap.get(student.userId);
+
+      if (!existingChat) {
         return {
           id: student.user.id,
           firstName: student.user.firstName,
           lastName: student.user.lastName,
           avatarUrl: student.user.avatarUrl,
-          chatId: existingChat.id,
-          lastMessage: existingChat.messages[0] || null,
-          unreadCount,
-          updatedAt: existingChat.updatedAt,
+          chatId: null,
+          lastMessage: null,
+          unreadCount: 0,
+          updatedAt: student.updatedAt,
         };
-      }),
-    );
+      }
+
+      const lastReadAt = participantMap.get(existingChat.id);
+      // If no lastReadAt, all messages are unread
+      const unreadCount = lastReadAt === undefined || lastReadAt === null
+        ? existingChat._count.messages
+        : (unreadCountMap.get(existingChat.id) ?? 0);
+
+      return {
+        id: student.user.id,
+        firstName: student.user.firstName,
+        lastName: student.user.lastName,
+        avatarUrl: student.user.avatarUrl,
+        chatId: existingChat.id,
+        lastMessage: existingChat.messages[0] || null,
+        unreadCount,
+        updatedAt: existingChat.updatedAt,
+      };
+    });
 
     return studentsWithChat;
   }
