@@ -330,47 +330,85 @@ export class GroupsService {
   }
 
   async assignTeacher(groupId: string, teacherId: string) {
-    await this.findById(groupId);
+    // Use transaction to ensure atomicity: Group.teacherId and ChatParticipant must be updated together
+    return await this.prisma.$transaction(async (tx) => {
+      // Verify group exists
+      const existingGroup = await tx.group.findUnique({
+        where: { id: groupId },
+        select: { id: true, name: true, teacherId: true },
+      });
 
-    const teacher = await this.prisma.teacher.findUnique({
-      where: { id: teacherId },
-      include: { user: true },
-    });
+      if (!existingGroup) {
+        throw new NotFoundException(`Group with ID ${groupId} not found`);
+      }
 
-    if (!teacher) {
-      throw new BadRequestException(`Teacher with ID ${teacherId} not found`);
-    }
+      // Verify teacher exists
+      const teacher = await tx.teacher.findUnique({
+        where: { id: teacherId },
+        include: { user: true },
+      });
 
-    // Update group
-    const group = await this.prisma.group.update({
-      where: { id: groupId },
-      data: { teacherId },
-    });
+      if (!teacher) {
+        throw new BadRequestException(`Teacher with ID ${teacherId} not found`);
+      }
 
-    // Ensure group chat exists and teacher is added as participant
-    let chat = await this.prisma.chat.findUnique({
-      where: { groupId },
-    });
-
-    // Create chat if it doesn't exist
-    if (!chat) {
-      chat = await this.createGroupChat(groupId, group.name, teacherId);
-    } else {
-      // Add teacher to existing chat
-      await this.prisma.chatParticipant.upsert({
-        where: {
-          chatId_userId: { chatId: chat.id, userId: teacher.userId },
-        },
-        update: { isAdmin: true, leftAt: null },
-        create: {
-          chatId: chat.id,
-          userId: teacher.userId,
-          isAdmin: true,
+      // If group already has a different teacher, we'll update it (old teacher's ChatParticipant remains but new one is added)
+      // Update group.teacherId (this is the canonical source of truth)
+      const group = await tx.group.update({
+        where: { id: groupId },
+        data: { teacherId },
+        include: {
+          center: { select: { id: true, name: true } },
+          teacher: {
+            include: {
+              user: {
+                select: { id: true, firstName: true, lastName: true, email: true },
+              },
+            },
+          },
         },
       });
-    }
 
-    return group;
+      // Ensure group chat exists and teacher is added as participant
+      let chat = await tx.chat.findUnique({
+        where: { groupId },
+      });
+
+      // Create chat if it doesn't exist
+      if (!chat) {
+        chat = await tx.chat.create({
+          data: {
+            type: 'GROUP',
+            name: group.name,
+            groupId,
+          },
+        });
+
+        // Add teacher as admin
+        await tx.chatParticipant.create({
+          data: {
+            chatId: chat.id,
+            userId: teacher.userId,
+            isAdmin: true,
+          },
+        });
+      } else {
+        // Add teacher to existing chat (upsert ensures idempotency)
+        await tx.chatParticipant.upsert({
+          where: {
+            chatId_userId: { chatId: chat.id, userId: teacher.userId },
+          },
+          update: { isAdmin: true, leftAt: null },
+          create: {
+            chatId: chat.id,
+            userId: teacher.userId,
+            isAdmin: true,
+          },
+        });
+      }
+
+      return group;
+    });
   }
 
   async addStudent(groupId: string, studentId: string) {

@@ -30,3 +30,6 @@ export type {
   CreateRecurringLessonsDto,
   LessonStatistics,
 } from './types';
+
+// Components
+export { AddLessonForm } from './components/AddLessonForm';

@@ -198,11 +198,11 @@ export class ChatService {
     const isParticipant = chat.participants.some(p => p.userId === userId);
     
     // Allow admin to access group chats even if not a participant
-    const isAdminAccessingGroup = userRole === 'ADMIN' && chat.type === ChatType.GROUP;
+    const isAdminAccessingGroup = (userRole === UserRole.ADMIN || userRole === 'ADMIN') && chat.type === ChatType.GROUP;
     
     // For teachers, validate assignment for group chats
     if (!isParticipant && !isAdminAccessingGroup) {
-      if (userRole === 'TEACHER' && chat.type === ChatType.GROUP && chat.groupId) {
+      if ((userRole === UserRole.TEACHER || userRole === 'TEACHER') && chat.type === ChatType.GROUP && chat.groupId) {
         // Check if teacher is assigned to this group (canonical source: Group.teacherId)
         const isAssigned = await this.isTeacherAssignedToGroup(userId, chat.groupId);
         
@@ -218,7 +218,7 @@ export class ChatService {
       }
       
       // For direct chats, validate teacher-student assignment
-      if (userRole === 'TEACHER' && chat.type === ChatType.DIRECT) {
+      if ((userRole === UserRole.TEACHER || userRole === 'TEACHER') && chat.type === ChatType.DIRECT) {
         const otherParticipant = chat.participants.find(p => p.userId !== userId);
         if (otherParticipant) {
           const otherUser = await this.prisma.user.findUnique({
@@ -1011,14 +1011,11 @@ export class ChatService {
 
       // Check authorization
       let isAuthorized = false;
-      if (userRole === UserRole.ADMIN) {
+      if (userRole === UserRole.ADMIN || userRole === 'ADMIN') {
         isAuthorized = true;
-      } else if (userRole === UserRole.TEACHER && userId) {
-        const teacher = await this.prisma.teacher.findUnique({
-          where: { userId },
-          select: { id: true },
-        });
-        isAuthorized = !!(teacher && group.teacherId === teacher.id);
+      } else if ((userRole === UserRole.TEACHER || userRole === 'TEACHER') && userId) {
+        // Use canonical method to check assignment (Group.teacherId)
+        isAuthorized = await this.isTeacherAssignedToGroup(userId, groupId);
       } else if (userRole === UserRole.STUDENT && userId) {
         // Check if student is a member of this group
         const student = await this.prisma.student.findFirst({
@@ -1159,7 +1156,7 @@ export class ChatService {
     }
 
     // For teachers, validate assignment to the group
-    if (userId && userRole === UserRole.TEACHER) {
+    if (userId && (userRole === UserRole.TEACHER || userRole === 'TEACHER')) {
       // Check if teacher is assigned to this group (canonical source: Group.teacherId)
       const isAssigned = await this.isTeacherAssignedToGroup(userId, groupId);
       

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { DashboardLayout } from '@/shared/components/layout/DashboardLayout';
 import { StatCard, Badge, Button } from '@/shared/components/ui';
 import { LessonListTable } from '@/shared/components/calendar/LessonListTable';
-import { useLessons, useLessonStatistics, useCancelLesson, type Lesson, type LessonStatus } from '@/features/lessons';
+import { useLessons, useLessonStatistics, useCancelLesson, AddLessonForm, type Lesson, type LessonStatus } from '@/features/lessons';
 
 // Helper to get week dates
 function getWeekDates(date: Date): Date[] {
@@ -45,6 +45,7 @@ export default function CalendarPage() {
   const router = useRouter();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'week' | 'list'>('week');
+  const [isAddLessonOpen, setIsAddLessonOpen] = useState(false);
   
   const weekDates = useMemo(() => getWeekDates(currentDate), [currentDate]);
   const dateFrom = formatDate(weekDates[0]);
@@ -210,7 +211,10 @@ export default function CalendarPage() {
             >
               List
             </button>
-            <Button className="ml-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium">
+            <Button 
+              onClick={() => setIsAddLessonOpen(true)}
+              className="ml-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium"
+            >
               + Add Lesson
             </Button>
           </div>
@@ -358,6 +362,12 @@ export default function CalendarPage() {
           </div>
         </div>
       </div>
+
+      {/* Add Lesson Dialog */}
+      <AddLessonForm 
+        open={isAddLessonOpen} 
+        onOpenChange={setIsAddLessonOpen}
+      />
     </DashboardLayout>
   );
 }
