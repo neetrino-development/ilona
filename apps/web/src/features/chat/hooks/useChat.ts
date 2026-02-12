@@ -10,8 +10,10 @@ import {
   fetchAdminTeachers,
   fetchAdminGroups,
   fetchGroupChat,
+  fetchTeacherGroups,
+  fetchTeacherStudents,
 } from '../api/chat.api';
-import type { AdminChatUser, AdminChatGroup } from '../api/chat.api';
+import type { AdminChatUser, AdminChatGroup, TeacherGroup, TeacherStudent } from '../api/chat.api';
 
 // Query keys
 export const chatKeys = {
@@ -25,6 +27,9 @@ export const chatKeys = {
   adminStudents: (search?: string) => [...chatKeys.all, 'admin', 'students', search] as const,
   adminTeachers: (search?: string) => [...chatKeys.all, 'admin', 'teachers', search] as const,
   adminGroups: (search?: string) => [...chatKeys.all, 'admin', 'groups', search] as const,
+  // Teacher chat lists
+  teacherGroups: (search?: string) => [...chatKeys.all, 'teacher', 'groups', search] as const,
+  teacherStudents: (search?: string) => [...chatKeys.all, 'teacher', 'students', search] as const,
 };
 
 /**
@@ -186,6 +191,28 @@ export function useAdminGroups(search?: string) {
   return useQuery({
     queryKey: chatKeys.adminGroups(search),
     queryFn: () => fetchAdminGroups(search),
+    staleTime: 60 * 1000, // Cache for 1 minute
+  });
+}
+
+/**
+ * Teacher-only: Hook to fetch teacher's assigned groups
+ */
+export function useTeacherGroups(search?: string) {
+  return useQuery({
+    queryKey: chatKeys.teacherGroups(search),
+    queryFn: () => fetchTeacherGroups(search),
+    staleTime: 60 * 1000, // Cache for 1 minute
+  });
+}
+
+/**
+ * Teacher-only: Hook to fetch teacher's assigned students
+ */
+export function useTeacherStudents(search?: string) {
+  return useQuery({
+    queryKey: chatKeys.teacherStudents(search),
+    queryFn: () => fetchTeacherStudents(search),
     staleTime: 60 * 1000, // Cache for 1 minute
   });
 }

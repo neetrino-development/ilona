@@ -121,3 +121,68 @@ export async function fetchAdminGroups(search?: string): Promise<AdminChatGroup[
   const url = query ? `${CHAT_ENDPOINT}/admin/groups?${query}` : `${CHAT_ENDPOINT}/admin/groups`;
   return api.get<AdminChatGroup[]>(url);
 }
+
+/**
+ * Teacher-only: Fetch teacher's assigned groups
+ */
+export interface TeacherGroup {
+  id: string;
+  name: string;
+  level?: string | null;
+  center?: {
+    id: string;
+    name: string;
+  } | null;
+  chatId: string | null;
+  lastMessage?: {
+    id: string;
+    content: string | null;
+    createdAt: string;
+    sender: {
+      id: string;
+      firstName: string;
+      lastName: string;
+    };
+  } | null;
+  unreadCount: number;
+  updatedAt: string;
+}
+
+export async function fetchTeacherGroups(search?: string): Promise<TeacherGroup[]> {
+  const params = new URLSearchParams();
+  if (search) params.append('search', search);
+  const query = params.toString();
+  const url = query ? `${CHAT_ENDPOINT}/teacher/groups?${query}` : `${CHAT_ENDPOINT}/teacher/groups`;
+  return api.get<TeacherGroup[]>(url);
+}
+
+/**
+ * Teacher-only: Fetch teacher's assigned students
+ */
+export interface TeacherStudent {
+  id: string;
+  firstName: string;
+  lastName: string;
+  avatarUrl?: string | null;
+  chatId: string | null;
+  lastMessage?: {
+    id: string;
+    content: string | null;
+    createdAt: string;
+    sender: {
+      id: string;
+      firstName: string;
+      lastName: string;
+    };
+  } | null;
+  unreadCount: number;
+  updatedAt: string;
+}
+
+export async function fetchTeacherStudents(search?: string): Promise<TeacherStudent[]> {
+  const params = new URLSearchParams();
+  if (search) params.append('search', search);
+  const query = params.toString();
+  const url = query ? `${CHAT_ENDPOINT}/teacher/students?${query}` : `${CHAT_ENDPOINT}/teacher/students`;
+  return api.get<TeacherStudent[]>(url);
+}

@@ -168,6 +168,30 @@ export class ChatController {
   ) {
     return this.chatService.getAdminGroups(user.sub, search);
   }
+
+  /**
+   * Get teacher's assigned groups (Teacher only)
+   */
+  @Get('teacher/groups')
+  @Roles(UserRole.TEACHER)
+  async getTeacherGroups(
+    @CurrentUser() user: JwtPayload,
+    @Query('search') search?: string,
+  ) {
+    return this.chatService.getTeacherGroups(user.sub, search);
+  }
+
+  /**
+   * Get teacher's assigned students (Teacher only)
+   */
+  @Get('teacher/students')
+  @Roles(UserRole.TEACHER)
+  async getTeacherStudents(
+    @CurrentUser() user: JwtPayload,
+    @Query('search') search?: string,
+  ) {
+    return this.chatService.getTeacherStudents(user.sub, search);
+  }
 }
 
 

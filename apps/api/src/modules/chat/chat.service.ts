@@ -181,7 +181,88 @@ export class ChatService {
     // Allow admin to access group chats even if not a participant
     const isAdminAccessingGroup = userRole === 'ADMIN' && chat.type === ChatType.GROUP;
     
+    // For teachers, validate assignment for group chats
     if (!isParticipant && !isAdminAccessingGroup) {
+      if (userRole === 'TEACHER' && chat.type === ChatType.GROUP && chat.groupId) {
+        // Check if teacher is assigned to this group
+        const group = await this.prisma.group.findUnique({
+          where: { id: chat.groupId },
+          select: { teacherId: true },
+        });
+        
+        if (group) {
+          const teacher = await this.prisma.teacher.findUnique({
+            where: { userId },
+            select: { id: true },
+          });
+          
+          if (teacher && group.teacherId === teacher.id) {
+            // Teacher is assigned, add them as participant if not already
+            await this.prisma.chatParticipant.upsert({
+              where: {
+                chatId_userId: {
+                  chatId: chat.id,
+                  userId,
+                },
+              },
+              update: {
+                leftAt: null,
+                isAdmin: true,
+              },
+              create: {
+                chatId: chat.id,
+                userId,
+                isAdmin: true,
+              },
+            });
+            
+            // Refetch chat with updated participants
+            return this.getChatById(chatId, userId, userRole);
+          }
+        }
+      }
+      
+      // For direct chats, validate teacher-student assignment
+      if (userRole === 'TEACHER' && chat.type === ChatType.DIRECT) {
+        const otherParticipant = chat.participants.find(p => p.userId !== userId);
+        if (otherParticipant) {
+          const otherUser = await this.prisma.user.findUnique({
+            where: { id: otherParticipant.userId },
+            select: { role: true },
+          });
+          
+          if (otherUser?.role === 'STUDENT') {
+            const canAccess = await this.validateStudentTeacherDM(otherParticipant.userId, userId);
+            if (canAccess) {
+              // Teacher is assigned, ensure they're a participant
+              if (!isParticipant) {
+                await this.prisma.chatParticipant.upsert({
+                  where: {
+                    chatId_userId: {
+                      chatId: chat.id,
+                      userId,
+                    },
+                  },
+                  update: {
+                    leftAt: null,
+                  },
+                  create: {
+                    chatId: chat.id,
+                    userId,
+                    isAdmin: false,
+                  },
+                });
+                
+                // Refetch chat with updated participants
+                return this.getChatById(chatId, userId, userRole);
+              }
+              // Already a participant, allow access
+              return chat;
+            }
+          }
+        }
+      }
+      
       throw new ForbiddenException('You are not a participant of this chat');
     }
 
@@ -830,8 +911,107 @@ export class ChatService {
       },
     });
 
+    // If chat doesn't exist, create it lazily (if user is authorized)
     if (!chat) {
-      throw new NotFoundException('Group chat not found');
+      // First, verify the group exists and user has access
+      const group = await this.prisma.group.findUnique({
+        where: { id: groupId },
+        select: {
+          id: true,
+          name: true,
+          teacherId: true,
+          isActive: true,
+        },
+      });
+
+      if (!group) {
+        throw new NotFoundException('Group not found');
+      }
+
+      if (!group.isActive) {
+        throw new BadRequestException('Group is not active');
+      }
+
+      // Check authorization
+      let isAuthorized = false;
+      if (userRole === 'ADMIN') {
+        isAuthorized = true;
+      } else if (userRole === 'TEACHER' && userId) {
+        const teacher = await this.prisma.teacher.findUnique({
+          where: { userId },
+          select: { id: true },
+        });
+        isAuthorized = !!(teacher && group.teacherId === teacher.id);
+      }
+
+      if (!isAuthorized) {
+        throw new ForbiddenException('You are not authorized to access this group chat');
+      }
+
+      // Create the chat
+      const newChat = await this.prisma.chat.create({
+        data: {
+          type: ChatType.GROUP,
+          name: group.name,
+          groupId: group.id,
+        },
+        include: {
+          group: {
+            select: {
+              id: true,
+              name: true,
+              level: true,
+              center: { select: { id: true, name: true } },
+            },
+          },
+          participants: {
+            where: { leftAt: null },
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                  avatarUrl: true,
+                  role: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      // Add teacher as admin if exists
+      if (group.teacherId) {
+        const teacher = await this.prisma.teacher.findUnique({
+          where: { id: group.teacherId },
+          select: { userId: true },
+        });
+
+        if (teacher) {
+          await this.prisma.chatParticipant.create({
+            data: {
+              chatId: newChat.id,
+              userId: teacher.userId,
+              isAdmin: true,
+            },
+          });
+        }
+      }
+
+      // Add admin if accessing
+      if (userRole === 'ADMIN' && userId) {
+        await this.prisma.chatParticipant.create({
+          data: {
+            chatId: newChat.id,
+            userId,
+            isAdmin: true,
+          },
+        });
+      }
+
+      // Refetch with all participants
+      return this.getGroupChat(groupId, userId, userRole);
     }
 
     // If admin is accessing and not a participant, add them
@@ -857,6 +1037,51 @@ export class ChatService {
 
         // Refetch with updated participants
         return this.getGroupChat(groupId, userId, userRole);
+      }
+    }
+
+    // For teachers, validate assignment to the group
+    if (userId && userRole === 'TEACHER') {
+      const isParticipant = chat.participants.some(p => p.userId === userId);
+      if (!isParticipant) {
+        // Check if teacher is assigned to this group
+        const group = await this.prisma.group.findUnique({
+          where: { id: groupId },
+          select: { teacherId: true },
+        });
+        
+        if (group) {
+          const teacher = await this.prisma.teacher.findUnique({
+            where: { userId },
+            select: { id: true },
+          });
+          
+          if (teacher && group.teacherId === teacher.id) {
+            // Teacher is assigned, add them as participant
+            await this.prisma.chatParticipant.upsert({
+              where: {
+                chatId_userId: {
+                  chatId: chat.id,
+                  userId,
+                },
+              },
+              update: {
+                leftAt: null,
+                isAdmin: true,
+              },
+              create: {
+                chatId: chat.id,
+                userId,
+                isAdmin: true,
+              },
+            });
+            
+            // Refetch with updated participants
+            return this.getGroupChat(groupId, userId, userRole);
+          } else {
+            throw new ForbiddenException('You are not assigned to this group');
+          }
+        }
       }
     }
 
@@ -1001,6 +1226,248 @@ export class ChatService {
       name: group.name,
       center: group.center ? { id: group.center.id, name: group.center.name } : null,
     }));
+  }
+
+  /**
+   * Get teacher's assigned groups
+   */
+  async getTeacherGroups(teacherUserId: string, search?: string) {
+    // Get teacher profile
+    const teacher = await this.prisma.teacher.findUnique({
+      where: { userId: teacherUserId },
+      select: { id: true },
+    });
+
+    if (!teacher) {
+      throw new NotFoundException('Teacher not found');
+    }
+
+    const where: Prisma.GroupWhereInput = {
+      teacherId: teacher.id,
+      isActive: true,
+      ...(search && {
+        OR: [
+          { name: { contains: search, mode: 'insensitive' } },
+          { description: { contains: search, mode: 'insensitive' } },
+        ],
+      }),
+    };
+
+    const groups = await this.prisma.group.findMany({
+      where,
+      take: 100, // Limit to 100 for performance
+      orderBy: {
+        name: 'asc',
+      },
+      include: {
+        center: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        chat: {
+          select: {
+            id: true,
+            updatedAt: true,
+            messages: {
+              take: 1,
+              orderBy: { createdAt: 'desc' },
+              include: {
+                sender: {
+                  select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true,
+                  },
+                },
+              },
+            },
+            participants: {
+              where: { userId: teacherUserId, leftAt: null },
+              select: {
+                lastReadAt: true,
+              },
+            },
+            _count: {
+              select: { messages: true },
+            },
+          },
+        },
+      },
+    });
+
+    // Get unread counts for each group chat
+    const groupsWithUnread = await Promise.all(
+      groups.map(async (group) => {
+        if (!group.chat) {
+          return {
+            id: group.id,
+            name: group.name,
+            level: group.level,
+            center: group.center ? { id: group.center.id, name: group.center.name } : null,
+            chatId: null,
+            lastMessage: null,
+            unreadCount: 0,
+            updatedAt: group.updatedAt,
+          };
+        }
+
+        const participant = group.chat.participants[0];
+        const unreadCount = participant?.lastReadAt
+          ? await this.prisma.message.count({
+              where: {
+                chatId: group.chat.id,
+                createdAt: { gt: participant.lastReadAt },
+                senderId: { not: teacherUserId },
+              },
+            })
+          : group.chat._count.messages;
+
+        return {
+          id: group.id,
+          name: group.name,
+          level: group.level,
+          center: group.center ? { id: group.center.id, name: group.center.name } : null,
+          chatId: group.chat.id,
+          lastMessage: group.chat.messages[0] || null,
+          unreadCount,
+          updatedAt: group.chat.updatedAt,
+        };
+      }),
+    );
+
+    return groupsWithUnread;
+  }
+
+  /**
+   * Get teacher's assigned students
+   */
+  async getTeacherStudents(teacherUserId: string, search?: string) {
+    // Get teacher profile
+    const teacher = await this.prisma.teacher.findUnique({
+      where: { userId: teacherUserId },
+      select: { id: true },
+    });
+
+    if (!teacher) {
+      throw new NotFoundException('Teacher not found');
+    }
+
+    const where: Prisma.StudentWhereInput = {
+      teacherId: teacher.id,
+      user: {
+        status: 'ACTIVE',
+        ...(search && {
+          OR: [
+            { firstName: { contains: search, mode: 'insensitive' } },
+            { lastName: { contains: search, mode: 'insensitive' } },
+            { email: { contains: search, mode: 'insensitive' } },
+          ],
+        }),
+      },
+    };
+
+    const students = await this.prisma.student.findMany({
+      where,
+      take: 100, // Limit to 100 for performance
+      orderBy: {
+        user: {
+          firstName: 'asc',
+        },
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            avatarUrl: true,
+            status: true,
+          },
+        },
+      },
+    });
+
+    // Get or create direct chat for each student
+    const studentsWithChat = await Promise.all(
+      students.map(async (student) => {
+        // Find existing direct chat between teacher and student
+        const existingChat = await this.prisma.chat.findFirst({
+          where: {
+            type: ChatType.DIRECT,
+            participants: {
+              every: {
+                userId: { in: [teacherUserId, student.userId] },
+              },
+            },
+          },
+          select: {
+            id: true,
+            updatedAt: true,
+            messages: {
+              take: 1,
+              orderBy: { createdAt: 'desc' },
+              include: {
+                sender: {
+                  select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true,
+                  },
+                },
+              },
+            },
+            participants: {
+              where: { userId: teacherUserId, leftAt: null },
+              select: {
+                lastReadAt: true,
+              },
+            },
+            _count: {
+              select: { messages: true },
+            },
+          },
+        });
+
+        if (!existingChat) {
+          return {
+            id: student.user.id,
+            firstName: student.user.firstName,
+            lastName: student.user.lastName,
+            avatarUrl: student.user.avatarUrl,
+            chatId: null,
+            lastMessage: null,
+            unreadCount: 0,
+            updatedAt: student.updatedAt,
+          };
+        }
+
+        const participant = existingChat.participants[0];
+        const unreadCount = participant?.lastReadAt
+          ? await this.prisma.message.count({
+              where: {
+                chatId: existingChat.id,
+                createdAt: { gt: participant.lastReadAt },
+                senderId: { not: teacherUserId },
+              },
+            })
+          : existingChat._count.messages;
+
+        return {
+          id: student.user.id,
+          firstName: student.user.firstName,
+          lastName: student.user.lastName,
+          avatarUrl: student.user.avatarUrl,
+          chatId: existingChat.id,
+          lastMessage: existingChat.messages[0] || null,
+          unreadCount,
+          updatedAt: existingChat.updatedAt,
+        };
+      }),
+    );
+
+    return studentsWithChat;
   }
 }
 
