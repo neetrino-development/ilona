@@ -62,6 +62,15 @@ export class ChatService {
           messages: {
             take: 1,
             orderBy: { createdAt: 'desc' },
+            where: {
+              // Filter out soft-deleted messages (content === null && isSystem === true)
+              NOT: {
+                AND: [
+                  { content: null },
+                  { isSystem: true },
+                ],
+              },
+            },
             include: {
               sender: {
                 select: {
@@ -1532,6 +1541,15 @@ export class ChatService {
             messages: {
               take: 1,
               orderBy: { createdAt: 'desc' },
+              where: {
+                // Filter out soft-deleted messages (content === null && isSystem === true)
+                NOT: {
+                  AND: [
+                    { content: null },
+                    { isSystem: true },
+                  ],
+                },
+              },
               include: {
                 sender: {
                   select: {
@@ -1733,6 +1751,15 @@ export class ChatService {
         messages: {
           take: 1,
           orderBy: { createdAt: 'desc' },
+          where: {
+            // Filter out soft-deleted messages (content === null && isSystem === true)
+            NOT: {
+              AND: [
+                { content: null },
+                { isSystem: true },
+              ],
+            },
+          },
           include: {
             sender: {
               select: {

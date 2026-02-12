@@ -6,6 +6,7 @@ import { useChats, useSocket } from '../hooks';
 import { useChatStore } from '../store/chat.store';
 import type { Chat } from '../types';
 import { cn } from '@/shared/lib/utils';
+import { formatMessagePreview } from '../utils';
 
 interface ChatListProps {
   onSelectChat: (chat: Chat) => void;
@@ -222,7 +223,7 @@ export function ChatList({ onSelectChat }: ChatListProps) {
                         hasUnread ? 'text-slate-700 font-medium' : 'text-slate-500'
                       )}
                     >
-                      {chat.lastMessage?.content || 'No messages yet'}
+                      {formatMessagePreview(chat.lastMessage)}
                     </p>
                     {hasUnread && (
                       <span className="ml-2 px-2 py-0.5 bg-primary text-primary-foreground text-xs rounded-full flex-shrink-0">

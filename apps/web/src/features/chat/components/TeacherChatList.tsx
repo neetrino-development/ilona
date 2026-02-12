@@ -7,6 +7,7 @@ import { fetchGroupChat } from '../api/chat.api';
 import { useChatStore } from '../store/chat.store';
 import type { Chat } from '../types';
 import { cn } from '@/shared/lib/utils';
+import { formatMessagePreview } from '../utils';
 
 interface TeacherChatListProps {
   onSelectChat: (chat: Chat) => void;
@@ -251,7 +252,7 @@ export function TeacherChatList({ onSelectChat }: TeacherChatListProps) {
                         hasUnread ? 'text-slate-700 font-medium' : 'text-slate-500'
                       )}
                     >
-                      {group.lastMessage?.content || 'No messages yet'}
+                      {formatMessagePreview(group.lastMessage)}
                     </p>
                     {hasUnread && (
                       <span className="ml-2 px-2 py-0.5 bg-primary text-primary-foreground text-xs rounded-full flex-shrink-0">
@@ -334,7 +335,7 @@ export function TeacherChatList({ onSelectChat }: TeacherChatListProps) {
                             hasUnread ? 'text-slate-700 font-medium' : 'text-slate-500'
                           )}
                         >
-                          {student.lastMessage?.content || 'No messages yet'}
+                          {formatMessagePreview(student.lastMessage)}
                         </p>
                         {hasUnread && (
                           <span className="ml-2 px-2 py-0.5 bg-primary text-primary-foreground text-xs rounded-full flex-shrink-0">

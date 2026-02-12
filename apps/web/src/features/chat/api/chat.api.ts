@@ -136,7 +136,9 @@ export interface TeacherGroup {
   chatId: string | null;
   lastMessage?: {
     id: string;
+    type?: string;
     content: string | null;
+    fileName?: string | null;
     createdAt: string;
     sender: {
       id: string;
@@ -167,7 +169,9 @@ export interface TeacherStudent {
   chatId: string | null;
   lastMessage?: {
     id: string;
+    type?: string;
     content: string | null;
+    fileName?: string | null;
     createdAt: string;
     sender: {
       id: string;
