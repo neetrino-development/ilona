@@ -15,6 +15,7 @@ import {
 } from '../api/groups.api';
 import type { GroupFilters, CreateGroupDto, UpdateGroupDto } from '../types';
 import { chatKeys } from '../../chat/hooks/useChat';
+import { useAuthStore } from '@/features/auth/store/auth.store';
 
 // Query keys
 export const groupKeys = {
@@ -51,9 +52,19 @@ export function useGroup(id: string, enabled = true) {
  * Hook to fetch groups assigned to the currently logged-in teacher
  */
 export function useMyGroups() {
+  const { isHydrated, isAuthenticated, tokens } = useAuthStore();
+  
+  // Only enable query when:
+  // 1. Auth store is hydrated (token loaded from localStorage)
+  // 2. User is authenticated
+  // 3. Access token is available
+  // This prevents race condition where request fires before token is ready
+  const isAuthReady = isHydrated && isAuthenticated && !!tokens?.accessToken;
+  
   return useQuery({
     queryKey: groupKeys.myGroups(),
     queryFn: () => fetchMyGroups(),
+    enabled: isAuthReady,
     // Set staleTime to 0 to ensure fresh data after mutations
     // This prevents stale cache from hiding newly assigned groups
     staleTime: 0,

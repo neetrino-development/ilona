@@ -155,8 +155,18 @@ class ApiClient {
       ...(options.headers || {}),
     };
 
+    const hasAuthHeader = !!token;
     if (token) {
       (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
+    }
+
+    // Diagnostics logging (dev only)
+    const isDev = process.env.NODE_ENV === 'development';
+    if (isDev) {
+      console.log(`[ApiClient] ${fetchOptions.method || 'GET'} ${endpoint}`, {
+        hasAuthHeader,
+        authHeaderLength: token ? token.length : 0,
+      });
     }
 
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
@@ -173,7 +183,15 @@ class ApiClient {
       throw new ApiError('Invalid response from server', response.status);
     }
 
-    // Handle 401 Unauthorized - attempt token refresh
+    // Diagnostics logging for 401 (dev only)
+    if (isDev && response.status === 401) {
+      console.warn(`[ApiClient] 401 Unauthorized on ${fetchOptions.method || 'GET'} ${endpoint}`, {
+        hadAuthHeader: hasAuthHeader,
+        responseMessage: (data as ApiErrorResponse).message || (data as ApiErrorResponse).error,
+      });
+    }
+
+    // Handle 401 Unauthorized - attempt session revalidation and token refresh
     if (response.status === 401 && !skipAuthRefresh && !isRetry) {
       // Skip refresh for auth endpoints to avoid infinite loops
       if (endpoint.startsWith('/auth/')) {
@@ -188,22 +206,18 @@ class ApiClient {
         );
       }
 
-      // Only attempt refresh if we have a refresh token
+      // Step 1: Attempt session revalidation by trying to refresh token
       const refreshToken = this.getRefreshToken();
       if (!refreshToken) {
-        // No refresh token available - user needs to login again
-        // Trigger logout through the auth store if available
-        if (this.logoutCallback) {
-          try {
-            this.logoutCallback();
-          } catch (error) {
-            console.warn('Error during logout callback:', error);
-          }
+        // No refresh token available - session is truly invalid
+        // Don't auto-logout, just throw error with clear message
+        if (isDev) {
+          console.warn('[ApiClient] No refresh token available for 401 recovery');
         }
         const errorData = data as ApiErrorResponse;
         const message = Array.isArray(errorData.message) 
           ? errorData.message[0] 
-          : errorData.message || errorData.error || 'Unauthorized';
+          : errorData.message || errorData.error || 'Session expired. Please sign in again.';
         throw new ApiError(
           message,
           response.status,
@@ -211,10 +225,16 @@ class ApiClient {
         );
       }
 
-      // Attempt to refresh token
+      // Step 2: Attempt to refresh token
+      if (isDev) {
+        console.log('[ApiClient] Attempting token refresh after 401...');
+      }
       const refreshSuccess = await this.attemptTokenRefresh();
       
       if (refreshSuccess) {
+        if (isDev) {
+          console.log('[ApiClient] Token refresh successful, retrying request...');
+        }
         // Wait a bit to ensure token is available (store might need time to update)
         // Try multiple times to get the new token
         let newToken: string | null = null;
@@ -227,7 +247,9 @@ class ApiClient {
         if (!newToken) {
           // If we still don't have a token after refresh, try one more time with original token
           // This handles edge cases where refresh succeeded but token retrieval is delayed
-          console.warn('Token not available after refresh, retrying request...');
+          if (isDev) {
+            console.warn('[ApiClient] Token not available after refresh, retrying request...');
+          }
           // Retry with original options - the token might be available now
           return this.request<T>(endpoint, { ...options, skipAuthRefresh: true }, true);
         }
@@ -235,12 +257,15 @@ class ApiClient {
         // Retry the original request with new token
         return this.request<T>(endpoint, { ...options, skipAuthRefresh: true, token: newToken }, true);
       } else {
-        // Refresh failed - if refresh token was invalid, user should already be logged out
-        // by the refreshToken function. Just throw the error.
+        // Refresh failed - session is truly expired/invalid
+        // Don't auto-logout, just throw error with clear message
+        if (isDev) {
+          console.warn('[ApiClient] Token refresh failed after 401');
+        }
         const errorData = data as ApiErrorResponse;
         const message = Array.isArray(errorData.message) 
           ? errorData.message[0] 
-          : errorData.message || errorData.error || 'Unauthorized';
+          : errorData.message || errorData.error || 'Session expired. Please sign in again.';
         throw new ApiError(
           message,
           response.status,
