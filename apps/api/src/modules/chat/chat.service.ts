@@ -1498,18 +1498,23 @@ export class ChatService {
 
   /**
    * Get teacher's assigned groups
+   * Uses the same canonical logic as GroupsService.findByTeacherUserId
+   * to ensure consistency across all endpoints
    */
   async getTeacherGroups(teacherUserId: string, search?: string) {
-    // Get teacher profile
+    // Get teacher profile using canonical lookup (same as GroupsService)
     const teacher = await this.prisma.teacher.findUnique({
       where: { userId: teacherUserId },
       select: { id: true },
     });
 
     if (!teacher) {
-      throw new NotFoundException('Teacher not found');
+      // Return empty array instead of throwing to match GroupsService behavior
+      return [];
     }
 
+    // Use the same WHERE clause logic as GroupsService.findByTeacher
+    // This ensures both endpoints return identical groups
     const where: Prisma.GroupWhereInput = {
       teacherId: teacher.id,
       isActive: true,
@@ -1523,7 +1528,7 @@ export class ChatService {
 
     const groups = await this.prisma.group.findMany({
       where,
-      take: 100, // Limit to 100 for performance
+      // No limit - return all assigned groups to match GroupsService.findByTeacher behavior
       orderBy: {
         name: 'asc',
       },

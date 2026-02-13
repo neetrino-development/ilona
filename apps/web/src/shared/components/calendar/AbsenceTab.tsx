@@ -24,7 +24,7 @@ export function AbsenceTab({ lessonId }: AbsenceTabProps) {
   const [hasChanges, setHasChanges] = useState(false);
 
   useEffect(() => {
-    if (attendanceData) {
+    if (attendanceData?.attendances) {
       const initial: Record<string, { isPresent: boolean; absenceType?: AbsenceType }> = {};
       attendanceData.attendances.forEach((att) => {
         initial[att.studentId] = {

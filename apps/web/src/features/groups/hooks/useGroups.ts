@@ -54,6 +54,11 @@ export function useMyGroups() {
   return useQuery({
     queryKey: groupKeys.myGroups(),
     queryFn: () => fetchMyGroups(),
+    // Set staleTime to 0 to ensure fresh data after mutations
+    // This prevents stale cache from hiding newly assigned groups
+    staleTime: 0,
+    // Refetch on window focus to catch updates from other tabs/windows
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -88,11 +93,18 @@ export function useUpdateGroup() {
       queryClient.invalidateQueries({ queryKey: groupKeys.detail(id) });
       queryClient.invalidateQueries({ queryKey: groupKeys.lists() });
       // If teacher assignment changed, invalidate my-groups cache and chat queries
+      // This ensures both the old teacher (if removed) and new teacher (if assigned) see updates
       if (data.teacherId !== undefined) {
+        // Invalidate all teacher my-groups queries (affects both old and new teacher)
         queryClient.invalidateQueries({ queryKey: groupKeys.myGroups() });
         queryClient.invalidateQueries({ queryKey: chatKeys.lists() });
         queryClient.invalidateQueries({ queryKey: chatKeys.teacherGroups() });
         queryClient.invalidateQueries({ queryKey: chatKeys.details() });
+      }
+      // If group active status changed, invalidate my-groups (inactive groups shouldn't appear)
+      if (data.isActive !== undefined) {
+        queryClient.invalidateQueries({ queryKey: groupKeys.myGroups() });
+        queryClient.invalidateQueries({ queryKey: chatKeys.teacherGroups() });
       }
     },
   });
@@ -175,6 +187,9 @@ export function useToggleGroupActive() {
       // Invalidate to refetch and ensure consistency
       queryClient.invalidateQueries({ queryKey: groupKeys.detail(id) });
       queryClient.invalidateQueries({ queryKey: groupKeys.lists() });
+      // Invalidate my-groups since active status affects teacher group visibility
+      queryClient.invalidateQueries({ queryKey: groupKeys.myGroups() });
+      queryClient.invalidateQueries({ queryKey: chatKeys.teacherGroups() });
     },
   });
 }

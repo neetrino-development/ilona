@@ -122,6 +122,21 @@ export class GroupsService {
     return group;
   }
 
+  /**
+   * Get teacher entity by userId (canonical lookup method)
+   */
+  async getTeacherByUserId(userId: string) {
+    const teacher = await this.prisma.teacher.findUnique({
+      where: { userId },
+      select: { id: true },
+    });
+    return teacher;
+  }
+
+  /**
+   * Get all groups assigned to a teacher by teacherId
+   * This is the canonical method for fetching teacher groups - used by all endpoints
+   */
   async findByTeacher(teacherId: string) {
     const groups = await this.prisma.group.findMany({
       where: { teacherId, isActive: true },
@@ -155,6 +170,18 @@ export class GroupsService {
         students: countMap.get(group.id) || 0,
       },
     }));
+  }
+
+  /**
+   * Get all groups assigned to a teacher by userId
+   * This method ensures consistent lookup across all endpoints
+   */
+  async findByTeacherUserId(userId: string) {
+    const teacher = await this.getTeacherByUserId(userId);
+    if (!teacher) {
+      return [];
+    }
+    return this.findByTeacher(teacher.id);
   }
 
   async create(dto: CreateGroupDto) {

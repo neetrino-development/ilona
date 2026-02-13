@@ -202,7 +202,11 @@ export function useTeacherGroups(search?: string) {
   return useQuery({
     queryKey: chatKeys.teacherGroups(search),
     queryFn: () => fetchTeacherGroups(search),
-    staleTime: 60 * 1000, // Cache for 1 minute
+    // Set staleTime to 0 to ensure fresh data after mutations
+    // This prevents stale cache from hiding newly assigned groups
+    staleTime: 0,
+    // Refetch on window focus to catch updates from other tabs/windows
+    refetchOnWindowFocus: true,
   });
 }
 
