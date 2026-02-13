@@ -1893,6 +1893,3 @@ export class ChatService {
     return studentsWithChat;
   }
 }
-
-console.log("Hello")
-
