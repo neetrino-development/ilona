@@ -65,6 +65,8 @@ export interface LessonFilters {
   status?: LessonStatus;
   dateFrom?: string;
   dateTo?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
 }
 
 export interface CreateLessonDto {
