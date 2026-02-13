@@ -6,6 +6,7 @@ import { DashboardLayout } from '@/shared/components/layout/DashboardLayout';
 import { LessonListTable } from '@/shared/components/calendar/LessonListTable';
 import { useLessons, type Lesson } from '@/features/lessons';
 import { AddCourseForm } from '@/features/lessons/components/AddCourseForm';
+import { EditLessonForm } from '@/features/lessons/components/EditLessonForm';
 import { Button } from '@/shared/components/ui/button';
 import { cn } from '@/shared/lib/utils';
 import { useTranslations } from 'next-intl';
@@ -118,6 +119,7 @@ export default function TeacherCalendarPage() {
   
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isAddCourseOpen, setIsAddCourseOpen] = useState(false);
+  const [editingLessonId, setEditingLessonId] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<string>('scheduledAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   
@@ -346,6 +348,7 @@ export default function TeacherCalendarPage() {
           <LessonListTable
             lessons={lessons}
             isLoading={isLoading}
+            onEdit={(lessonId) => setEditingLessonId(lessonId)}
             onObligationClick={(lessonId, obligation) => {
               router.push(`/teacher/calendar/${lessonId}?tab=${obligation}`);
             }}
@@ -358,6 +361,17 @@ export default function TeacherCalendarPage() {
             open={isAddCourseOpen}
             onOpenChange={setIsAddCourseOpen}
           />
+          {editingLessonId && (
+            <EditLessonForm
+              open={!!editingLessonId}
+              onOpenChange={(open) => {
+                if (!open) {
+                  setEditingLessonId(null);
+                }
+              }}
+              lessonId={editingLessonId}
+            />
+          )}
         </>
       ) : (
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">

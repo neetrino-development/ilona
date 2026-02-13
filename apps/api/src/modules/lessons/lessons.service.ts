@@ -412,8 +412,43 @@ export class LessonsService {
     return created;
   }
 
-  async update(id: string, dto: UpdateLessonDto) {
+  async update(id: string, dto: UpdateLessonDto, userId?: string, userRole?: UserRole) {
     const lesson = await this.findById(id);
+
+    // For teachers, check authorization: they can only edit their own lessons
+    if (userRole === UserRole.TEACHER && userId) {
+      const teacher = await this.prisma.teacher.findUnique({
+        where: { userId },
+        include: { groups: { select: { id: true } } },
+      });
+
+      if (!teacher) {
+        throw new ForbiddenException('Teacher profile not found');
+      }
+
+      // Check if teacher is assigned to this lesson
+      const isAssignedToLesson = lesson.teacherId === teacher.id;
+      // Check if teacher is assigned to the lesson's group
+      const isAssignedToGroup = teacher.groups.some((g) => g.id === lesson.groupId);
+
+      if (!isAssignedToLesson && !isAssignedToGroup) {
+        throw new ForbiddenException('You can only edit lessons assigned to you or your groups');
+      }
+    }
+
+    // Validate endTime > startTime
+    // Use updated values if provided, otherwise use existing lesson values
+    const scheduledAt = dto.scheduledAt ? new Date(dto.scheduledAt) : new Date(lesson.scheduledAt);
+    const duration = dto.duration !== undefined ? dto.duration : lesson.duration;
+    
+    if (duration <= 0) {
+      throw new BadRequestException('Duration must be greater than 0');
+    }
+    
+    const endTime = new Date(scheduledAt.getTime() + duration * 60 * 1000);
+    if (endTime <= scheduledAt) {
+      throw new BadRequestException('End time must be after start time');
+    }
 
     // Allow updates to completed lessons for notes, topic, description
     // but prevent changing scheduledAt or duration for completed lessons

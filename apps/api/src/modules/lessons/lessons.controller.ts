@@ -194,8 +194,12 @@ export class LessonsController {
 
   @Put(':id')
   @Roles(UserRole.ADMIN, UserRole.TEACHER)
-  async update(@Param('id') id: string, @Body() dto: UpdateLessonDto) {
-    return this.lessonsService.update(id, dto);
+  async update(
+    @Param('id') id: string,
+    @Body() dto: UpdateLessonDto,
+    @CurrentUser() user?: JwtPayload,
+  ) {
+    return this.lessonsService.update(id, dto, user?.sub, user?.role);
   }
 
   @Patch(':id/start')
