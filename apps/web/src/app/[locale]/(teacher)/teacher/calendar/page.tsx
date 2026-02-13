@@ -118,6 +118,8 @@ export default function TeacherCalendarPage() {
   
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isAddCourseOpen, setIsAddCourseOpen] = useState(false);
+  const [sortBy, setSortBy] = useState<string>('scheduledAt');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   
   // Update URL when view mode changes
   const updateViewModeInUrl = (mode: ViewMode) => {
@@ -149,17 +151,16 @@ export default function TeacherCalendarPage() {
   const weekDates = useMemo(() => getWeekDates(new Date(currentDate)), [currentDate]);
   const monthDates = useMemo(() => getMonthDates(new Date(currentDate)), [currentDate]);
   
-  // For list view, show a wider range (3 months from today)
+  // For list view, show lessons from today onwards (no past lessons by default)
   // For week view, show the week
   // For month view, show the month
   const dateFrom = useMemo(() => {
     if (viewMode === 'week') {
       return weekDates[0];
     } else if (viewMode === 'list') {
-      // Show 3 months back and 3 months forward from today
+      // Start from today (beginning of today)
       const today = new Date();
-      today.setMonth(today.getMonth() - 3);
-      today.setDate(1);
+      today.setHours(0, 0, 0, 0);
       return today;
     } else {
       return new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
@@ -180,9 +181,24 @@ export default function TeacherCalendarPage() {
     }
   }, [viewMode, weekDates, currentDate]);
 
-  // Format dates for API
+  // Format dates for API (use local date to avoid timezone shifts)
   const formatDate = (date: Date): string => {
-    return date.toISOString().split('T')[0];
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  // Handle sorting
+  const handleSort = (key: string) => {
+    if (sortBy === key) {
+      // Toggle sort order if clicking the same column
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      // Set new sort column and default to ascending
+      setSortBy(key);
+      setSortOrder('asc');
+    }
   };
 
   // Fetch lessons using main endpoint (automatically scoped by backend for teachers)
@@ -190,6 +206,8 @@ export default function TeacherCalendarPage() {
     dateFrom: formatDate(dateFrom),
     dateTo: formatDate(dateTo),
     take: 100,
+    sortBy: sortBy === 'scheduledAt' ? 'scheduledAt' : undefined,
+    sortOrder: sortBy === 'scheduledAt' ? sortOrder : undefined,
   });
 
   const lessons = lessonsData?.items || [];
@@ -332,6 +350,9 @@ export default function TeacherCalendarPage() {
               router.push(`/teacher/calendar/${lessonId}?tab=${obligation}`);
             }}
             hideTeacherColumn={true}
+            sortBy={sortBy}
+            sortOrder={sortOrder}
+            onSort={handleSort}
           />
           <AddCourseForm
             open={isAddCourseOpen}

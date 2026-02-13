@@ -37,6 +37,8 @@ export class LessonsController {
       status: query.status as LessonStatus,
       dateFrom: query.dateFrom ? new Date(query.dateFrom) : undefined,
       dateTo: query.dateTo ? new Date(query.dateTo) : undefined,
+      sortBy: query.sortBy,
+      sortOrder: query.sortOrder,
       currentUserId: user?.sub,
       userRole: user?.role,
     });

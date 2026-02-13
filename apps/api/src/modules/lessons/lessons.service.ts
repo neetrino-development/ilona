@@ -20,10 +20,12 @@ export class LessonsService {
     status?: LessonStatus;
     dateFrom?: Date;
     dateTo?: Date;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
     currentUserId?: string;
     userRole?: UserRole;
   }) {
-    const { skip = 0, take = 50, groupId, teacherId, status, dateFrom, dateTo, currentUserId, userRole } = params || {};
+    const { skip = 0, take = 50, groupId, teacherId, status, dateFrom, dateTo, sortBy, sortOrder, currentUserId, userRole } = params || {};
 
     const where: Prisma.LessonWhereInput = {};
 
@@ -99,12 +101,21 @@ export class LessonsService {
       }
     }
 
+    // Build orderBy clause
+    let orderBy: Prisma.LessonOrderByWithRelationInput;
+    if (sortBy === 'scheduledAt' || sortBy === 'dateTime') {
+      orderBy = { scheduledAt: sortOrder || 'desc' };
+    } else {
+      // Default to scheduledAt desc if no valid sortBy
+      orderBy = { scheduledAt: 'desc' };
+    }
+
     const [items, total] = await Promise.all([
       this.prisma.lesson.findMany({
         where,
         skip,
         take,
-        orderBy: { scheduledAt: 'desc' },
+        orderBy,
         include: {
           group: {
             select: {

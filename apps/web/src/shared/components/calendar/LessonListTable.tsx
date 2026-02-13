@@ -2,9 +2,11 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useLocale } from 'next-intl';
 import { Button } from '@/shared/components/ui/button';
 import { Badge } from '@/shared/components/ui/badge';
 import { Checkbox } from '@/shared/components/ui/checkbox';
+import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import type { Lesson } from '@/features/lessons';
 import { cn } from '@/shared/lib/utils';
 
@@ -16,6 +18,9 @@ interface LessonListTableProps {
   onDelete?: (lessonId: string) => void;
   onObligationClick?: (lessonId: string, obligation: 'absence' | 'feedback' | 'voice' | 'text') => void;
   hideTeacherColumn?: boolean;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+  onSort?: (key: string) => void;
 }
 
 const statusConfig: Record<string, { label: string; variant: 'success' | 'warning' | 'error' | 'info' | 'default' }> = {
@@ -26,18 +31,22 @@ const statusConfig: Record<string, { label: string; variant: 'success' | 'warnin
   MISSED: { label: 'Missed', variant: 'error' },
 };
 
-function formatTime(dateStr: string): string {
+function formatTime(dateStr: string, locale: string): string {
   const date = new Date(dateStr);
-  return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+  return date.toLocaleTimeString(locale === 'hy' ? 'hy-AM' : 'en-US', { 
+    hour: '2-digit', 
+    minute: '2-digit', 
+    hour12: false 
+  });
 }
 
-function formatDate(dateStr: string): string {
+function formatDate(dateStr: string, locale: string): string {
   const date = new Date(dateStr);
-  return date.toLocaleDateString('en-US', { 
+  return date.toLocaleDateString(locale === 'hy' ? 'hy-AM' : 'en-US', { 
     weekday: 'short', 
     month: 'short', 
-    day: 'numeric',
-    year: 'numeric'
+    day: 'numeric'
+    // Year removed as per requirements
   });
 }
 
@@ -97,8 +106,12 @@ export function LessonListTable({
   onDelete,
   onObligationClick,
   hideTeacherColumn = false,
+  sortBy,
+  sortOrder,
+  onSort,
 }: LessonListTableProps) {
   const router = useRouter();
+  const locale = useLocale();
   const [selectedLessons, setSelectedLessons] = useState<Set<string>>(new Set());
 
   const handleSelectAll = (checked: boolean) => {
@@ -193,7 +206,40 @@ export function LessonListTable({
                 />
               </th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Lesson Name</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Date & Time</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">
+                {onSort ? (
+                  <button
+                    type="button"
+                    onClick={() => onSort('scheduledAt')}
+                    className={cn(
+                      'flex items-center gap-1.5 w-full text-left text-xs font-semibold uppercase hover:bg-slate-50 rounded-md px-0 py-0.5 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-1',
+                      sortBy === 'scheduledAt' && 'text-slate-700'
+                    )}
+                    aria-label={
+                      sortBy !== 'scheduledAt'
+                        ? 'Sort by Date & Time'
+                        : sortOrder === 'asc'
+                        ? 'Sorted by Date & Time ascending. Click to sort descending.'
+                        : 'Sorted by Date & Time descending. Click to sort ascending.'
+                    }
+                  >
+                    <span>Date & Time</span>
+                    <span className="flex-shrink-0">
+                      {sortBy === 'scheduledAt' ? (
+                        sortOrder === 'asc' ? (
+                          <ArrowUp className="w-3.5 h-3.5 text-slate-600" aria-hidden="true" />
+                        ) : (
+                          <ArrowDown className="w-3.5 h-3.5 text-slate-600" aria-hidden="true" />
+                        )
+                      ) : (
+                        <ArrowUpDown className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
+                      )}
+                    </span>
+                  </button>
+                ) : (
+                  'Date & Time'
+                )}
+              </th>
               {!hideTeacherColumn && (
                 <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Teacher</th>
               )}
@@ -228,8 +274,8 @@ export function LessonListTable({
                   </td>
                   <td className="px-4 py-3">
                     <div>
-                      <p className="text-sm font-medium text-slate-800">{formatDate(lesson.scheduledAt)}</p>
-                      <p className="text-sm text-slate-600">{formatTime(lesson.scheduledAt)}</p>
+                      <p className="text-sm font-medium text-slate-800">{formatDate(lesson.scheduledAt, locale)}</p>
+                      <p className="text-sm text-slate-600">{formatTime(lesson.scheduledAt, locale)}</p>
                     </div>
                   </td>
                   {!hideTeacherColumn && (
